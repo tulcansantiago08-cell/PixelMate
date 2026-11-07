@@ -1,307 +1,214 @@
 import 'package:flutter/material.dart';
 import '../../domain/mascot/mascot_state.dart';
 
-/// Dibuja la mascota pixel art estilo peluche suave.
+/// Mascota estilo pixel art — cada "píxel" es un cuadrado de [px] puntos.
 class MascotPainter extends CustomPainter {
   final MascotState state;
-  final double animValue; // 0.0 → 1.0 animación continua
+  final double animValue;
 
   const MascotPainter({required this.state, required this.animValue});
 
+  static const double px = 7.0; // tamaño de cada píxel
+
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2 + (animValue * 4 - 2); // bob suave
-
-    _drawBody(canvas, cx, cy, size);
-    _drawFace(canvas, cx, cy);
-    _drawAccessory(canvas, cx, cy);
+    // Bob vertical suave
+    final dy = (animValue * 4 - 2);
+    canvas.save();
+    canvas.translate(0, dy);
+    _drawSprite(canvas, state);
+    canvas.restore();
   }
 
-  void _drawBody(Canvas canvas, double cx, double cy, Size size) {
-    final color = _bodyColor;
-    final paint = Paint()..color = color;
-    final shadowPaint = Paint()..color = Colors.black26;
+  void _drawSprite(Canvas canvas, MascotState state) {
+    // Sprite grid 18×22 — origen en (1*px, 1*px) para margen
+    // Colores
+    const C = Color(0xFF000000); // contorno
+    const W = Color(0xFFFFFFFF); // blanco
+    const T = Color(0x00000000); // transparente
 
-    // Sombra
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, size.height - 18), width: 70, height: 14),
-      shadowPaint,
-    );
-
-    // Cuerpo
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, cy + 30), width: 90, height: 80),
-      paint,
-    );
-
-    // Cabeza
-    canvas.drawCircle(Offset(cx, cy - 10), 48, paint);
-
-    // Brillo peluche
-    canvas.drawCircle(
-      Offset(cx - 14, cy - 24),
-      14,
-      Paint()..color = Colors.white.withOpacity(0.25),
-    );
-
-    // Orejas
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - 36, cy - 48), width: 20, height: 26),
-      paint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx + 36, cy - 48), width: 20, height: 26),
-      paint,
-    );
-    // Interior orejas
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - 36, cy - 48), width: 12, height: 16),
-      Paint()..color = _earColor,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx + 36, cy - 48), width: 12, height: 16),
-      Paint()..color = _earColor,
-    );
-
-    // Brazos
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - 54, cy + 20), width: 20, height: 32),
-      paint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx + 54, cy + 20), width: 20, height: 32),
-      paint,
-    );
-
-    // Pies
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - 24, cy + 70), width: 32, height: 18),
-      paint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx + 24, cy + 70), width: 32, height: 18),
-      paint,
-    );
-  }
-
-  void _drawFace(Canvas canvas, double cx, double cy) {
-    final eyePaint = Paint()..color = const Color(0xFF1a1a2e);
-    final whitePaint = Paint()..color = Colors.white;
-    final cheekPaint = Paint()
-      ..color = Colors.pink.withOpacity(0.5);
-
-    // Mejillas
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - 28, cy + 4), width: 20, height: 14),
-      cheekPaint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx + 28, cy + 4), width: 20, height: 14),
-      cheekPaint,
-    );
-
+    // Colores del cuerpo según estado
+    final Color B; // cuerpo principal
+    final Color S; // sombreado
+    final Color E; // ojos
     switch (state) {
       case MascotState.sleeping:
       case MascotState.tired:
-        _drawTiredEyes(canvas, cx, cy);
-        _drawSleepingMouth(canvas, cx, cy);
+        B = const Color(0xFF6a9fd8);
+        S = const Color(0xFF4a7fb8);
+        E = const Color(0xFF2a4a70);
         break;
       case MascotState.celebrating:
-        _drawStarEyes(canvas, cx, cy);
-        _drawHappyMouth(canvas, cx, cy);
+        B = const Color(0xFFb87ae8);
+        S = const Color(0xFF8a50c0);
+        E = const Color(0xFF4a1a80);
         break;
       case MascotState.alert:
-        _drawWideEyes(canvas, cx, cy, eyePaint, whitePaint);
-        _drawAlertMouth(canvas, cx, cy);
+        B = const Color(0xFFe8907a);
+        S = const Color(0xFFc06050);
+        E = const Color(0xFF803020);
         break;
-      default:
-        // Ojos normales brillantes
-        canvas.drawCircle(Offset(cx - 16, cy - 6), 10, whitePaint);
-        canvas.drawCircle(Offset(cx + 16, cy - 6), 10, whitePaint);
-        canvas.drawCircle(Offset(cx - 14, cy - 6), 7, eyePaint);
-        canvas.drawCircle(Offset(cx + 18, cy - 6), 7, eyePaint);
-        canvas.drawCircle(Offset(cx - 16, cy - 9), 3, whitePaint);
-        canvas.drawCircle(Offset(cx + 16, cy - 9), 3, whitePaint);
-        _drawHappyMouth(canvas, cx, cy);
-    }
-  }
-
-  void _drawTiredEyes(Canvas canvas, double cx, double cy) {
-    final p = Paint()
-      ..color = _bodyColor.withRed((_bodyColor.red * 0.7).toInt())
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx - 16, cy - 4), width: 20, height: 8),
-        const Radius.circular(4),
-      ),
-      p,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx + 16, cy - 4), width: 20, height: 8),
-        const Radius.circular(4),
-      ),
-      p,
-    );
-  }
-
-  void _drawStarEyes(Canvas canvas, double cx, double cy) {
-    final tp = TextPainter(textDirection: TextDirection.ltr);
-    tp.text = const TextSpan(text: '★', style: TextStyle(fontSize: 18, color: Color(0xFFFFD700)));
-    tp.layout();
-    tp.paint(canvas, Offset(cx - 26, cy - 16));
-    tp.paint(canvas, Offset(cx + 8, cy - 16));
-  }
-
-  void _drawWideEyes(Canvas canvas, double cx, double cy, Paint eye, Paint white) {
-    canvas.drawCircle(Offset(cx - 16, cy - 6), 12, white);
-    canvas.drawCircle(Offset(cx + 16, cy - 6), 12, white);
-    canvas.drawCircle(Offset(cx - 16, cy - 6), 7, eye);
-    canvas.drawCircle(Offset(cx + 16, cy - 6), 7, eye);
-  }
-
-  void _drawHappyMouth(Canvas canvas, double cx, double cy) {
-    final path = Path()
-      ..moveTo(cx - 16, cy + 14)
-      ..quadraticBezierTo(cx, cy + 26, cx + 16, cy + 14);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = const Color(0xFF5a3010)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  void _drawSleepingMouth(Canvas canvas, double cx, double cy) {
-    final path = Path()
-      ..moveTo(cx - 12, cy + 16)
-      ..quadraticBezierTo(cx, cy + 10, cx + 12, cy + 16);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = const Color(0xFF5a3010)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  void _drawAlertMouth(Canvas canvas, double cx, double cy) {
-    canvas.drawCircle(
-      Offset(cx, cy + 18),
-      8,
-      Paint()..color = const Color(0xFFc05030),
-    );
-  }
-
-  void _drawAccessory(Canvas canvas, double cx, double cy) {
-    switch (state) {
-      case MascotState.working:
-      case MascotState.chatting:
-        _drawHeadphones(canvas, cx, cy);
+      case MascotState.gaming:
+        B = const Color(0xFF5ac87a);
+        S = const Color(0xFF30a050);
+        E = const Color(0xFF105030);
         break;
-      case MascotState.celebrating:
-        _drawPartyHat(canvas, cx, cy);
-        break;
-      case MascotState.sleeping:
-        _drawZzz(canvas, cx, cy);
-        break;
-      default:
-        break;
-    }
-  }
-
-  void _drawHeadphones(Canvas canvas, double cx, double cy) {
-    final p = Paint()
-      ..color = const Color(0xFF1a1a1a)
-      ..strokeWidth = 5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final path = Path()
-      ..moveTo(cx - 46, cy - 30)
-      ..quadraticBezierTo(cx, cy - 70, cx + 46, cy - 30);
-    canvas.drawPath(path, p);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx - 46, cy - 24), width: 18, height: 22),
-        const Radius.circular(9),
-      ),
-      Paint()..color = const Color(0xFF222222),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx + 46, cy - 24), width: 18, height: 22),
-        const Radius.circular(9),
-      ),
-      Paint()..color = const Color(0xFF222222),
-    );
-  }
-
-  void _drawPartyHat(Canvas canvas, double cx, double cy) {
-    final path = Path()
-      ..moveTo(cx, cy - 68)
-      ..lineTo(cx - 24, cy - 42)
-      ..lineTo(cx + 24, cy - 42)
-      ..close();
-    canvas.drawPath(path, Paint()..color = const Color(0xFFff6eb4));
-    canvas.drawCircle(Offset(cx, cy - 68), 5, Paint()..color = const Color(0xFFFFD700));
-  }
-
-  void _drawZzz(Canvas canvas, double cx, double cy) {
-    final tp = TextPainter(textDirection: TextDirection.ltr);
-    for (final z in [
-      (cx + 44, cy - 50, 10.0, 0.5),
-      (cx + 52, cy - 62, 13.0, 0.65),
-      (cx + 62, cy - 76, 16.0, 0.8),
-    ]) {
-      tp.text = TextSpan(
-        text: 'z',
-        style: TextStyle(
-          fontSize: z.$3,
-          color: Colors.blueGrey.withOpacity(z.$4),
-        ),
-      );
-      tp.layout();
-      tp.paint(canvas, Offset(z.$1, z.$2));
-    }
-  }
-
-  Color get _bodyColor {
-    switch (state) {
       case MascotState.working:
       case MascotState.studying:
-        return const Color(0xFFe8c87a);
-      case MascotState.sleeping:
-      case MascotState.tired:
-        return const Color(0xFF8aaac8);
-      case MascotState.celebrating:
-        return const Color(0xFFb87ae8);
-      case MascotState.alert:
-        return const Color(0xFFe8907a);
-      case MascotState.gaming:
-        return const Color(0xFF7ae8b8);
+        B = const Color(0xFFe8c060);
+        S = const Color(0xFFc09030);
+        E = const Color(0xFF604010);
+        break;
       default:
-        return const Color(0xFFe8d0a0);
+        B = const Color(0xFFf0d090);
+        S = const Color(0xFFc8a060);
+        E = const Color(0xFF604020);
     }
+
+    const P = Color(0xFFff9ab0); // mejillas / nariz rosa
+    const H = Color(0xFF1a1a1a); // audífonos / accesorios
+
+    // Sprite 18 columnas × 22 filas (0-indexed)
+    // Cada fila es una lista de colores
+    final grid = _buildGrid(B, S, C, W, T, P, E, H, state);
+    _drawGrid(canvas, grid);
   }
 
-  Color get _earColor {
+  List<List<Color>> _buildGrid(
+    Color B, Color S, Color C, Color W, Color T,
+    Color P, Color E, Color H, MascotState state,
+  ) {
+    // Ojos según estado
+    final eyeL = _eyeLeft(state, C, W, E, B);
+    final eyeR = _eyeRight(state, C, W, E, B);
+
+    // Boca según estado
+    final mouthRow = _mouthRow(state, C, B, P);
+
+    return [
+      // fila 0 — orejas
+      [T,T,T,C,C,T,T,T,T,T,T,T,T,C,C,T,T,T],
+      // fila 1 — orejas interior
+      [T,T,C,B,B,C,T,T,T,T,T,T,C,B,B,C,T,T],
+      // fila 2 — orejas interior
+      [T,T,C,S,B,C,T,T,T,T,T,T,C,B,S,C,T,T],
+      // fila 3 — tope cabeza
+      [T,T,C,C,C,C,C,C,C,C,C,C,C,C,C,C,T,T],
+      // fila 4 — cabeza
+      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      // fila 5 — cabeza con audífonos
+      [C,H,B,B,B,B,B,B,B,B,B,B,B,B,B,B,H,C],
+      // fila 6 — ojos
+      eyeL,
+      // fila 7 — ojos brillo
+      eyeR,
+      // fila 8 — nariz
+      [C,H,B,B,B,B,B,B,P,B,B,B,B,B,B,B,H,C],
+      // fila 9 — mejillas + boca
+      mouthRow,
+      // fila 10 — mejillas
+      [C,H,B,P,B,B,B,B,B,B,B,B,B,B,P,B,H,C],
+      // fila 11 — barbilla
+      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      // fila 12 — cuello / inicio cuerpo
+      [T,T,C,C,B,B,B,B,B,B,B,B,B,B,C,C,T,T],
+      // fila 13 — cuerpo
+      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      // fila 14 — cuerpo
+      [C,B,B,B,S,B,B,B,B,B,B,B,B,S,B,B,B,C],
+      // fila 15 — cuerpo
+      [C,B,B,S,S,B,B,B,B,B,B,B,B,S,S,B,B,C],
+      // fila 16 — cuerpo
+      [C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C],
+      // fila 17 — inicio pies
+      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      // fila 18 — pies
+      [T,T,C,B,B,C,T,T,T,T,T,T,T,C,B,B,C,T],
+      // fila 19 — pies
+      [T,T,C,B,S,C,T,T,T,T,T,T,T,C,S,B,C,T],
+      // fila 20 — suela
+      [T,T,C,C,C,C,T,T,T,T,T,T,T,C,C,C,C,T],
+      // fila 21 — sombra
+      [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],
+    ];
+  }
+
+  List<Color> _eyeLeft(MascotState state, Color C, Color W, Color E, Color B) {
+    const H = Color(0xFF1a1a1a);
     switch (state) {
       case MascotState.sleeping:
       case MascotState.tired:
-        return const Color(0xFF6a8aaa);
+        return [C,H,B,B,B,B,B,B,B,B,B,B,B,B,B,B,H,C];
       case MascotState.celebrating:
-        return const Color(0xFFed93b1);
+        return [C,H,B,W,C,B,B,B,B,B,B,B,B,C,W,B,H,C];
+      case MascotState.alert:
+        return [C,H,B,W,W,C,B,B,B,B,B,C,W,W,B,B,H,C];
       default:
-        return const Color(0xFFf4c0d1);
+        return [C,H,B,W,W,C,B,B,B,B,B,C,W,W,B,B,H,C];
+    }
+  }
+
+  List<Color> _eyeRight(MascotState state, Color C, Color W, Color E, Color B) {
+    const H = Color(0xFF1a1a1a);
+    final T = const Color(0x00000000);
+    switch (state) {
+      case MascotState.sleeping:
+      case MascotState.tired:
+        // línea de ojos cerrados
+        return [C,H,B,C,C,B,B,B,B,B,B,B,B,C,C,B,H,C];
+      case MascotState.celebrating:
+        // ojos estrella (★)
+        return [C,H,B,C,E,C,B,B,B,B,B,C,E,C,B,B,H,C];
+      case MascotState.alert:
+        // ojos muy abiertos
+        return [C,H,B,W,E,W,B,B,B,B,B,W,E,W,B,B,H,C];
+      default:
+        // ojos normales con brillo
+        return [C,H,B,E,E,W,B,B,B,B,B,W,E,E,B,B,H,C];
+    }
+  }
+
+  List<Color> _mouthRow(MascotState state, Color C, Color B, Color P) {
+    const H = Color(0xFF1a1a1a);
+    const D = Color(0xFF5a3010); // marrón oscuro boca
+    switch (state) {
+      case MascotState.sleeping:
+        return [C,H,B,B,B,B,B,D,B,B,D,B,B,B,B,B,H,C];
+      case MascotState.celebrating:
+        return [C,H,B,B,B,D,D,D,D,D,D,D,D,B,B,B,H,C];
+      case MascotState.alert:
+        return [C,H,B,B,B,B,B,P,P,P,B,B,B,B,B,B,H,C];
+      default:
+        return [C,H,B,B,B,B,D,B,B,B,B,D,B,B,B,B,H,C];
+    }
+  }
+
+  void _drawGrid(Canvas canvas, List<List<Color>> grid) {
+    final paint = Paint()..isAntiAlias = false;
+    // Centrar horizontalmente
+    const offsetX = 1.0 * px;
+    const offsetY = 2.0 * px;
+
+    for (int row = 0; row < grid.length; row++) {
+      final cols = grid[row];
+      for (int col = 0; col < cols.length; col++) {
+        final color = cols[col];
+        if (color.alpha == 0) continue;
+        paint.color = color;
+        canvas.drawRect(
+          Rect.fromLTWH(
+            offsetX + col * px,
+            offsetY + row * px,
+            px,
+            px,
+          ),
+          paint,
+        );
+      }
     }
   }
 
   @override
-  bool shouldRepaint(MascotPainter oldDelegate) =>
-      oldDelegate.state != state || oldDelegate.animValue != animValue;
+  bool shouldRepaint(MascotPainter old) =>
+      old.state != state || old.animValue != animValue;
 }
