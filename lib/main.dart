@@ -6,10 +6,10 @@ import 'presentation/mascot/mascot_window.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configurar ventana flotante sin bordes para macOS
   await windowManager.ensureInitialized();
   const options = WindowOptions(
-    size: Size(160, 200),
+    size: Size(320, 480), // más grande para acomodar el chat
+    minimumSize: Size(160, 200),
     backgroundColor: Colors.transparent,
     skipTaskbar: true,
     titleBarStyle: TitleBarStyle.hidden,
