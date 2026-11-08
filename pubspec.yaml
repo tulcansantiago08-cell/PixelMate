@@ -56,4 +56,8 @@ flutter:
     - assets/config/
     - assets/pets/cat/
     - assets/pets/cat/accessories/
+    - assets/pets/dog/
+    - assets/pets/dog/accessories/
+    - assets/pets/fox/
+    - assets/pets/fox/accessories/
     - assets/sounds/

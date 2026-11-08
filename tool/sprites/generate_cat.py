@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Genera el spritesheet pixel art del gato de PixelMate.
+"""Genera los spritesheets pixel art de las mascotas de PixelMate (gato,
+perro y zorro).
 
-Uso:  python3 tool/sprites/generate_cat.py
+Uso:  python3 tool/sprites/generate_cat.py [--sin-vistas]
 
-Salida:
-  assets/pets/cat/sheet.png    spritesheet (una fila por animación)
-  assets/pets/cat/pet.json     metadatos que lee la app
-  build/sprites/cat_preview.png  vista previa ampliada (no se incluye en la app)
+Salida, por especie (<id> = cat | dog | fox):
+  assets/pets/<id>/sheet.png      spritesheet (una fila por animación)
+  assets/pets/<id>/pet.json       metadatos que lee la app
+  assets/pets/<id>/accessories/   capas de accesorios
+  build/sprites/<id>_preview.png  vista previa ampliada (no va en la app)
 
 El gato se compone por piezas (cabeza, cuerpo, ojos, patas, accesorios) en
 una cuadrícula de 32x32. Para cambiar el arte basta con editar este archivo y
@@ -18,6 +20,7 @@ import json
 import math
 import os
 import struct
+import sys
 import zlib
 
 SIZE = 32
@@ -50,6 +53,38 @@ GOLD = (255, 216, 74)
 CONFETTI = [(255, 90, 90), (90, 200, 120), (90, 160, 255), (255, 216, 74), (200, 120, 255)]
 DROP = (106, 183, 255)
 ALERT = (255, 90, 90)
+
+
+# --- Especies ------------------------------------------------------------------
+# Todas comparten pose, cara y animaciones; cambian colores, orejas, cola y
+# hocico. El gato es la especie por defecto (y su hoja no cambia).
+
+SPECIES = {
+    "cat": {
+        "name": "Gato", "body": BODY, "shade": SHADE, "belly": BELLY,
+        "ear_in": EAR_IN, "nose": PINK, "ears": "cat", "tail": "cat",
+    },
+    "dog": {
+        "name": "Perro", "body": (204, 150, 98), "shade": (158, 106, 64),
+        "belly": (246, 230, 206), "ear_in": (122, 80, 50),
+        "nose": (52, 34, 26), "ears": "dog", "tail": "dog", "snout": True,
+    },
+    "fox": {
+        "name": "Zorro", "body": (236, 132, 60), "shade": (192, 94, 40),
+        "belly": (252, 244, 232), "ear_in": (250, 226, 200),
+        "nose": (52, 34, 26), "ears": "fox", "tail": "fox", "cheeks": True,
+        "tip": (252, 244, 232), "dark": (72, 44, 34),
+    },
+}
+KIND = SPECIES["cat"]
+
+
+def use_species(sid):
+    """Cambia la paleta y las piezas que usan cat() y face()."""
+    global KIND, BODY, SHADE, BELLY, EAR_IN
+    KIND = SPECIES[sid]
+    BODY, SHADE, BELLY, EAR_IN = (KIND["body"], KIND["shade"], KIND["belly"],
+                                  KIND["ear_in"])
 
 
 class Canvas:
@@ -150,9 +185,17 @@ def cat(cv, dy=0, squash=0, eyes="open", mouth="smile", arms="down",
     hy = 12 + dy + squash
     # Cola (detrás del cuerpo)
     sway = [0, 1, 2, 1][tail % 4]
-    cv.line([(22, 27), (25, 26), (27, 24 - sway // 2), (27, 21 - sway),
-             (26 + sway // 2, 19 - sway)], BODY, body=True)
-    cv.line([(22, 28), (25, 27), (28, 24 - sway // 2)], BODY, body=True)
+    if KIND["tail"] == "dog":  # corta y contenta, se menea
+        wag = [0, 2, 3, 2][tail % 4]
+        cv.line([(22, 27), (25, 25), (26 + wag // 2, 22 - wag // 2)], BODY, body=True)
+        cv.line([(22, 28), (25, 26), (27 + wag // 2, 23 - wag // 2)], BODY, body=True)
+    elif KIND["tail"] == "fox":  # grande y esponjosa, con la punta blanca
+        cv.ellipse(25.5 + sway * 0.4, 23 - sway * 0.3, 3.4, 5.6, BODY)
+        cv.ellipse(26 + sway * 0.5, 18.6 - sway * 0.4, 2.2, 2.2, KIND["tip"])
+    else:
+        cv.line([(22, 27), (25, 26), (27, 24 - sway // 2), (27, 21 - sway),
+                 (26 + sway // 2, 19 - sway)], BODY, body=True)
+        cv.line([(22, 28), (25, 27), (28, 24 - sway // 2)], BODY, body=True)
     # Cuerpo
     cv.ellipse(16, 23 + dy * 0.5 + squash * 0.6, 7.5, 6.5 - squash * 0.5, BODY)
     cv.ellipse(16, 24.5 + dy * 0.5 + squash * 0.6, 4.2, 3.6 - squash * 0.3, BELLY)
@@ -160,7 +203,17 @@ def cat(cv, dy=0, squash=0, eyes="open", mouth="smile", arms="down",
     cv.ellipse(11.5, 29.3, 2.4, 1.4, BODY)
     cv.ellipse(20.5, 29.3, 2.4, 1.4, BODY)
     # Orejas
-    if ears == 0:
+    kind_ears = KIND["ears"]
+    if kind_ears == "fox" and ears == 0:  # grandes, con las puntas oscuras
+        cv.triangle((7, hy - 2.5), (8.5, hy - 12), (14, hy - 5.5), BODY)
+        cv.triangle((25, hy - 2.5), (23.5, hy - 12), (18, hy - 5.5), BODY)
+        cv.triangle((9, hy - 4.5), (9.6, hy - 9.5), (12.6, hy - 5.6), EAR_IN)
+        cv.triangle((23, hy - 4.5), (22.4, hy - 9.5), (19.4, hy - 5.6), EAR_IN)
+        cv.triangle((7.8, hy - 9), (8.5, hy - 12), (10.6, hy - 9.6), KIND["dark"])
+        cv.triangle((24.2, hy - 9), (23.5, hy - 12), (21.4, hy - 9.6), KIND["dark"])
+    elif kind_ears == "dog":
+        pass  # caídas: se dibujan después de la cabeza
+    elif ears == 0:
         cv.triangle((7.5, hy - 3), (9.5, hy - 10.5), (13.5, hy - 5.5), BODY)
         cv.triangle((24.5, hy - 3), (22.5, hy - 10.5), (18.5, hy - 5.5), BODY)
         cv.triangle((9, hy - 4.5), (10, hy - 8.5), (12.3, hy - 5.6), EAR_IN)
@@ -170,6 +223,15 @@ def cat(cv, dy=0, squash=0, eyes="open", mouth="smile", arms="down",
         cv.triangle((25, hy - 2), (26.5, hy - 7), (20, hy - 5), BODY)
     # Cabeza
     cv.ellipse(16, hy, 8.6, 6.8, BODY)
+    if kind_ears == "dog":  # orejas que cuelgan a los lados
+        low = 1.5 if ears else 0
+        cv.ellipse(7.6, hy + low, 2.4, 4.6, EAR_IN)
+        cv.ellipse(24.4, hy + low, 2.4, 4.6, EAR_IN)
+    if KIND.get("cheeks"):  # mejillas blancas del zorro
+        cv.ellipse(11.5, hy + 2.6, 3.4, 2.4, BELLY)
+        cv.ellipse(20.5, hy + 2.6, 3.4, 2.4, BELLY)
+    if KIND.get("snout"):  # hocico del perro
+        cv.ellipse(16, hy + 2.4, 3.6, 2.4, BELLY)
     # Sombra bajo la cabeza
     for x in range(10, 23):
         if cv.body[min(SIZE - 1, int(hy + 7))][x]:
@@ -236,7 +298,7 @@ def face(cv, hy, eyes, mouth, look):
     # Mejillas y nariz
     cv.set(9 + look, ey + 3, PINK)
     cv.set(23 + look, ey + 3, PINK)
-    cv.set(16 + look, ey + 2, PINK)
+    cv.set(16 + look, ey + 2, KIND["nose"])
     my = ey + 3
     mx = 16 + look
     if mouth == "smile":
@@ -562,7 +624,8 @@ def write_png(path, width, height, rows):
         fh.write(data)
 
 
-def main():
+def render_species(sid, previews=True):
+    use_species(sid)
     anims = anim_frames()
     order = list(anims.keys())
     cols = max(len(frames) for _, _, frames in anims.values())
@@ -583,7 +646,7 @@ def main():
                         sheet[row * SIZE + y][i:i + 4] = [c[0], c[1], c[2], 255]
         meta[name] = {"row": row, "frames": len(frames), "fps": fps, "loop": loop}
 
-    out = os.path.join(ROOT, "assets", "pets", "cat")
+    out = os.path.join(ROOT, "assets", "pets", sid)
     write_png(os.path.join(out, "sheet.png"), width, height, sheet)
 
     # Capas de accesorios, alineadas fotograma a fotograma con la hoja.
@@ -600,23 +663,25 @@ def main():
                         if c is not None:
                             i = (col * SIZE + x) * 4
                             layer[row * SIZE + y][i:i + 4] = [c[0], c[1], c[2], 255]
-        rel = f"assets/pets/cat/accessories/{acc}.png"
+        rel = f"assets/pets/{sid}/accessories/{acc}.png"
         write_png(os.path.join(ROOT, rel), width, height, layer)
         layers[acc] = layer
     with open(os.path.join(out, "pet.json"), "w", encoding="utf-8") as fh:
         json.dump({
-            "id": "cat",
-            "name": "Gato",
-            "sheet": "assets/pets/cat/sheet.png",
+            "id": sid,
+            "name": KIND["name"],
+            "sheet": f"assets/pets/{sid}/sheet.png",
             "frameWidth": SIZE,
             "frameHeight": SIZE,
             "animations": meta,
             "accessories": {
-                acc: f"assets/pets/cat/accessories/{acc}.png" for acc in ACCESSORIES
+                acc: f"assets/pets/{sid}/accessories/{acc}.png" for acc in ACCESSORIES
             },
         }, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
+    if not previews:
+        return
     # Vista previa ampliada x4 sobre fondo oscuro, para revisar el arte.
     scale = 4
     bg = (30, 27, 46)
@@ -628,7 +693,7 @@ def main():
             px = sheet[sy][sx * 4: sx * 4 + 4]
             row += (px[:3] + [255]) if px[3] else [bg[0], bg[1], bg[2], 255]
         preview.append(row)
-    write_png(os.path.join(ROOT, "build", "sprites", "cat_preview.png"),
+    write_png(os.path.join(ROOT, "build", "sprites", f"{sid}_preview.png"),
               width * scale, height * scale, preview)
 
     # Vista previa con cada accesorio puesto.
@@ -642,9 +707,16 @@ def main():
                 px = top if top[3] else sheet[sy][sx * 4: sx * 4 + 4]
                 row += (px[:3] + [255]) if px[3] else [bg[0], bg[1], bg[2], 255]
             rows.append(row)
-        write_png(os.path.join(ROOT, "build", "sprites", f"cat_{acc}_preview.png"),
+        write_png(os.path.join(ROOT, "build", "sprites", f"{sid}_{acc}_preview.png"),
                   width * scale, height * scale, rows)
-    print(f"{len(order)} animaciones, hoja {width}x{height}: {', '.join(order)}")
+    print(f"{KIND['name']}: {len(order)} animaciones, hoja {width}x{height}")
+
+
+def main():
+    previews = "--sin-vistas" not in sys.argv
+    for sid in SPECIES:
+        render_species(sid, previews)
+    use_species("cat")
 
 
 if __name__ == "__main__":

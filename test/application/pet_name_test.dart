@@ -63,8 +63,8 @@ void main() {
         goal: null,
         progress: PlayerProgress.empty,
       );
-      expect(context, startsWith('Te llamas Nube.'));
-      expect(assistantInstructions, contains('Tu nombre viene en el estado'));
+      expect(context, startsWith('Te llamas Nube y eres un gato.'));
+      expect(assistantInstructions, contains('Tu nombre y qué animal'));
     });
   });
 

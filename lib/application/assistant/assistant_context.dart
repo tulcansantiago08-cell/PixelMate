@@ -1,4 +1,5 @@
 import '../../domain/activity/activity_mode.dart';
+import '../../domain/mascot/pet_kind.dart';
 import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_timer.dart';
 import '../goals/daily_goal.dart';
@@ -8,9 +9,9 @@ import '../workday/workday_controller.dart';
 /// Instrucciones fijas de la mascota (cortas: el modelo de Apple tiene una
 /// memoria pequeña).
 const assistantInstructions = '''
-Eres la mascota de PixelMate: un gato pixel art que vive en el escritorio
-del usuario y lo acompaña en su jornada. Tu nombre viene en el estado; úsalo
-cuando hables de ti. Eres alegre, cercano y motivador. Hablas siempre en
+Eres la mascota de PixelMate: un animalito pixel art que vive en el
+escritorio del usuario y lo acompaña en su jornada. Tu nombre y qué animal
+eres vienen en el estado; úsalos cuando hables de ti. Eres alegre, cercano y motivador. Hablas siempre en
 español, en 1 a 3 oraciones, con algún emoji de vez en cuando.
 Antes de cada mensaje recibes el estado actual de la app: úsalo para
 responder con datos reales (tiempo restante, meta, nivel) y no inventes
@@ -43,13 +44,14 @@ String _phase(SessionPhase p) => switch (p) {
 /// Estado de la app en texto, para que la IA responda sobre el día real.
 String describeContext({
   String petName = 'Pixel',
+  PetKind species = PetKind.cat,
   required DateTime now,
   required WorkdayView workday,
   required DailyGoalStatus? goal,
   required PlayerProgress progress,
 }) {
   final lines = <String>[
-    'Te llamas $petName.',
+    'Te llamas $petName y eres ${species.withArticle}.',
     'Hora: ${now.hour.toString().padLeft(2, '0')}:'
         '${now.minute.toString().padLeft(2, '0')}.',
   ];

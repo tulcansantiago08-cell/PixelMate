@@ -11,6 +11,7 @@ import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
+import '../../domain/mascot/pet_kind.dart';
 import '../mascot/rename_dialog.dart';
 import '../stats/level_card.dart';
 import '../stats/stats_style.dart';
@@ -98,6 +99,17 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   ),
                   const Padding(
                     padding: EdgeInsets.only(top: 2, bottom: 4),
+                    child: Text('Especie',
+                        style: TextStyle(
+                            color: StatsStyle.textPrimary, fontSize: 12)),
+                  ),
+                  _SpeciesPicker(
+                    level: level,
+                    active: ref.watch(activeSpeciesProvider),
+                    onChoose: mascot.setSpecies,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8, bottom: 4),
                     child: Text('Accesorio',
                         style: TextStyle(
                             color: StatsStyle.textPrimary, fontSize: 12)),
@@ -312,5 +324,66 @@ class _Switch extends StatelessWidget {
             ),
           ),
         ]),
+      );
+}
+
+/// Elegir especie: las desbloqueadas se eligen con un toque; las demás
+/// muestran el nivel que piden.
+class _SpeciesPicker extends StatelessWidget {
+  final int level;
+  final PetKind active;
+  final ValueChanged<PetKind> onChoose;
+
+  const _SpeciesPicker(
+      {required this.level, required this.active, required this.onChoose});
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final k in PetKind.values)
+            Tooltip(
+              message: k.unlockedAt(level)
+                  ? k.label
+                  : '${k.label}: se desbloquea en el nivel ${k.unlockLevel}',
+              child: Material(
+                color: k == active ? StatsStyle.accent : StatsStyle.surface,
+                borderRadius: BorderRadius.circular(6),
+                child: InkWell(
+                  key: ValueKey('species-${k.id}'),
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: k.unlockedAt(level) ? () => onChoose(k) : null,
+                  child: Container(
+                    height: 28,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                          color: k.unlockedAt(level)
+                              ? StatsStyle.accent
+                              : StatsStyle.grid),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text(k.unlockedAt(level) ? k.emoji : '🔒',
+                          style: const TextStyle(fontSize: 12)),
+                      const SizedBox(width: 4),
+                      Text(
+                          k.unlockedAt(level)
+                              ? k.label
+                              : '${k.label} · Nv. ${k.unlockLevel}',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: k == active
+                                  ? Colors.white
+                                  : k.unlockedAt(level)
+                                      ? StatsStyle.textPrimary
+                                      : StatsStyle.textMuted)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+        ],
       );
 }

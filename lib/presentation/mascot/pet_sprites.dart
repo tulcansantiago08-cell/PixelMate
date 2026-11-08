@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/mascot/accessory_providers.dart';
 import '../../domain/mascot/pet_accessory.dart';
 import '../../domain/mascot/pet_species.dart';
 
@@ -56,8 +57,9 @@ Future<LoadedPet> loadPet(String id, {AssetBundle? bundle}) async {
   return LoadedPet(species, sheet, accessories);
 }
 
-/// Especie elegida (por ahora solo existe el gato).
-final petSpeciesIdProvider = StateProvider<String>((_) => 'cat');
+/// Carpeta de la especie que se ve ahora (la elegida y desbloqueada).
+final petSpeciesIdProvider =
+    Provider<String>((ref) => ref.watch(activeSpeciesProvider).id);
 
 final loadedPetProvider = FutureProvider<LoadedPet>(
   (ref) => loadPet(ref.watch(petSpeciesIdProvider)),

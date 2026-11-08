@@ -17,6 +17,7 @@ import 'package:pixelmate/application/goals/daily_goal.dart';
 import 'package:pixelmate/application/mascot/mascot_settings.dart';
 import 'package:pixelmate/application/workday/workday_controller.dart';
 import 'package:pixelmate/application/workday/workday_providers.dart';
+import 'package:pixelmate/domain/mascot/pet_kind.dart';
 import 'package:pixelmate/infrastructure/persistence/sqlite_workday_store.dart';
 import 'package:pixelmate/presentation/mascot/mascot_window.dart';
 import 'package:pixelmate/presentation/onboarding/welcome_panel.dart';
@@ -122,6 +123,12 @@ void main() {
         SettingsPanel(onClose: () {}, onShowWelcome: () => welcome++));
 
     expect(find.text('Pixel ✏️'), findsOneWidget);
+    // Especie: el perro (Nv. 5) y el zorro (Nv. 10) aún están bloqueados.
+    expect(find.text('Perro · Nv. 5'), findsOneWidget);
+    expect(find.text('Zorro · Nv. 10'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('species-dog')));
+    await tester.pumpAndSettle();
+    expect(env.mascot.species, PetKind.cat, reason: 'bloqueado: no cambia');
     await tester.tap(find.byKey(const ValueKey('settings-walk')));
     await tester.tap(find.byKey(const ValueKey('settings-guard')));
     await tester.tap(find.byKey(const ValueKey('settings-detection')));
@@ -140,6 +147,8 @@ void main() {
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-login')), 100,
         scrollable: find.byType(Scrollable).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-login')));
     await tester.pumpAndSettle();
     expect(env.launch.enabled, isFalse);

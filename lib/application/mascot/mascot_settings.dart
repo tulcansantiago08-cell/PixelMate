@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/mascot/pet_accessory.dart';
+import '../../domain/mascot/pet_kind.dart';
 
 /// Preferencias de comportamiento de la mascota.
 class MascotSettings extends ChangeNotifier {
@@ -10,6 +11,7 @@ class MascotSettings extends ChangeNotifier {
   static const _accessoryKey = 'mascot.accessory';
   static const _nameKey = 'mascot.name';
   static const _onboardingKey = 'onboarding.done';
+  static const _speciesKey = 'mascot.species';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -20,11 +22,13 @@ class MascotSettings extends ChangeNotifier {
   bool _walk;
   PetAccessory? _accessory;
   String _name;
+  PetKind _species;
 
   MascotSettings([this._prefs])
       : _walk = _prefs?.getBool(_walkKey) ?? true,
         _accessory = PetAccessory.byName(_prefs?.getString(_accessoryKey)),
-        _name = cleanName(_prefs?.getString(_nameKey)) ?? defaultName;
+        _name = cleanName(_prefs?.getString(_nameKey)) ?? defaultName,
+        _species = PetKind.byId(_prefs?.getString(_speciesKey)) ?? PetKind.cat;
 
   /// Pasear por el escritorio cuando está en reposo.
   bool get walkEnabled => _walk;
@@ -66,6 +70,15 @@ class MascotSettings extends ChangeNotifier {
 
   Future<void> completeOnboarding() async {
     await _prefs?.setBool(_onboardingKey, true);
+    notifyListeners();
+  }
+
+  /// Especie elegida. Solo se usa si ya está desbloqueada.
+  PetKind get species => _species;
+
+  Future<void> setSpecies(PetKind value) async {
+    _species = value;
+    await _prefs?.setString(_speciesKey, value.id);
     notifyListeners();
   }
 
