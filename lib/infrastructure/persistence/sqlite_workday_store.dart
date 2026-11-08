@@ -61,8 +61,8 @@ class SqliteWorkdayStore implements WorkdayStore {
 
   @override
   ActiveWorkday? loadActive() {
-    final rows =
-        _db.select('SELECT mode, timer_json FROM active_workday WHERE slot = 1');
+    final rows = _db
+        .select('SELECT mode, timer_json FROM active_workday WHERE slot = 1');
     if (rows.isEmpty) return null;
     final row = rows.first;
     try {

@@ -4,8 +4,11 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
+import 'application/activity/activity_providers.dart';
+import 'application/activity/detection_settings.dart';
 import 'application/desktop/mascot_window_port.dart';
 import 'application/workday/workday_providers.dart';
+import 'infrastructure/activity/macos_app_activity.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
 import 'infrastructure/desktop/system_notifier.dart';
 import 'infrastructure/persistence/sqlite_workday_store.dart';
@@ -38,15 +41,24 @@ void main() async {
     await windowManager.show();
   });
 
+  // Detección de apps: catálogo incluido + el del usuario, si existe.
+  final detection = DetectionSettings(prefs);
+  final catalog = await loadAppCatalog(
+      userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
+
   final container = ProviderContainer(overrides: [
     workdayStoreProvider.overrideWithValue(store),
     mascotWindowProvider.overrideWithValue(window),
+    detectionSettingsProvider.overrideWithValue(detection),
+    appCatalogProvider.overrideWithValue(catalog),
+    foregroundAppsProvider.overrideWithValue(MacosAppActivity().foregroundApps),
   ]);
 
   final shell = DesktopShell(
     container: container,
     window: window,
     notifier: SystemNotifier(),
+    detection: detection,
     quitApp: () async {
       container.dispose();
       store.close();
@@ -59,6 +71,8 @@ void main() async {
     child: const PixelMateApp(),
   ));
   await shell.start();
+  // Empieza a escuchar la app activa desde el arranque.
+  container.read(activityDetectionProvider);
 }
 
 class PixelMateApp extends StatelessWidget {

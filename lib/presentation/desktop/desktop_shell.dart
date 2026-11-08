@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/activity/detection_settings.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/desktop/tray_model.dart';
 import '../../application/workday/workday_controller.dart';
@@ -16,6 +17,7 @@ class DesktopShell {
   final ProviderContainer container;
   final MascotWindowPort window;
   final SystemNotifier notifier;
+  final DetectionSettings detection;
   final Future<void> Function() quitApp;
 
   late final MenuBarTray _tray = MenuBarTray(onSelected: _onTrayAction);
@@ -25,6 +27,7 @@ class DesktopShell {
     required this.container,
     required this.window,
     required this.notifier,
+    required this.detection,
     required this.quitApp,
   });
 
@@ -42,12 +45,15 @@ class DesktopShell {
     );
     _cleanup.add(sub.close);
 
-    void onVisibility() => _refreshTray(container.read(workdayControllerProvider));
+    void onVisibility() =>
+        _refreshTray(container.read(workdayControllerProvider));
     window.visible.addListener(onVisibility);
     _cleanup.add(() => window.visible.removeListener(onVisibility));
+    detection.addListener(onVisibility);
+    _cleanup.add(() => detection.removeListener(onVisibility));
 
     final events = _workday.events.listen((event) {
-      final notice = noticeFor(event);
+      final notice = noticeFor(event, mode: _workday.currentMode);
       if (notice != null) unawaited(notifier.show(notice));
     });
     _cleanup.add(events.cancel);
@@ -56,7 +62,11 @@ class DesktopShell {
   void _refreshTray(WorkdayView view) {
     unawaited(_tray.update(
       trayTitle(view),
-      trayEntries(view, mascotVisible: window.visible.value),
+      trayEntries(
+        view,
+        mascotVisible: window.visible.value,
+        detectionEnabled: detection.enabled,
+      ),
     ));
   }
 
@@ -76,6 +86,8 @@ class DesktopShell {
         _workday.finish();
       case TrayAction.toggleMascot:
         await window.toggle();
+      case TrayAction.toggleDetection:
+        await detection.setEnabled(!detection.enabled);
       case TrayAction.quit:
         await dispose();
         await quitApp();

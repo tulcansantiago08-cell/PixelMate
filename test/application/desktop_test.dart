@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/desktop/mascot_placement.dart';
 import 'package:pixelmate/application/desktop/tray_model.dart';
 import 'package:pixelmate/application/workday/workday_controller.dart';
+import 'package:pixelmate/application/workday/workday_dialogue.dart';
 import 'package:pixelmate/application/workday/workday_event.dart';
 import 'package:pixelmate/application/workday/workday_format.dart';
 import 'package:pixelmate/application/workday/workday_notifications.dart';
@@ -165,7 +166,7 @@ void main() {
     test('avisan al empezar descansos y al volver al enfoque', () {
       final rest = noticeFor(PhaseStarted(plan[1], plan[0]))!;
       expect(rest.title, '☕ Descanso de 10 min');
-      expect(rest.body, contains('estira'));
+      expect(rest.body, contains(eyeBreakTip(1)));
       expect(noticeFor(PhaseStarted(plan[5], plan[4]))!.title,
           '🌿 Descanso largo de 30 min');
       expect(noticeFor(PhaseStarted(plan[2], plan[1]))!.title,

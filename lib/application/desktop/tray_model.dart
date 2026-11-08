@@ -11,6 +11,7 @@ enum TrayAction {
   skipPhase,
   finish,
   toggleMascot,
+  toggleDetection,
   quit,
 }
 
@@ -22,6 +23,9 @@ class TrayEntry {
   /// Para [TrayAction.startWorkday]: duración elegida.
   final Duration? workday;
   final bool enabled;
+
+  /// Si no es `null`, la entrada se muestra como casilla de verificación.
+  final bool? checked;
   final bool isSeparator;
   final List<TrayEntry> children;
 
@@ -30,6 +34,7 @@ class TrayEntry {
     this.action,
     this.workday,
     this.enabled = true,
+    this.checked,
     this.children = const [],
   }) : isSeparator = false;
 
@@ -38,13 +43,14 @@ class TrayEntry {
         action = null,
         workday = null,
         enabled = false,
+        checked = null,
         children = const [],
         isSeparator = true;
 
   /// Clave estable, usada para identificar el clic y detectar cambios.
   String get key => isSeparator
       ? '---'
-      : '${action?.name ?? 'info'}:${workday?.inMinutes ?? ''}:$label:$enabled'
+      : '${action?.name ?? 'info'}:${workday?.inMinutes ?? ''}:$label:$enabled:${checked ?? ''}'
           '${children.isEmpty ? '' : '[${children.map((c) => c.key).join(',')}]'}';
 }
 
@@ -52,7 +58,11 @@ class TrayEntry {
 String trayTitle(WorkdayView view) => compactStatus(view);
 
 /// Menú de la barra de menú según el estado de la jornada.
-List<TrayEntry> trayEntries(WorkdayView view, {required bool mascotVisible}) {
+List<TrayEntry> trayEntries(
+  WorkdayView view, {
+  required bool mascotVisible,
+  bool detectionEnabled = true,
+}) {
   final status = view.status;
   final entries = <TrayEntry>[];
 
@@ -80,13 +90,16 @@ List<TrayEntry> trayEntries(WorkdayView view, {required bool mascotVisible}) {
         ? const TrayEntry('Reanudar', action: TrayAction.resume)
         : const TrayEntry('Pausar', action: TrayAction.pause));
     entries.add(const TrayEntry('Saltar fase', action: TrayAction.skipPhase));
-    entries.add(const TrayEntry('Finalizar jornada', action: TrayAction.finish));
+    entries
+        .add(const TrayEntry('Finalizar jornada', action: TrayAction.finish));
   }
 
   entries
     ..add(const TrayEntry.separator())
     ..add(TrayEntry(mascotVisible ? 'Ocultar mascota' : 'Mostrar mascota',
         action: TrayAction.toggleMascot))
+    ..add(TrayEntry('Detectar apps y sugerir modo',
+        action: TrayAction.toggleDetection, checked: detectionEnabled))
     ..add(const TrayEntry.separator())
     ..add(const TrayEntry('Salir de PixelMate', action: TrayAction.quit));
   return entries;

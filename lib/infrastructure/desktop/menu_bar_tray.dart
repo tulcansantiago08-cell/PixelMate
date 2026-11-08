@@ -33,7 +33,8 @@ class MenuBarTray with TrayListener {
     if (signature == _menuSignature) return;
     _menuSignature = signature;
     _entriesByKey.clear();
-    await trayManager.setContextMenu(Menu(items: entries.map(_toItem).toList()));
+    await trayManager
+        .setContextMenu(Menu(items: entries.map(_toItem).toList()));
   }
 
   MenuItem _toItem(TrayEntry entry) {
@@ -44,6 +45,14 @@ class MenuBarTray with TrayListener {
         key: entry.key,
         label: entry.label,
         submenu: Menu(items: entry.children.map(_toItem).toList()),
+      );
+    }
+    if (entry.checked != null) {
+      return MenuItem.checkbox(
+        key: entry.key,
+        label: entry.label,
+        checked: entry.checked,
+        disabled: !entry.enabled,
       );
     }
     return MenuItem(

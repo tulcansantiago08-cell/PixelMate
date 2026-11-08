@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../application/activity/activity_providers.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/workday/workday_controller.dart';
 import '../../application/workday/workday_dialogue.dart';
 import '../../application/workday/workday_providers.dart';
+import '../../domain/activity/activity_mode.dart';
 import '../../domain/mascot/mascot_state.dart';
 import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_timer.dart';
+import '../activity/suggestion_bubble.dart';
 import '../chat/chat_bubble.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
@@ -46,12 +49,16 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     )..repeat(reverse: true);
 
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _greeting = false);
+      if (!mounted) return;
+      setState(() => _greeting = false);
+      // Tras saludar, pregunta qué vamos a hacer (si no hay sesión en curso).
+      ref.read(activityDetectionProvider.notifier).askWelcome();
     });
 
     _eventsSub =
         ref.read(workdayControllerProvider.notifier).events.listen((event) {
-      final reaction = reactionFor(event);
+      final mode = ref.read(workdayControllerProvider.notifier).currentMode;
+      final reaction = reactionFor(event, mode: mode);
       if (reaction == null || !mounted) return;
       _reactionTimer?.cancel();
       setState(() {
@@ -97,7 +104,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
       return MascotState.idle;
     }
     return switch (status.phase?.kind) {
-      SessionPhase.focus => MascotState.working,
+      SessionPhase.focus => focusMood(view.mode ?? ActivityMode.work),
       SessionPhase.shortBreak || SessionPhase.longBreak => MascotState.resting,
       _ => MascotState.idle,
     };
@@ -106,6 +113,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
   @override
   Widget build(BuildContext context) {
     final view = ref.watch(workdayControllerProvider);
+    final suggestion = ref.watch(activityDetectionProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -132,7 +140,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
               if (!_showChat)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: WorkdayBadge(view: view, speech: _speech),
+                  child: suggestion != null
+                      ? SuggestionBubble(
+                          suggestion: suggestion,
+                          onChoose: (action) => ref
+                              .read(activityDetectionProvider.notifier)
+                              .choose(action),
+                        )
+                      : WorkdayBadge(view: view, speech: _speech),
                 ),
 
               // Mascota fija abajo

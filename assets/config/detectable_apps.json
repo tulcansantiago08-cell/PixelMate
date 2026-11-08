@@ -1,0 +1,38 @@
+{
+  "_comment": "Apps que PixelMate reconoce. Para añadir las tuyas sin tocar este archivo, crea ~/Library/Application Support/com.pixelmate.pixelmate/detectable_apps.json con el mismo formato. category: development | gaming.",
+  "apps": [
+    { "name": "Visual Studio Code", "category": "development",
+      "bundleIds": ["com.microsoft.VSCode", "com.microsoft.VSCodeInsiders", "com.vscodium"] },
+    { "name": "Cursor", "category": "development",
+      "bundleIds": ["com.todesktop.230313mzl4w4u92"] },
+    { "name": "Xcode", "category": "development",
+      "bundleIds": ["com.apple.dt.Xcode"] },
+    { "name": "IntelliJ IDEA", "category": "development",
+      "bundleIdPrefixes": ["com.jetbrains.intellij"] },
+    { "name": "PyCharm", "category": "development",
+      "bundleIdPrefixes": ["com.jetbrains.pycharm"] },
+    { "name": "WebStorm", "category": "development",
+      "bundleIds": ["com.jetbrains.WebStorm"] },
+    { "name": "Android Studio", "category": "development",
+      "bundleIds": ["com.google.android.studio"] },
+    { "name": "Zed", "category": "development",
+      "bundleIds": ["dev.zed.Zed"] },
+    { "name": "Sublime Text", "category": "development",
+      "bundleIdPrefixes": ["com.sublimetext"] },
+
+    { "name": "League of Legends", "category": "gaming",
+      "bundleIdPrefixes": ["com.riotgames.LeagueofLegends"],
+      "nameContains": ["League of Legends"] },
+    { "name": "Minecraft", "category": "gaming",
+      "bundleIds": ["com.mojang.minecraftlauncher"],
+      "nameContains": ["Minecraft"] },
+    { "name": "Steam", "category": "gaming",
+      "bundleIds": ["com.valvesoftware.steam"] },
+    { "name": "Battle.net", "category": "gaming",
+      "bundleIds": ["net.battle.app", "net.battle.bootstrapper"] },
+    { "name": "Epic Games", "category": "gaming",
+      "bundleIds": ["com.epicgames.EpicGamesLauncher"] },
+    { "name": "GeForce NOW", "category": "gaming",
+      "bundleIds": ["com.nvidia.gfnpc.mall"] }
+  ]
+}

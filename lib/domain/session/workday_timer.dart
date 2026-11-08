@@ -177,8 +177,8 @@ class WorkdayTimer {
     for (final p in plan) {
       final reached = _overlap(p.start, p.end, Duration.zero, position);
       if (reached == Duration.zero) continue;
-      final skipped = skips.fold<Duration>(
-          Duration.zero, (sum, s) => sum + _overlap(p.start, p.end, s.start, s.end));
+      final skipped = skips.fold<Duration>(Duration.zero,
+          (sum, s) => sum + _overlap(p.start, p.end, s.start, s.end));
       final effective = reached - skipped;
 
       if (p.kind == SessionPhase.focus) {
@@ -217,8 +217,8 @@ class WorkdayTimer {
     return now.toUtc().add(status.phaseRemaining);
   }
 
-  static Duration _overlap(Duration aStart, Duration aEnd, Duration bStart,
-      Duration bEnd) {
+  static Duration _overlap(
+      Duration aStart, Duration aEnd, Duration bStart, Duration bEnd) {
     final start = aStart > bStart ? aStart : bStart;
     final end = aEnd < bEnd ? aEnd : bEnd;
     return end > start ? end - start : Duration.zero;
@@ -237,7 +237,10 @@ class WorkdayTimer {
         'pausedAt': pausedAt?.toIso8601String(),
         'skips': [
           for (final s in skips)
-            {'startMs': s.start.inMilliseconds, 'durationMs': s.duration.inMilliseconds}
+            {
+              'startMs': s.start.inMilliseconds,
+              'durationMs': s.duration.inMilliseconds
+            }
         ],
         'finishedAt': finishedAt?.toIso8601String(),
       };

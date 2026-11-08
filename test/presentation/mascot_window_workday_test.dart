@@ -2,9 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pixelmate/application/activity/activity_providers.dart';
+import 'package:pixelmate/application/activity/detection_settings.dart';
 import 'package:pixelmate/application/workday/workday_providers.dart';
 import 'package:pixelmate/infrastructure/persistence/sqlite_workday_store.dart';
 import 'package:pixelmate/presentation/mascot/mascot_window.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// La mascota anima en bucle, así que no se puede usar pumpAndSettle.
 Future<void> settleMenu(WidgetTester tester) async {
@@ -21,8 +24,13 @@ void main() {
     addTearDown(tester.view.reset);
 
     final store = SqliteWorkdayStore.inMemory();
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(ProviderScope(
-      overrides: [workdayStoreProvider.overrideWithValue(store)],
+      overrides: [
+        workdayStoreProvider.overrideWithValue(store),
+        detectionSettingsProvider.overrideWithValue(DetectionSettings(prefs)),
+      ],
       child: const MaterialApp(home: MascotWindow()),
     ));
 
