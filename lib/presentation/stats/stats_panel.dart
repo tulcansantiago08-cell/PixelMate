@@ -9,6 +9,7 @@ import '../../application/workday/workday_store.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
+import '../../application/activity/focus_guard_controller.dart';
 import '../../application/goals/daily_goal.dart';
 import 'daily_goal_row.dart';
 import 'level_card.dart';
@@ -78,6 +79,20 @@ class StatsPanel extends ConsumerWidget {
                     onGoalChanged: (g) =>
                         ref.read(dailyGoalSettingsProvider).setGoal(g),
                   ),
+                  if (ref.watch(distractionsTodayProvider) case final d?)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        d.episodes == 0
+                            ? '🛡️ Sin distracciones en el enfoque de hoy'
+                            : '👀 ${d.episodes} '
+                                '${d.episodes == 1 ? 'distracción' : 'distracciones'}'
+                                ' en el enfoque · ${formatSpent(d.time)}',
+                        key: const ValueKey('distractions-today'),
+                        style: const TextStyle(
+                            color: StatsStyle.textSecondary, fontSize: 11),
+                      ),
+                    ),
                 ],
                 const SizedBox(height: 10),
                 for (final mode in trackedModes)

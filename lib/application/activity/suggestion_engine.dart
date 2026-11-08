@@ -30,7 +30,7 @@ class SuggestionEngine {
     if (!detectionEnabled || sessionActive) return null;
     if (excludedApps.contains(app.key)) return null;
     final rule = catalog.identify(app);
-    if (rule == null) return null;
+    if (rule == null || rule.category == AppCategory.distraction) return null;
 
     final quiet = _quietUntil[rule.category];
     if (quiet != null && now.isBefore(quiet)) return null;

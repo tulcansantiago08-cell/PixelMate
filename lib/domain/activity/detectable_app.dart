@@ -29,7 +29,14 @@ class ForegroundApp {
   String toString() => 'ForegroundApp($name, $bundleId)';
 }
 
-enum AppCategory { development, gaming }
+enum AppCategory {
+  development,
+  gaming,
+
+  /// Mensajería, redes y video: no sugieren un modo, pero el guardián del
+  /// enfoque avisa si se abren durante un bloque de enfoque.
+  distraction,
+}
 
 /// Regla para reconocer una app. Basta con que coincida un criterio.
 class DetectableApp {

@@ -9,15 +9,16 @@ class AppDelegate: FlutterAppDelegate {
     if let controller = mainFlutterWindow?.contentViewController as? FlutterViewController {
       activityMonitor = AppActivityMonitor.register(with: controller.engine.binaryMessenger)
       LoginItem.register(with: controller.engine.binaryMessenger)
+      AppleAssistant.register(with: controller.engine.binaryMessenger)
     }
     super.applicationDidFinishLaunching(notification)
   }
 
-  override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-    return true
-  }
+  override func applicationShouldTerminateAfterLastWindowClosed(
+    _ sender: NSApplication
+  ) -> Bool { return true }
 
-  override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
-    return true
-  }
+  override func applicationSupportsSecureRestorableState(
+    _ app: NSApplication
+  ) -> Bool { return true }
 }

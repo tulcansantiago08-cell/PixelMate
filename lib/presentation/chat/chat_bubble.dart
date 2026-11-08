@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../infrastructure/claude/claude_provider.dart';
+import '../../application/assistant/chat_controller.dart';
 
 class ChatBubble extends ConsumerStatefulWidget {
   const ChatBubble({super.key});
@@ -14,17 +14,19 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
   final _scroll = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    ref.read(chatProvider.notifier).prewarm();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
-  void _send() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-    _controller.clear();
-    ref.read(chatProvider.notifier).send(text);
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scroll.hasClients) {
         _scroll.animateTo(
@@ -36,23 +38,33 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
     });
   }
 
+  void _send({bool withScreenshot = false}) {
+    final text = _controller.text.trim();
+    if (text.isEmpty && !withScreenshot) return;
+    _controller.clear();
+    ref.read(chatProvider.notifier).send(text, withScreenshot: withScreenshot);
+    _scrollToBottom();
+  }
+
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(chatProvider);
     final notifier = ref.read(chatProvider.notifier);
+    final assistant = ref.watch(assistantChoiceProvider).valueOrNull?.assistant;
+
+    // Auto-scroll al llegar nuevo mensaje
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Container(
-      width: 280,
-      height: 340,
       decoration: BoxDecoration(
         color: const Color(0xFF1a1a2e),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF7C3AED), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7C3AED).withOpacity(0.3),
+            color: const Color(0xFF7C3AED).withOpacity(0.25),
             blurRadius: 12,
-            spreadRadius: 2,
+            spreadRadius: 1,
           ),
         ],
       ),
@@ -65,17 +77,24 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
               color: Color(0xFF7C3AED),
               borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Text('🐾', style: TextStyle(fontSize: 14)),
-                SizedBox(width: 6),
-                Text(
+                const Text('🐾', style: TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
+                const Text(
                   'PixelMate',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
+                ),
+                const Spacer(),
+                // Qué IA responde (la de Apple funciona sin conexión).
+                Text(
+                  assistant?.label ?? 'Sin IA',
+                  key: const ValueKey('assistant-label'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 10),
                 ),
               ],
             ),
@@ -90,26 +109,45 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
               itemBuilder: (_, i) {
                 final msg = messages[i];
                 return Align(
-                  alignment: msg.isUser
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                  alignment:
+                      msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 3),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
-                    constraints: const BoxConstraints(maxWidth: 200),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    constraints: const BoxConstraints(maxWidth: 210),
                     decoration: BoxDecoration(
                       color: msg.isUser
                           ? const Color(0xFF7C3AED)
-                          : const Color(0xFF2d2d44),
+                          : msg.isNote
+                              ? const Color(0xFF1F3A2E) // acción realizada
+                              : const Color(0xFF2d2d44),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(
-                      msg.text,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (msg.hasImage)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.screenshot,
+                                    color: Colors.white70, size: 12),
+                                SizedBox(width: 4),
+                                Text('Pantalla capturada',
+                                    style: TextStyle(
+                                        color: Colors.white70, fontSize: 10)),
+                              ],
+                            ),
+                          ),
+                        Text(
+                          msg.text,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 12),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -117,17 +155,25 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
             ),
           ),
 
-          // Loading indicator
+          // Loading
           if (notifier.isLoading)
             const Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Color(0xFF7C3AED),
-                ),
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF7C3AED),
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Text('Pensando...',
+                      style: TextStyle(color: Colors.white38, fontSize: 11)),
+                ],
               ),
             ),
 
@@ -136,15 +182,36 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
             padding: const EdgeInsets.all(8),
             child: Row(
               children: [
+                // Botón captura de pantalla (solo si la IA ve imágenes)
+                if (assistant?.supportsImages ?? false) ...[
+                  GestureDetector(
+                    onTap: () => _send(withScreenshot: true),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2d2d44),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: const Color(0xFF7C3AED).withOpacity(0.5)),
+                      ),
+                      child: const Icon(Icons.screenshot,
+                          color: Colors.white70, size: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+
+                // Input texto
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     onSubmitted: (_) => _send(),
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                     decoration: InputDecoration(
-                      hintText: 'Escribe algo...',
+                      hintText: 'Pregúntame algo...',
                       hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.4), fontSize: 12),
+                          color: Colors.white.withOpacity(0.35), fontSize: 12),
                       filled: true,
                       fillColor: const Color(0xFF2d2d44),
                       contentPadding: const EdgeInsets.symmetric(
@@ -157,6 +224,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                   ),
                 ),
                 const SizedBox(width: 6),
+
+                // Botón enviar
                 GestureDetector(
                   onTap: _send,
                   child: Container(
@@ -166,7 +235,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                       color: const Color(0xFF7C3AED),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.send, color: Colors.white, size: 16),
+                    child:
+                        const Icon(Icons.send, color: Colors.white, size: 16),
                   ),
                 ),
               ],

@@ -37,7 +37,8 @@ class Suggestion {
     this.category,
   });
 
-  static Suggestion forApp(ForegroundApp app, DetectableApp rule) =>
+  /// `null` para las apps que no sugieren un modo (distracciones).
+  static Suggestion? forApp(ForegroundApp app, DetectableApp rule) =>
       switch (rule.category) {
         AppCategory.development => Suggestion(
             message: '¡Veo que vamos a programar en ${rule.name}! '
@@ -67,6 +68,7 @@ class Suggestion {
             app: app,
             category: rule.category,
           ),
+        AppCategory.distraction => null,
       };
 
   /// Pregunta al abrir PixelMate.
