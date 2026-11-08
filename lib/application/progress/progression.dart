@@ -2,6 +2,7 @@ import 'dart:math';
 
 import '../../domain/activity/activity_mode.dart';
 import '../../domain/mascot/pet_accessory.dart';
+import '../../domain/mascot/pet_kind.dart';
 import '../workday/workday_store.dart';
 
 /// Experiencia, niveles y logros.
@@ -199,8 +200,13 @@ class LeveledUp extends ProgressEvent {
   /// Accesorios que se desbloquean con esta subida.
   final List<PetAccessory> accessories;
 
+  /// Especies que se desbloquean con esta subida.
+  final List<PetKind> species;
+
   const LeveledUp(this.level, this.title,
-      {required this.newTitle, this.accessories = const []});
+      {required this.newTitle,
+      this.accessories = const [],
+      this.species = const []});
 }
 
 class AchievementUnlocked extends ProgressEvent {
@@ -216,7 +222,8 @@ List<ProgressEvent> progressEvents(
   if (after.level > before.level) {
     events.add(LeveledUp(after.level, after.title,
         newTitle: after.title != before.title,
-        accessories: PetAccessory.unlockedBetween(before.level, after.level)));
+        accessories: PetAccessory.unlockedBetween(before.level, after.level),
+        species: PetKind.unlockedBetween(before.level, after.level)));
   }
   for (final a in achievements) {
     if (after.isUnlocked(a) && !before.isUnlocked(a)) {
@@ -233,17 +240,18 @@ List<ProgressEvent> progressEvents(
         :final level,
         :final title,
         :final newTitle,
-        :final accessories
+        :final accessories,
+        :final species
       ) =>
         (
           title: '¡Nivel $level!',
           message: (newTitle
                   ? '¡Subiste a nivel $level! Ahora eres «$title» 🎉'
                   : '¡Subiste a nivel $level! Sigue así 🎉') +
-              (accessories.isEmpty
-                  ? ''
-                  : ' Desbloqueaste: ${accessories.map((a) => '${a.emoji} ${a.label}').join(', ')}'
-                      ' (póntelo desde 📊).'),
+              _unlocks([
+                for (final k in species) '${k.emoji} ${k.label}',
+                for (final a in accessories) '${a.emoji} ${a.label}',
+              ]),
         ),
       AchievementUnlocked(:final achievement) => (
           title: 'Logro desbloqueado',
@@ -251,3 +259,7 @@ List<ProgressEvent> progressEvents(
               '¡Logro: ${achievement.emoji} ${achievement.title}! ${achievement.description}',
         ),
     };
+
+String _unlocks(List<String> items) => items.isEmpty
+    ? ''
+    : ' Desbloqueaste: ${items.join(', ')} (elígelo en ⚙️ Ajustes).';

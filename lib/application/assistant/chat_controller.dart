@@ -6,6 +6,7 @@ import '../../domain/session/workday_timer.dart';
 import '../activity/focus_guard.dart';
 
 import '../desktop/mascot_panel.dart';
+import '../mascot/accessory_providers.dart';
 import '../mascot/mascot_settings.dart';
 import '../desktop/mascot_window_port.dart';
 import '../goals/daily_goal.dart';
@@ -170,6 +171,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
 
   String _context() => describeContext(
         petName: _ref.read(petNameProvider),
+        species: _ref.read(activeSpeciesProvider),
         now: DateTime.now(),
         workday: _ref.read(workdayControllerProvider),
         goal: _ref.read(dailyGoalProvider),
