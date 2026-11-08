@@ -21,6 +21,8 @@ import 'mascot_quick_actions.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
 import '../../application/mascot/idle_behavior.dart';
+import '../../application/mascot/mascot_settings.dart';
+import '../../application/mascot/mascot_walker.dart';
 import '../../domain/mascot/pet_species.dart';
 import 'pet_sprites.dart';
 import 'sprite_mascot.dart';
@@ -42,6 +44,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
   final _idle = IdleBehavior(now: DateTime.now());
   Timer? _idleTimer;
   PetAnimation? _oneShot;
+  late final MascotWalker _walker;
   static const _idleCheck = Duration(seconds: 30);
 
   // Reacción temporal a un suceso de la jornada.
@@ -56,6 +59,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
   void initState() {
     super.initState();
     _idleTimer = Timer.periodic(_idleCheck, (_) => _onIdleTick());
+    _walker = MascotWalker(window: ref.read(mascotWindowProvider))
+      ..addListener(_onWalkerChanged);
 
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
@@ -91,7 +96,15 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     _eventsSub?.cancel();
     _reactionTimer?.cancel();
     _idleTimer?.cancel();
+    _walker
+      ..removeListener(_onWalkerChanged)
+      ..stop()
+      ..dispose();
     super.dispose();
+  }
+
+  void _onWalkerChanged() {
+    if (mounted) setState(() {});
   }
 
   bool get _isIdle =>
@@ -102,8 +115,15 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       !ref.read(workdayControllerProvider).isActive;
 
   void _onIdleTick() {
-    if (!mounted || _oneShot != null) return;
-    switch (_idle.tick(DateTime.now(), idle: _isIdle)) {
+    if (!mounted || _oneShot != null || _walker.walking) return;
+    final decision = _idle.tick(
+      DateTime.now(),
+      idle: _isIdle,
+      canWalk: ref.read(mascotSettingsProvider).walkEnabled,
+    );
+    switch (decision) {
+      case StartWalk():
+        _walker.start();
       case PlayOnce(:final animation):
         setState(() => _oneShot = animation);
       case FallAsleep():
@@ -116,6 +136,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
   /// Registra actividad; si dormía, se despierta (con animación).
   /// Devuelve `true` si estaba dormida.
   bool _wake({bool animate = true}) {
+    // Cualquier interacción o suceso detiene el paseo.
+    _walker.stop();
     final wasAsleep = _idle.activity(DateTime.now());
     if (wasAsleep && mounted) {
       setState(() => _oneShot = animate ? PetAnimation.wakeUp : null);
@@ -141,6 +163,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         controller: ref.read(workdayControllerProvider.notifier),
         view: ref.read(workdayControllerProvider),
         onShowStats: () => _openPanel(MascotPanel.stats),
+        onWalk: () => _walker.start(),
       );
 
   /// Clic en la mascota: abre o cierra el chat (o cierra otro panel).
@@ -170,6 +193,11 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     final suggestion = ref.watch(activityDetectionProvider);
     final panel = ref.watch(mascotPanelProvider);
     final pet = ref.watch(loadedPetProvider).valueOrNull;
+    // Si la mascota pregunta algo, deja de pasear.
+    ref.listen(activityDetectionProvider, (_, s) {
+      if (s != null) _walker.stop();
+    });
+    final walking = _walker.walking;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -229,8 +257,10 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                   GestureDetector(
                     key: mascotKey,
                     behavior: HitTestBehavior.opaque,
-                    onPanStart: (_) async =>
-                        await windowManager.startDragging(),
+                    onPanStart: (_) async {
+                      _wake(animate: false); // arrastrarla detiene el paseo
+                      await windowManager.startDragging();
+                    },
                     onTap: _onMascotTap,
                     onSecondaryTapDown: (details) {
                       _wake();
@@ -240,8 +270,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                         ? const SizedBox.square(dimension: 160)
                         : SpriteMascot(
                             pet: pet,
-                            animation: animationFor(_mascotState(view, panel)),
-                            oneShot: _oneShot,
+                            animation: walking
+                                ? PetAnimation.walk
+                                : animationFor(_mascotState(view, panel)),
+                            // El gato mira a la izquierda (cola a la derecha):
+                            // se voltea al caminar hacia la derecha.
+                            flipped: walking && !_walker.facingLeft,
+                            oneShot: walking ? null : _oneShot,
                             onOneShotDone: () {
                               if (mounted) setState(() => _oneShot = null);
                             },
