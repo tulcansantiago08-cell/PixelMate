@@ -6,11 +6,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 import 'application/activity/activity_providers.dart';
 import 'application/activity/detection_settings.dart';
+import 'application/activity/focus_guard.dart';
+import 'application/activity/focus_guard_controller.dart';
+import 'application/assistant/chat_controller.dart';
 import 'application/desktop/mascot_window_port.dart';
 import 'application/goals/daily_goal.dart';
 import 'application/mascot/mascot_settings.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
+import 'infrastructure/assistant/assistant_setup.dart';
+import 'infrastructure/claude/claude_provider.dart';
+import 'infrastructure/screenshot/screenshot_service.dart';
 import 'infrastructure/desktop/macos_login_item.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
 import 'infrastructure/desktop/system_notifier.dart';
@@ -48,6 +54,7 @@ void main() async {
   final detection = DetectionSettings(prefs);
   final mascotSettings = MascotSettings(prefs);
   final dailyGoal = DailyGoalSettings(prefs);
+  final focusGuard = FocusGuardSettings(prefs);
   final catalog = await loadAppCatalog(
       userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
 
@@ -57,6 +64,12 @@ void main() async {
     detectionSettingsProvider.overrideWithValue(detection),
     mascotSettingsProvider.overrideWithValue(mascotSettings),
     dailyGoalSettingsProvider.overrideWithValue(dailyGoal),
+    focusGuardSettingsProvider.overrideWithValue(focusGuard),
+    // IA del chat: la de Apple si está disponible; si no, Claude.
+    assistantChoiceProvider
+        .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),
+    screenCaptureProvider.overrideWithValue(
+        () => captureScreenWithPermission(ScreenshotService())),
     appCatalogProvider.overrideWithValue(catalog),
     foregroundAppsProvider.overrideWithValue(MacosAppActivity().foregroundApps),
   ]);
@@ -68,6 +81,7 @@ void main() async {
     detection: detection,
     mascot: mascotSettings,
     loginItem: MacosLoginItem(),
+    focusGuard: focusGuard,
     quitApp: () async {
       container.dispose();
       store.close();
@@ -82,6 +96,7 @@ void main() async {
   await shell.start();
   // Empieza a escuchar la app activa desde el arranque.
   container.read(activityDetectionProvider);
+  container.read(focusGuardProvider);
 }
 
 class PixelMateApp extends StatelessWidget {

@@ -14,6 +14,7 @@ enum TrayAction {
   toggleMascot,
   toggleDetection,
   toggleWalk,
+  toggleFocusGuard,
   toggleLaunchAtLogin,
   quit,
 }
@@ -66,6 +67,7 @@ List<TrayEntry> trayEntries(
   required bool mascotVisible,
   bool detectionEnabled = true,
   bool walkEnabled = true,
+  bool focusGuardEnabled = true,
 
   /// `null` si el sistema no permite abrir la app al iniciar sesión.
   bool? launchAtLogin,
@@ -104,7 +106,9 @@ List<TrayEntry> trayEntries(
     ..add(TrayEntry('Detectar apps y sugerir modo',
         action: TrayAction.toggleDetection, checked: detectionEnabled))
     ..add(TrayEntry('Pasear por el escritorio',
-        action: TrayAction.toggleWalk, checked: walkEnabled));
+        action: TrayAction.toggleWalk, checked: walkEnabled))
+    ..add(TrayEntry('Guardián del enfoque',
+        action: TrayAction.toggleFocusGuard, checked: focusGuardEnabled));
   if (launchAtLogin != null) {
     entries.add(TrayEntry('Abrir al iniciar sesión',
         action: TrayAction.toggleLaunchAtLogin, checked: launchAtLogin));

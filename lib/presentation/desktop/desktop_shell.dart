@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/activity/detection_settings.dart';
+import '../../application/activity/focus_guard.dart';
+import '../../application/activity/focus_guard_controller.dart';
 import '../../application/desktop/login_item.dart';
 import '../../application/desktop/mascot_panel.dart';
 import '../../application/goals/daily_goal.dart';
@@ -26,6 +28,7 @@ class DesktopShell {
   final DetectionSettings detection;
   final MascotSettings mascot;
   final LoginItemPort loginItem;
+  final FocusGuardSettings focusGuard;
   final Future<void> Function() quitApp;
 
   late final MenuBarTray _tray = MenuBarTray(onSelected: _onTrayAction);
@@ -38,8 +41,9 @@ class DesktopShell {
     required this.detection,
     required this.mascot,
     this.loginItem = const _NoLoginItem(),
+    FocusGuardSettings? focusGuard,
     required this.quitApp,
-  });
+  }) : focusGuard = focusGuard ?? FocusGuardSettings();
 
   WorkdayController get _workday =>
       container.read(workdayControllerProvider.notifier);
@@ -69,6 +73,8 @@ class DesktopShell {
     _cleanup.add(() => detection.removeListener(onVisibility));
     mascot.addListener(onVisibility);
     _cleanup.add(() => mascot.removeListener(onVisibility));
+    focusGuard.addListener(onVisibility);
+    _cleanup.add(() => focusGuard.removeListener(onVisibility));
 
     final events = _workday.events.listen((event) {
       final notice = noticeFor(event, mode: _workday.currentMode);
@@ -99,6 +105,20 @@ class DesktopShell {
       },
     );
     _cleanup.add(goal.close);
+
+    // Aviso del guardián: si la mascota está oculta, por notificación.
+    final guard = container.listen<FocusNudge?>(
+      focusGuardProvider,
+      (before, nudge) {
+        if (nudge != null && before == null && !window.visible.value) {
+          unawaited(notifier.show(WorkdayNotice(
+              'Guardián del enfoque',
+              focusNudgeMessage(
+                  nudge, container.read(workdayControllerProvider)))));
+        }
+      },
+    );
+    _cleanup.add(guard.close);
   }
 
   void _refreshTray(WorkdayView view) {
@@ -109,6 +129,7 @@ class DesktopShell {
         mascotVisible: window.visible.value,
         detectionEnabled: detection.enabled,
         walkEnabled: mascot.walkEnabled,
+        focusGuardEnabled: focusGuard.enabled,
         launchAtLogin: _launchAtLogin,
       ),
     ));
@@ -141,6 +162,8 @@ class DesktopShell {
         await detection.setEnabled(!detection.enabled);
       case TrayAction.toggleWalk:
         await mascot.setWalkEnabled(!mascot.walkEnabled);
+      case TrayAction.toggleFocusGuard:
+        await focusGuard.setEnabled(!focusGuard.enabled);
       case TrayAction.toggleLaunchAtLogin:
         final want = !(_launchAtLogin ?? false);
         _launchAtLogin = await loginItem.setEnabled(want);

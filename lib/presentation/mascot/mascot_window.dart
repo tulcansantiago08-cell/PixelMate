@@ -20,6 +20,9 @@ import '../stats/stats_panel.dart';
 import 'mascot_quick_actions.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
+import '../../application/assistant/chat_controller.dart';
+import '../../application/workday/workday_event.dart';
+import '../../application/activity/focus_guard_controller.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/idle_behavior.dart';
@@ -80,19 +83,35 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       final reaction = reactionFor(event, mode: mode);
       if (reaction == null || !mounted) return;
       _react(reaction, replace: true);
+      if (event is WorkdayFinished) _summarize(event, mode);
     });
+  }
+
+  /// Al terminar la jornada, la IA del Mac (si la hay) hace un resumen; se
+  /// dice después del mensaje de fin y queda guardado en el chat.
+  Future<void> _summarize(WorkdayFinished event, ActivityMode? mode) async {
+    final text = await ref.read(chatProvider.notifier).summarizeFinishedWorkday(
+          event.status,
+          mode: mode,
+          distractions: ref.read(distractionsTodayProvider),
+        );
+    if (text != null && mounted) {
+      _react(MascotReaction('📝 $text', MascotState.chatting),
+          duration: const Duration(seconds: 15));
+    }
   }
 
   /// Reacciones que esperan su turno (por ejemplo, un logro justo al
   /// terminar la jornada se dice después del mensaje de fin).
-  final _pendingReactions = <MascotReaction>[];
+  final _pendingReactions = <(MascotReaction, Duration?)>[];
 
   /// Muestra un mensaje con su estado de ánimo durante unos segundos.
   /// Con [replace] sustituye al actual; si no, espera a que termine.
-  void _react(MascotReaction reaction, {bool replace = false}) {
+  void _react(MascotReaction reaction,
+      {bool replace = false, Duration? duration}) {
     if (!mounted) return;
     if (!replace && _reactionTimer?.isActive == true) {
-      _pendingReactions.add(reaction);
+      _pendingReactions.add((reaction, duration));
       return;
     }
     _reactionTimer?.cancel();
@@ -100,10 +119,11 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       _speech = reaction.message;
       _reactionMood = reaction.mood;
     });
-    _reactionTimer = Timer(_reactionDuration, () {
+    _reactionTimer = Timer(duration ?? _reactionDuration, () {
       if (!mounted) return;
       if (_pendingReactions.isNotEmpty) {
-        _react(_pendingReactions.removeAt(0));
+        final (next, nextDuration) = _pendingReactions.removeAt(0);
+        _react(next, duration: nextDuration);
         return;
       }
       setState(() {
@@ -228,11 +248,22 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
             progressMessage(event).message, MascotState.celebrating));
       }
     });
+    // Guardián del enfoque: un aviso amable si hay una distracción al frente.
+    ref.listen(focusGuardProvider, (before, nudge) {
+      if (nudge != null && before == null) {
+        _walker.stop();
+        _react(
+            MascotReaction(
+                focusNudgeMessage(nudge, ref.read(workdayControllerProvider)),
+                MascotState.alert),
+            replace: true);
+      }
+    });
     ref.listen(dailyGoalProvider, (before, after) {
       if (goalJustReached(before, after)) {
         _walker.stop();
-        _react(MascotReaction(goalReachedMessage(after!.goal),
-            MascotState.celebrating));
+        _react(MascotReaction(
+            goalReachedMessage(after!.goal), MascotState.celebrating));
       }
     });
     final walking = _walker.walking;
