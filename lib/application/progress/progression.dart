@@ -3,6 +3,7 @@ import 'dart:math';
 import '../../domain/activity/activity_mode.dart';
 import '../../domain/mascot/pet_accessory.dart';
 import '../../domain/mascot/pet_kind.dart';
+import '../stats/consistency.dart';
 import '../workday/workday_store.dart';
 
 /// Experiencia, niveles y logros.
@@ -80,8 +81,12 @@ class _History {
   final Duration breaks;
   final int activeDays;
 
+  /// Sesiones en 5 de 7 días en algún tramo de una semana.
+  final bool steady;
+
   _History(this.records)
-      : focus = records.fold(Duration.zero, (s, r) => s + r.effectiveFocus),
+      : steady = hasSteadyWindow(activeDaySet(records)),
+        focus = records.fold(Duration.zero, (s, r) => s + r.effectiveFocus),
         breaks = records.fold(Duration.zero, (s, r) => s + r.effectiveBreak),
         activeDays = records
             .map((r) {
@@ -123,6 +128,12 @@ final achievements = <Achievement>[
       'Siete días',
       'Ten sesiones en 7 días distintos (no hace falta que sean seguidos).',
       (h) => h.activeDays >= 7),
+  Achievement._(
+      'steady',
+      '🌱',
+      'Buen ritmo',
+      'Ten sesiones en 5 de 7 días (no hace falta que sean seguidos).',
+      (h) => h.steady),
   Achievement._('study', '📚', 'Estudioso', 'Haz 5 sesiones de estudio.',
       (h) => h.sessionsOf(ActivityMode.study) >= 5),
   Achievement._(

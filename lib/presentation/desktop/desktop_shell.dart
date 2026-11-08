@@ -11,6 +11,7 @@ import '../../application/desktop/sounds.dart';
 import '../../application/desktop/mascot_panel.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/late_night.dart';
+import '../../application/stats/consistency.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
 import '../../application/progress/progression.dart';
@@ -135,6 +136,16 @@ class DesktopShell {
       },
     );
     _cleanup.add(guard.close);
+
+    // Racha amable: el hito también se avisa si la mascota está oculta.
+    final streak = container.listen<Consistency>(consistencyProvider,
+        (before, after) {
+      final message = consistencyMilestone(before, after);
+      if (message != null && !window.visible.value) {
+        unawaited(notifier.show(WorkdayNotice('¡Buen ritmo!', message)));
+      }
+    });
+    _cleanup.add(streak.close);
 
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {

@@ -11,6 +11,8 @@ import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/goals/daily_goal.dart';
+import '../../application/stats/consistency.dart';
+import 'consistency_row.dart';
 import 'daily_goal_row.dart';
 import 'level_card.dart';
 import 'stats_chart.dart';
@@ -74,6 +76,8 @@ class StatsPanel extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 _Hero(stats: stats),
+                const SizedBox(height: 6),
+                ConsistencyRow(consistency: ref.watch(consistencyProvider)),
                 if (period == StatsPeriod.today) ...[
                   const SizedBox(height: 8),
                   DailyGoalRow(
