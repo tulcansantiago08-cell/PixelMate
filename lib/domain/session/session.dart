@@ -1,4 +1,7 @@
 import '../activity/activity_mode.dart';
+import 'phase_planner.dart';
+import 'session_phase.dart';
+import 'workday_config.dart';
 
 /// Representa una sesión de trabajo/estudio/juego.
 class Session {
@@ -30,13 +33,19 @@ class Session {
     this.effectiveDuration = Duration.zero,
   });
 
-  /// Calcula el número total de ciclos para cubrir [plannedDuration].
-  int get totalCycles {
-    final cycleLength = focusDuration + shortBreakDuration;
-    final longBreakCycle = cycleLength * cyclesBeforeLongBreak + longBreakDuration;
-    if (longBreakCycle.inSeconds == 0) return 0;
-    return (plannedDuration.inSeconds / longBreakCycle.inSeconds * cyclesBeforeLongBreak).ceil();
-  }
+  WorkdayConfig get config => WorkdayConfig(
+        focus: focusDuration,
+        shortBreak: shortBreakDuration,
+        longBreak: longBreakDuration,
+        focusesPerCycle: cyclesBeforeLongBreak,
+        workday: plannedDuration,
+      );
+
+  /// Número de bloques de enfoque que caben en [plannedDuration]
+  /// (el último puede estar recortado). Usa el mismo plan que el temporizador.
+  int get totalCycles => planWorkday(config)
+      .where((p) => p.kind == SessionPhase.focus)
+      .length;
 
   Session copyWith({
     bool? completed,
