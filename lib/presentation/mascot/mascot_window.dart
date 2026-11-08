@@ -20,7 +20,10 @@ import '../stats/stats_panel.dart';
 import 'mascot_quick_actions.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
-import 'mascot_painter.dart';
+import '../../application/mascot/idle_behavior.dart';
+import '../../domain/mascot/pet_species.dart';
+import 'pet_sprites.dart';
+import 'sprite_mascot.dart';
 
 class MascotWindow extends ConsumerStatefulWidget {
   const MascotWindow({super.key});
@@ -29,10 +32,17 @@ class MascotWindow extends ConsumerStatefulWidget {
   ConsumerState<MascotWindow> createState() => _MascotWindowState();
 }
 
-class _MascotWindowState extends ConsumerState<MascotWindow>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+/// Clave de la mascota (para pruebas y accesibilidad).
+const mascotKey = ValueKey('mascot');
+
+class _MascotWindowState extends ConsumerState<MascotWindow> {
   bool _greeting = true;
+
+  // Vida propia en reposo: estirarse, saludar, dormirse.
+  final _idle = IdleBehavior(now: DateTime.now());
+  Timer? _idleTimer;
+  PetAnimation? _oneShot;
+  static const _idleCheck = Duration(seconds: 30);
 
   // Reacción temporal a un suceso de la jornada.
   String? _speech;
@@ -45,10 +55,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    _idleTimer = Timer.periodic(_idleCheck, (_) => _onIdleTick());
 
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
@@ -60,6 +67,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     _eventsSub =
         ref.read(workdayControllerProvider.notifier).events.listen((event) {
       final mode = ref.read(workdayControllerProvider.notifier).currentMode;
+      _wake(animate: false);
       final reaction = reactionFor(event, mode: mode);
       if (reaction == null || !mounted) return;
       _reactionTimer?.cancel();
@@ -82,8 +90,43 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
   void dispose() {
     _eventsSub?.cancel();
     _reactionTimer?.cancel();
-    _controller.dispose();
+    _idleTimer?.cancel();
     super.dispose();
+  }
+
+  bool get _isIdle =>
+      !_greeting &&
+      _reactionMood == null &&
+      ref.read(mascotPanelProvider) == MascotPanel.none &&
+      ref.read(activityDetectionProvider) == null &&
+      !ref.read(workdayControllerProvider).isActive;
+
+  void _onIdleTick() {
+    if (!mounted || _oneShot != null) return;
+    switch (_idle.tick(DateTime.now(), idle: _isIdle)) {
+      case PlayOnce(:final animation):
+        setState(() => _oneShot = animation);
+      case FallAsleep():
+        setState(() {});
+      case StayStill():
+        break;
+    }
+  }
+
+  /// Registra actividad; si dormía, se despierta (con animación).
+  /// Devuelve `true` si estaba dormida.
+  bool _wake({bool animate = true}) {
+    final wasAsleep = _idle.activity(DateTime.now());
+    if (wasAsleep && mounted) {
+      setState(() => _oneShot = animate ? PetAnimation.wakeUp : null);
+    }
+    return wasAsleep;
+  }
+
+  /// Clic en la mascota: si duerme, solo la despierta.
+  void _onMascotTap() {
+    if (_wake()) return;
+    _togglePanel();
   }
 
   Future<void> _openPanel(MascotPanel next) => setMascotPanel(
@@ -112,7 +155,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     if (_greeting) return MascotState.greeting;
     final status = view.status;
     if (status == null || status.state == WorkdayRunState.paused) {
-      return MascotState.idle;
+      return _idle.asleep ? MascotState.sleeping : MascotState.idle;
     }
     return switch (status.phase?.kind) {
       SessionPhase.focus => focusMood(view.mode ?? ActivityMode.work),
@@ -126,6 +169,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     final view = ref.watch(workdayControllerProvider);
     final suggestion = ref.watch(activityDetectionProvider);
     final panel = ref.watch(mascotPanelProvider);
+    final pet = ref.watch(loadedPetProvider).valueOrNull;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -171,27 +215,37 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
                 children: [
                   MascotQuickActions(
                     statsOpen: panel == MascotPanel.stats,
-                    onStats: () => _openPanel(panel == MascotPanel.stats
-                        ? MascotPanel.none
-                        : MascotPanel.stats),
-                    onMenu: (position) => _showMenu(context, position),
+                    onStats: () {
+                      _wake();
+                      _openPanel(panel == MascotPanel.stats
+                          ? MascotPanel.none
+                          : MascotPanel.stats);
+                    },
+                    onMenu: (position) {
+                      _wake();
+                      _showMenu(context, position);
+                    },
                   ),
                   GestureDetector(
+                    key: mascotKey,
+                    behavior: HitTestBehavior.opaque,
                     onPanStart: (_) async =>
                         await windowManager.startDragging(),
-                    onTap: _togglePanel,
-                    onSecondaryTapDown: (details) =>
-                        _showMenu(context, details.globalPosition),
-                    child: AnimatedBuilder(
-                      animation: _controller,
-                      builder: (context, _) => CustomPaint(
-                        painter: MascotPainter(
-                          state: _mascotState(view, panel),
-                          animValue: _controller.value,
-                        ),
-                        size: const Size(160, 160),
-                      ),
-                    ),
+                    onTap: _onMascotTap,
+                    onSecondaryTapDown: (details) {
+                      _wake();
+                      _showMenu(context, details.globalPosition);
+                    },
+                    child: pet == null
+                        ? const SizedBox.square(dimension: 160)
+                        : SpriteMascot(
+                            pet: pet,
+                            animation: animationFor(_mascotState(view, panel)),
+                            oneShot: _oneShot,
+                            onOneShotDone: () {
+                              if (mounted) setState(() => _oneShot = null);
+                            },
+                          ),
                   ),
                 ],
               ),
