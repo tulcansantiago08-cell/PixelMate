@@ -22,6 +22,9 @@ class SpriteMascot extends StatefulWidget {
   final double size;
   final bool flipped;
 
+  /// Capa de accesorio que se dibuja encima, con el mismo fotograma.
+  final ui.Image? accessory;
+
   const SpriteMascot({
     super.key,
     required this.pet,
@@ -30,6 +33,7 @@ class SpriteMascot extends StatefulWidget {
     this.onOneShotDone,
     this.size = 160,
     this.flipped = false,
+    this.accessory,
   });
 
   @override
@@ -99,6 +103,7 @@ class SpriteMascotState extends State<SpriteMascot> {
         spec: widget.pet.species.spec(_playing),
         frame: _frame,
         flipped: widget.flipped,
+        accessory: widget.accessory,
       ),
     );
   }
@@ -110,6 +115,7 @@ class _SpritePainter extends CustomPainter {
   final AnimationSpec spec;
   final int frame;
   final bool flipped;
+  final ui.Image? accessory;
 
   _SpritePainter({
     required this.sheet,
@@ -117,6 +123,7 @@ class _SpritePainter extends CustomPainter {
     required this.spec,
     required this.frame,
     required this.flipped,
+    this.accessory,
   });
 
   @override
@@ -130,14 +137,13 @@ class _SpritePainter extends CustomPainter {
       canvas.translate(size.width, 0);
       canvas.scale(-1, 1);
     }
-    canvas.drawImageRect(
-      sheet,
-      src,
-      dst,
-      Paint()
-        ..filterQuality = FilterQuality.none // píxeles nítidos
-        ..isAntiAlias = false,
-    );
+    final paint = Paint()
+      ..filterQuality = FilterQuality.none // píxeles nítidos
+      ..isAntiAlias = false;
+    canvas.drawImageRect(sheet, src, dst, paint);
+    if (accessory case final layer?) {
+      canvas.drawImageRect(layer, src, dst, paint);
+    }
     if (flipped) canvas.restore();
   }
 
@@ -146,5 +152,6 @@ class _SpritePainter extends CustomPainter {
       old.frame != frame ||
       old.spec != spec ||
       old.sheet != sheet ||
-      old.flipped != flipped;
+      old.flipped != flipped ||
+      old.accessory != accessory;
 }

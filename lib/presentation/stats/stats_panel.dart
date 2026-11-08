@@ -6,6 +6,8 @@ import '../../application/stats/stats_providers.dart';
 import '../../application/workday/workday_providers.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../../application/workday/workday_store.dart';
+import '../../application/mascot/accessory_providers.dart';
+import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
 import 'level_card.dart';
 import 'stats_chart.dart';
@@ -58,7 +60,12 @@ class StatsPanel extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.only(right: 4),
               children: [
-                LevelCard(progress: ref.watch(progressProvider)),
+                LevelCard(
+                  progress: ref.watch(progressProvider),
+                  equipped: ref.watch(equippedAccessoryProvider),
+                  onEquip: (a) =>
+                      ref.read(mascotSettingsProvider).setAccessory(a),
+                ),
                 const SizedBox(height: 12),
                 _Hero(stats: stats),
                 const SizedBox(height: 10),

@@ -95,5 +95,12 @@
       "fps": 8,
       "loop": false
     }
+  },
+  "accessories": {
+    "scarf": "assets/pets/cat/accessories/scarf.png",
+    "bow": "assets/pets/cat/accessories/bow.png",
+    "sunglasses": "assets/pets/cat/accessories/sunglasses.png",
+    "headphones": "assets/pets/cat/accessories/headphones.png",
+    "crown": "assets/pets/cat/accessories/crown.png"
   }
 }

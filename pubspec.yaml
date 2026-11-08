@@ -55,3 +55,4 @@ flutter:
     - assets/tray/
     - assets/config/
     - assets/pets/cat/
+    - assets/pets/cat/accessories/

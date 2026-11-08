@@ -368,6 +368,8 @@ def anim_frames():
             cat(cv, **kw)
             if extra:
                 extra(cv, i)
+        # Pose del fotograma, para alinear las capas de accesorios.
+        draw.pose = dict(kw)
         return draw
 
     A["idle"] = (4, True, [
@@ -465,6 +467,84 @@ def anim_frames():
     return A
 
 
+# --- Accesorios que se desbloquean por nivel ----------------------------------
+# Cada accesorio es una capa aparte del mismo tamaño que la hoja: la app la
+# dibuja encima del gato con el mismo fotograma, así sigue sus movimientos.
+
+SCARF = (214, 64, 80)
+SCARF_STRIPE = (250, 230, 190)
+BOW = (255, 110, 170)
+BOW_DARK = (200, 60, 120)
+LENS = (24, 24, 34)
+CROWN = GOLD
+GEM = (90, 160, 255)
+
+# Animaciones con algo delante del pecho (laptop, libro, mando).
+_HOLDING = {"work", "study", "gaming"}
+
+
+def _head(pose):
+    return 12 + pose.get("dy", 0) + pose.get("squash", 0)
+
+
+def acc_scarf(cv, pose, anim, i):
+    hy = _head(pose)
+    y = int(round(hy)) + 6
+    cv.rect(10, y, 22, y + 1, SCARF)
+    for x in range(12, 22, 4):  # rayas verticales
+        cv.rect(x, y, x, y + 1, SCARF_STRIPE)
+    if anim not in _HOLDING:  # la punta colgando, si no la tapa nada
+        cv.rect(19, y + 2, 20, y + 4, SCARF)
+        cv.set(19, y + 4, SCARF_STRIPE)
+    cv.outline_color(SCARF)
+
+
+def acc_bow(cv, pose, anim, i):
+    hy = int(round(_head(pose)))
+    cx, cy = (22, hy - 6) if pose.get("ears", 0) == 0 else (23, hy - 4)
+    cv.rect(cx - 3, cy - 1, cx - 2, cy + 1, BOW)
+    cv.rect(cx + 2, cy - 1, cx + 3, cy + 1, BOW)
+    cv.set(cx - 1, cy, BOW)
+    cv.set(cx + 1, cy, BOW)
+    cv.set(cx, cy, BOW_DARK)
+    cv.outline_color(BOW)
+
+
+def acc_sunglasses(cv, pose, anim, i):
+    ey = int(_head(pose)) - 1
+    look = pose.get("look", 0)
+    for x0 in (11 + look, 19 + look):
+        cv.rect(x0 - 1, ey - 1, x0 + 2, ey + 1, LENS)
+        cv.set(x0 - 1, ey - 1, (120, 130, 160))  # brillo
+    cv.line([(13 + look, ey - 1), (18 + look, ey - 1)], LENS)
+    cv.set(9 + look, ey - 1, LENS)
+    cv.set(23 + look, ey - 1, LENS)
+
+
+def acc_headphones(cv, pose, anim, i):
+    headphones(cv, pose.get("dy", 0) + pose.get("squash", 0))
+
+
+def acc_crown(cv, pose, anim, i):
+    top = int(round(_head(pose) - 6.8))
+    cv.rect(12, top - 1, 20, top, CROWN)
+    for x in (12, 16, 20):
+        cv.set(x, top - 2, CROWN)
+    cv.set(14, top - 2, CROWN)
+    cv.set(18, top - 2, CROWN)
+    cv.set(16, top - 1, GEM)
+    cv.outline_color(CROWN)
+
+
+ACCESSORIES = {
+    "scarf": acc_scarf,
+    "bow": acc_bow,
+    "sunglasses": acc_sunglasses,
+    "headphones": acc_headphones,
+    "crown": acc_crown,
+}
+
+
 # --- PNG ---------------------------------------------------------------------
 
 def write_png(path, width, height, rows):
@@ -505,6 +585,24 @@ def main():
 
     out = os.path.join(ROOT, "assets", "pets", "cat")
     write_png(os.path.join(out, "sheet.png"), width, height, sheet)
+
+    # Capas de accesorios, alineadas fotograma a fotograma con la hoja.
+    layers = {}
+    for acc, draw_acc in ACCESSORIES.items():
+        layer = [[0, 0, 0, 0] * width for _ in range(height)]
+        for row, name in enumerate(order):
+            for col, draw in enumerate(anims[name][2]):
+                cv = Canvas()
+                draw_acc(cv, draw.pose, name, col)
+                for y in range(SIZE):
+                    for x in range(SIZE):
+                        c = cv.px[y][x]
+                        if c is not None:
+                            i = (col * SIZE + x) * 4
+                            layer[row * SIZE + y][i:i + 4] = [c[0], c[1], c[2], 255]
+        rel = f"assets/pets/cat/accessories/{acc}.png"
+        write_png(os.path.join(ROOT, rel), width, height, layer)
+        layers[acc] = layer
     with open(os.path.join(out, "pet.json"), "w", encoding="utf-8") as fh:
         json.dump({
             "id": "cat",
@@ -513,6 +611,9 @@ def main():
             "frameWidth": SIZE,
             "frameHeight": SIZE,
             "animations": meta,
+            "accessories": {
+                acc: f"assets/pets/cat/accessories/{acc}.png" for acc in ACCESSORIES
+            },
         }, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
@@ -529,6 +630,20 @@ def main():
         preview.append(row)
     write_png(os.path.join(ROOT, "build", "sprites", "cat_preview.png"),
               width * scale, height * scale, preview)
+
+    # Vista previa con cada accesorio puesto.
+    for acc, layer in layers.items():
+        rows = []
+        for y in range(height * scale):
+            row = []
+            for x in range(width * scale):
+                sx, sy = x // scale, y // scale
+                top = layer[sy][sx * 4: sx * 4 + 4]
+                px = top if top[3] else sheet[sy][sx * 4: sx * 4 + 4]
+                row += (px[:3] + [255]) if px[3] else [bg[0], bg[1], bg[2], 255]
+            rows.append(row)
+        write_png(os.path.join(ROOT, "build", "sprites", f"cat_{acc}_preview.png"),
+                  width * scale, height * scale, rows)
     print(f"{len(order)} animaciones, hoja {width}x{height}: {', '.join(order)}")
 
 

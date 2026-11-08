@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../../domain/activity/activity_mode.dart';
+import '../../domain/mascot/pet_accessory.dart';
 import '../workday/workday_store.dart';
 
 /// Experiencia, niveles y logros.
@@ -55,8 +56,7 @@ const _titles = <(int, String)>[
   (20, 'Leyenda pixel'),
 ];
 
-String titleForLevel(int level) =>
-    _titles.lastWhere((t) => level >= t.$1).$2;
+String titleForLevel(int level) => _titles.lastWhere((t) => level >= t.$1).$2;
 
 // ---------------------------------------------------------------------------
 // Logros
@@ -82,10 +82,13 @@ class _History {
   _History(this.records)
       : focus = records.fold(Duration.zero, (s, r) => s + r.effectiveFocus),
         breaks = records.fold(Duration.zero, (s, r) => s + r.effectiveBreak),
-        activeDays = records.map((r) {
-          final l = r.startedAt.toLocal();
-          return DateTime(l.year, l.month, l.day);
-        }).toSet().length;
+        activeDays = records
+            .map((r) {
+              final l = r.startedAt.toLocal();
+              return DateTime(l.year, l.month, l.day);
+            })
+            .toSet()
+            .length;
 
   int sessionsOf(ActivityMode mode) =>
       records.where((r) => r.mode == mode).length;
@@ -93,34 +96,45 @@ class _History {
 
 /// Logros en el orden en que se muestran.
 final achievements = <Achievement>[
-  Achievement._('first', '🐾', 'Primeros pasos',
-      'Haz tu primera sesión.', (h) => h.records.isNotEmpty),
-  Achievement._('complete', '✅', 'Hasta el final',
+  Achievement._('first', '🐾', 'Primeros pasos', 'Haz tu primera sesión.',
+      (h) => h.records.isNotEmpty),
+  Achievement._(
+      'complete',
+      '✅',
+      'Hasta el final',
       'Completa una jornada sin terminarla antes.',
       (h) => h.records.any((r) => r.completed)),
-  Achievement._('cycles', '🌀', 'Ciclo perfecto',
+  Achievement._(
+      'cycles',
+      '🌀',
+      'Ciclo perfecto',
       'Completa 3 ciclos en una misma jornada.',
       (h) => h.records.any((r) => r.cyclesCompleted >= 3)),
-  Achievement._('rest', '☕', 'Buen descanso',
-      'Suma 1 hora de descansos.',
+  Achievement._('rest', '☕', 'Buen descanso', 'Suma 1 hora de descansos.',
       (h) => h.breaks >= const Duration(hours: 1)),
-  Achievement._('focus10', '⏱️', '10 horas',
-      'Suma 10 horas de enfoque.',
+  Achievement._('focus10', '⏱️', '10 horas', 'Suma 10 horas de enfoque.',
       (h) => h.focus >= const Duration(hours: 10)),
-  Achievement._('focus50', '🔥', '50 horas',
-      'Suma 50 horas de enfoque.',
+  Achievement._('focus50', '🔥', '50 horas', 'Suma 50 horas de enfoque.',
       (h) => h.focus >= const Duration(hours: 50)),
-  Achievement._('days7', '📅', 'Siete días',
+  Achievement._(
+      'days7',
+      '📅',
+      'Siete días',
       'Ten sesiones en 7 días distintos (no hace falta que sean seguidos).',
       (h) => h.activeDays >= 7),
-  Achievement._('study', '📚', 'Estudioso',
-      'Haz 5 sesiones de estudio.',
+  Achievement._('study', '📚', 'Estudioso', 'Haz 5 sesiones de estudio.',
       (h) => h.sessionsOf(ActivityMode.study) >= 5),
-  Achievement._('gamer', '🎮', 'Gamer responsable',
+  Achievement._(
+      'gamer',
+      '🎮',
+      'Gamer responsable',
       'Completa una sesión de juego con sus pausas.',
-      (h) => h.records
-          .any((r) => r.mode == ActivityMode.gaming && r.completed)),
-  Achievement._('early', '🌅', 'Madrugador',
+      (h) =>
+          h.records.any((r) => r.mode == ActivityMode.gaming && r.completed)),
+  Achievement._(
+      'early',
+      '🌅',
+      'Madrugador',
       'Empieza una sesión antes de las 8:00.',
       (h) => h.records.any((r) => r.startedAt.toLocal().hour < 8)),
 ];
@@ -181,7 +195,12 @@ class LeveledUp extends ProgressEvent {
 
   /// `true` si con este nivel se estrena título.
   final bool newTitle;
-  const LeveledUp(this.level, this.title, {required this.newTitle});
+
+  /// Accesorios que se desbloquean con esta subida.
+  final List<PetAccessory> accessories;
+
+  const LeveledUp(this.level, this.title,
+      {required this.newTitle, this.accessories = const []});
 }
 
 class AchievementUnlocked extends ProgressEvent {
@@ -191,11 +210,13 @@ class AchievementUnlocked extends ProgressEvent {
 
 /// Qué cambió entre dos cálculos de progreso. Solo cuenta lo que se gana:
 /// si el historial cambia hacia atrás, no se anuncia nada.
-List<ProgressEvent> progressEvents(PlayerProgress before, PlayerProgress after) {
+List<ProgressEvent> progressEvents(
+    PlayerProgress before, PlayerProgress after) {
   final events = <ProgressEvent>[];
   if (after.level > before.level) {
     events.add(LeveledUp(after.level, after.title,
-        newTitle: after.title != before.title));
+        newTitle: after.title != before.title,
+        accessories: PetAccessory.unlockedBetween(before.level, after.level)));
   }
   for (final a in achievements) {
     if (after.isUnlocked(a) && !before.isUnlocked(a)) {
@@ -208,11 +229,21 @@ List<ProgressEvent> progressEvents(PlayerProgress before, PlayerProgress after) 
 /// Mensaje de la mascota y de la notificación para un suceso.
 ({String title, String message}) progressMessage(ProgressEvent event) =>
     switch (event) {
-      LeveledUp(:final level, :final title, :final newTitle) => (
+      LeveledUp(
+        :final level,
+        :final title,
+        :final newTitle,
+        :final accessories
+      ) =>
+        (
           title: '¡Nivel $level!',
-          message: newTitle
-              ? '¡Subiste a nivel $level! Ahora eres «$title» 🎉'
-              : '¡Subiste a nivel $level! Sigue así 🎉',
+          message: (newTitle
+                  ? '¡Subiste a nivel $level! Ahora eres «$title» 🎉'
+                  : '¡Subiste a nivel $level! Sigue así 🎉') +
+              (accessories.isEmpty
+                  ? ''
+                  : ' Desbloqueaste: ${accessories.map((a) => '${a.emoji} ${a.label}').join(', ')}'
+                      ' (póntelo desde 📊).'),
         ),
       AchievementUnlocked(:final achievement) => (
           title: 'Logro desbloqueado',
