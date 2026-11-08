@@ -6,6 +6,7 @@ import '../../domain/session/workday_timer.dart';
 import '../activity/focus_guard.dart';
 
 import '../desktop/mascot_panel.dart';
+import '../mascot/mascot_settings.dart';
 import '../desktop/mascot_window_port.dart';
 import '../goals/daily_goal.dart';
 import '../progress/progress_providers.dart';
@@ -49,7 +50,8 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   ChatController(this._ref)
       : super([
           ChatMessage(
-            text: '¡Hola! Soy PixelMate 🐾\n¿En qué te ayudo hoy?\n\n'
+            text: '¡Hola! Soy ${_ref.read(petNameProvider)} 🐾\n'
+                '¿En qué te ayudo hoy?\n\n'
                 'Puedo decirte cuánto te falta, empezar o pausar tu jornada '
                 'y cambiar tu meta. Pídemelo con tus palabras.',
             isUser: false,
@@ -167,6 +169,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   }
 
   String _context() => describeContext(
+        petName: _ref.read(petNameProvider),
         now: DateTime.now(),
         workday: _ref.read(workdayControllerProvider),
         goal: _ref.read(dailyGoalProvider),

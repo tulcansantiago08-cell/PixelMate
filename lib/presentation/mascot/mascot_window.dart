@@ -32,6 +32,7 @@ import '../../application/progress/progress_providers.dart';
 import '../../application/progress/progression.dart';
 import '../../domain/mascot/pet_species.dart';
 import 'pet_sprites.dart';
+import 'rename_dialog.dart';
 import 'sprite_mascot.dart';
 
 class MascotWindow extends ConsumerStatefulWidget {
@@ -199,14 +200,80 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         next: next,
       );
 
-  void _showMenu(BuildContext context, Offset position) => showWorkdayMenu(
+  /// Mientras sea > 0 la ventana sigue ampliada (menú o diálogo abiertos).
+  int _holdExpanded = 0;
+
+  /// `true` si la ventana la amplió el menú (y no un panel).
+  bool _grownForMenu = false;
+
+  /// Abre el menú ⋯. En la ventana compacta no cabe entero, así que la
+  /// amplía mientras está abierto (la mascota no se mueve: la ventana crece
+  /// hacia arriba y a la izquierda).
+  Future<void> _showMenu(BuildContext context, Offset position) async {
+    final window = ref.read(mascotWindowProvider);
+    var at = position;
+    _holdExpanded++;
+    final MenuAction? action;
+    try {
+      if (ref.read(mascotPanelProvider) == MascotPanel.none) {
+        final before = await window.bounds();
+        await window.setExpanded(true);
+        _grownForMenu = true;
+        final after = await window.bounds();
+        at = position + (before.topLeft - after.topLeft);
+        await WidgetsBinding.instance.endOfFrame;
+      }
+      if (!context.mounted) return;
+      action = await showWorkdayMenu(
         context: context,
-        globalPosition: position,
+        globalPosition: at,
         controller: ref.read(workdayControllerProvider.notifier),
         view: ref.read(workdayControllerProvider),
         onShowStats: () => _openPanel(MascotPanel.stats),
-        onWalk: () => _walker.start(),
+        onWalk: () async {
+          await _shrinkIfIdle(); // pasea con su tamaño normal
+          await _walker.start();
+        },
+        onRename: () => _rename(context),
       );
+    } finally {
+      _holdExpanded--;
+    }
+    await action?.call();
+    await _shrinkIfIdle();
+  }
+
+  /// Vuelve al tamaño compacto si no hay panel, menú ni diálogo abiertos.
+  Future<void> _shrinkIfIdle() async {
+    if (!mounted || !_grownForMenu || _holdExpanded > 0) return;
+    // Si se abrió un panel, el tamaño ya es cosa suya.
+    if (ref.read(mascotPanelProvider) != MascotPanel.none) {
+      _grownForMenu = false;
+      return;
+    }
+    _grownForMenu = false;
+    await ref.read(mascotWindowProvider).setExpanded(false);
+  }
+
+  /// Ponerle nombre a la mascota (desde el menú ⋯).
+  Future<void> _rename(BuildContext context) async {
+    final settings = ref.read(mascotSettingsProvider);
+    _holdExpanded++;
+    final String? typed;
+    try {
+      typed = await showRenameDialog(context, settings.name);
+    } finally {
+      _holdExpanded--;
+    }
+    await _shrinkIfIdle();
+    if (typed == null) return;
+    final name = await settings.setName(typed);
+    if (name == null || !mounted) return;
+    _react(
+        MascotReaction(
+            '¡Me encanta! Desde ahora soy $name 🐾', MascotState.celebrating),
+        replace: true);
+  }
 
   /// Clic en la mascota: abre o cierra el chat (o cierra otro panel).
   Future<void> _togglePanel() =>
