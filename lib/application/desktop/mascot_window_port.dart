@@ -60,8 +60,11 @@ class NoopMascotWindow extends MascotWindowPort {
   @override
   Future<void> rememberPosition() async => remembered++;
 
+  /// Cambios de tamaño pedidos (para pruebas).
+  final List<bool> expandedCalls = [];
+
   @override
-  Future<void> setExpanded(bool expanded) async {}
+  Future<void> setExpanded(bool expanded) async => expandedCalls.add(expanded);
 
   @override
   Future<void> show() async => visible.value = true;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/assistant/chat_controller.dart';
+import '../../application/mascot/mascot_settings.dart';
 
 class ChatBubble extends ConsumerStatefulWidget {
   const ChatBubble({super.key});
@@ -81,9 +82,10 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
               children: [
                 const Text('🐾', style: TextStyle(fontSize: 14)),
                 const SizedBox(width: 6),
-                const Text(
-                  'PixelMate',
-                  style: TextStyle(
+                Text(
+                  ref.watch(petNameProvider),
+                  key: const ValueKey('pet-name'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,

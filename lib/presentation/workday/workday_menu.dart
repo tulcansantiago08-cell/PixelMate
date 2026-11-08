@@ -1,17 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../application/workday/workday_controller.dart';
 import '../../domain/session/workday_config.dart';
 import '../../domain/session/workday_timer.dart';
 
-/// Menú contextual (clic derecho sobre la mascota) para la jornada.
-Future<void> showWorkdayMenu({
+/// Acción elegida en el menú (se ejecuta después de cerrarlo).
+typedef MenuAction = FutureOr<void> Function();
+
+/// Menú contextual (clic derecho o ⋯ sobre la mascota). Devuelve la acción
+/// elegida sin ejecutarla, para que quien lo abre decida el orden (por
+/// ejemplo, devolver la ventana a su tamaño antes de pasear).
+Future<MenuAction?> showWorkdayMenu({
   required BuildContext context,
   required Offset globalPosition,
   required WorkdayController controller,
   required WorkdayView view,
-  required VoidCallback onShowStats,
-  VoidCallback? onWalk,
+  required MenuAction onShowStats,
+  MenuAction? onWalk,
+  MenuAction? onRename,
 }) async {
   final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final position = RelativeRect.fromRect(
@@ -19,7 +27,7 @@ Future<void> showWorkdayMenu({
     Offset.zero & overlay.size,
   );
 
-  final List<PopupMenuEntry<VoidCallback>> items;
+  final List<PopupMenuEntry<MenuAction>> items;
   if (!view.isActive) {
     items = [
       const PopupMenuItem(enabled: false, child: Text('Iniciar jornada')),
@@ -57,10 +65,14 @@ Future<void> showWorkdayMenu({
         PopupMenuItem(value: onWalk, child: const Text('🚶  Dar un paseo')));
   }
 
-  final action = await showMenu<VoidCallback>(
+  if (onRename != null) {
+    items.add(PopupMenuItem(
+        value: onRename, child: const Text('✏️  Cambiar nombre')));
+  }
+
+  return showMenu<MenuAction>(
     context: context,
     position: position,
     items: items,
   );
-  action?.call();
 }

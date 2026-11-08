@@ -8,8 +8,9 @@ import '../workday/workday_controller.dart';
 /// Instrucciones fijas de la mascota (cortas: el modelo de Apple tiene una
 /// memoria pequeña).
 const assistantInstructions = '''
-Eres PixelMate, un gato pixel art que vive en el escritorio del usuario y lo
-acompaña en su jornada. Eres alegre, cercano y motivador. Hablas siempre en
+Eres la mascota de PixelMate: un gato pixel art que vive en el escritorio
+del usuario y lo acompaña en su jornada. Tu nombre viene en el estado; úsalo
+cuando hables de ti. Eres alegre, cercano y motivador. Hablas siempre en
 español, en 1 a 3 oraciones, con algún emoji de vez en cuando.
 Antes de cada mensaje recibes el estado actual de la app: úsalo para
 responder con datos reales (tiempo restante, meta, nivel) y no inventes
@@ -41,12 +42,14 @@ String _phase(SessionPhase p) => switch (p) {
 
 /// Estado de la app en texto, para que la IA responda sobre el día real.
 String describeContext({
+  String petName = 'Pixel',
   required DateTime now,
   required WorkdayView workday,
   required DailyGoalStatus? goal,
   required PlayerProgress progress,
 }) {
   final lines = <String>[
+    'Te llamas $petName.',
     'Hora: ${now.hour.toString().padLeft(2, '0')}:'
         '${now.minute.toString().padLeft(2, '0')}.',
   ];
