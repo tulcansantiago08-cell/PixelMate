@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/activity/detection_settings.dart';
 import 'package:pixelmate/application/desktop/mascot_panel.dart';
 import 'package:pixelmate/application/desktop/mascot_window_port.dart';
+import 'package:pixelmate/application/mascot/mascot_settings.dart';
 import 'package:pixelmate/application/workday/workday_providers.dart';
 import 'package:pixelmate/infrastructure/desktop/system_notifier.dart';
 import 'package:pixelmate/infrastructure/persistence/sqlite_workday_store.dart';
@@ -23,8 +24,8 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'setContextMenu') {
-        menus.add(Map<String, dynamic>.from(
-            (call.arguments as Map)['menu'] as Map));
+        menus.add(
+            Map<String, dynamic>.from((call.arguments as Map)['menu'] as Map));
       }
       return true;
     });
@@ -76,6 +77,7 @@ void main() {
       window: window,
       notifier: SystemNotifier(),
       detection: DetectionSettings(prefs),
+      mascot: MascotSettings(),
       quitApp: () async {},
     );
     await shell.start();

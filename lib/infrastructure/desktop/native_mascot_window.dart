@@ -27,6 +27,9 @@ class NativeMascotWindow extends MascotWindowPort with WindowListener {
 
   bool _expanded = false;
 
+  /// Mientras pasea no se guarda la posición en cada paso.
+  bool _animatingMove = false;
+
   NativeMascotWindow(this._prefs);
 
   /// Coloca la ventana. Llamar antes de mostrarla.
@@ -59,6 +62,7 @@ class NativeMascotWindow extends MascotWindowPort with WindowListener {
 
   @override
   void onWindowMoved() async {
+    if (_animatingMove) return;
     final bounds = await windowManager.getBounds();
     await _prefs.setDouble(_keyX, bounds.right);
     await _prefs.setDouble(_keyY, bounds.bottom);
@@ -72,13 +76,35 @@ class NativeMascotWindow extends MascotWindowPort with WindowListener {
     final newSize = expanded ? expandedSize : compactSize;
     var origin = MascotPlacement.resizeKeepingBottomRight(
         bounds.topLeft, bounds.size, newSize);
+    final area = await visibleAreaOf(bounds);
+    origin = MascotPlacement.clamp(origin, newSize, area);
+    await windowManager.setBounds(origin & newSize);
+  }
+
+  @override
+  Future<Rect> bounds() => windowManager.getBounds();
+
+  @override
+  Future<Rect> visibleAreaOf(Rect bounds) async {
     final areas = await _visibleAreas();
-    final area = areas
+    return areas
             .where((a) => a.contains(bounds.bottomRight - const Offset(1, 1)))
             .firstOrNull ??
         areas.first;
-    origin = MascotPlacement.clamp(origin, newSize, area);
-    await windowManager.setBounds(origin & newSize);
+  }
+
+  @override
+  Future<void> moveTo(Offset origin) async {
+    _animatingMove = true;
+    await windowManager.setPosition(origin);
+  }
+
+  @override
+  Future<void> rememberPosition() async {
+    _animatingMove = false;
+    final bounds = await windowManager.getBounds();
+    await _prefs.setDouble(_keyX, bounds.right);
+    await _prefs.setDouble(_keyY, bounds.bottom);
   }
 
   @override

@@ -21,6 +21,11 @@ class FallAsleep extends IdleDecision {
   const FallAsleep();
 }
 
+/// Dar un paseo por el escritorio.
+class StartWalk extends IdleDecision {
+  const StartWalk();
+}
+
 /// Comportamiento en reposo, sin depender de la interfaz ni de relojes reales.
 ///
 /// "Actividad" es cualquier cosa que haga el usuario con la mascota o una
@@ -62,7 +67,8 @@ class IdleBehavior {
 
   /// [idle] es `false` mientras hay una sesión o un panel abierto: eso cuenta
   /// como actividad y no se interrumpe con animaciones.
-  IdleDecision tick(DateTime now, {required bool idle}) {
+  /// [canWalk] permite que una de las "travesuras" sea pasear.
+  IdleDecision tick(DateTime now, {required bool idle, bool canWalk = false}) {
     if (!idle) {
       activity(now);
       return const StayStill();
@@ -73,6 +79,7 @@ class IdleBehavior {
       return const FallAsleep();
     }
     if (_random.nextDouble() < fidgetChance) {
+      if (canWalk && _random.nextBool()) return const StartWalk();
       return PlayOnce(_fidgets[_random.nextInt(_fidgets.length)]);
     }
     return const StayStill();

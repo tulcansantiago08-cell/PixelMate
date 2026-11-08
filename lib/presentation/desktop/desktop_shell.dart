@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/activity/detection_settings.dart';
 import '../../application/desktop/mascot_panel.dart';
+import '../../application/mascot/mascot_settings.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/desktop/tray_model.dart';
 import '../../application/workday/workday_controller.dart';
@@ -19,6 +20,7 @@ class DesktopShell {
   final MascotWindowPort window;
   final SystemNotifier notifier;
   final DetectionSettings detection;
+  final MascotSettings mascot;
   final Future<void> Function() quitApp;
 
   late final MenuBarTray _tray = MenuBarTray(onSelected: _onTrayAction);
@@ -29,6 +31,7 @@ class DesktopShell {
     required this.window,
     required this.notifier,
     required this.detection,
+    required this.mascot,
     required this.quitApp,
   });
 
@@ -52,6 +55,8 @@ class DesktopShell {
     _cleanup.add(() => window.visible.removeListener(onVisibility));
     detection.addListener(onVisibility);
     _cleanup.add(() => detection.removeListener(onVisibility));
+    mascot.addListener(onVisibility);
+    _cleanup.add(() => mascot.removeListener(onVisibility));
 
     final events = _workday.events.listen((event) {
       final notice = noticeFor(event, mode: _workday.currentMode);
@@ -67,6 +72,7 @@ class DesktopShell {
         view,
         mascotVisible: window.visible.value,
         detectionEnabled: detection.enabled,
+        walkEnabled: mascot.walkEnabled,
       ),
     ));
   }
@@ -96,6 +102,8 @@ class DesktopShell {
         await window.toggle();
       case TrayAction.toggleDetection:
         await detection.setEnabled(!detection.enabled);
+      case TrayAction.toggleWalk:
+        await mascot.setWalkEnabled(!mascot.walkEnabled);
       case TrayAction.quit:
         await dispose();
         await quitApp();

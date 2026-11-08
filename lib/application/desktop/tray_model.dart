@@ -13,6 +13,7 @@ enum TrayAction {
   showStats,
   toggleMascot,
   toggleDetection,
+  toggleWalk,
   quit,
 }
 
@@ -63,6 +64,7 @@ List<TrayEntry> trayEntries(
   WorkdayView view, {
   required bool mascotVisible,
   bool detectionEnabled = true,
+  bool walkEnabled = true,
 }) {
   final status = view.status;
   final entries = <TrayEntry>[];
@@ -97,6 +99,8 @@ List<TrayEntry> trayEntries(
         action: TrayAction.toggleMascot))
     ..add(TrayEntry('Detectar apps y sugerir modo',
         action: TrayAction.toggleDetection, checked: detectionEnabled))
+    ..add(TrayEntry('Pasear por el escritorio',
+        action: TrayAction.toggleWalk, checked: walkEnabled))
     ..add(const TrayEntry.separator())
     ..add(const TrayEntry('Salir de PixelMate', action: TrayAction.quit));
   return entries;
