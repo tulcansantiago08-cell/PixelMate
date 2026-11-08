@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../application/desktop/mascot_window_port.dart';
 import '../../application/workday/workday_controller.dart';
 import '../../application/workday/workday_dialogue.dart';
 import '../../application/workday/workday_providers.dart';
@@ -48,10 +49,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
       if (mounted) setState(() => _greeting = false);
     });
 
-    _eventsSub = ref
-        .read(workdayControllerProvider.notifier)
-        .events
-        .listen((event) {
+    _eventsSub =
+        ref.read(workdayControllerProvider.notifier).events.listen((event) {
       final reaction = reactionFor(event);
       if (reaction == null || !mounted) return;
       _reactionTimer?.cancel();
@@ -78,7 +77,16 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     super.dispose();
   }
 
-  void _toggleChat() => setState(() => _showChat = !_showChat);
+  Future<void> _toggleChat() async {
+    final open = !_showChat;
+    final window = ref.read(mascotWindowProvider);
+    // Al abrir, primero se agranda la ventana; al cerrar, primero se oculta
+    // el chat. Así nunca se dibuja el chat en una ventana pequeña.
+    if (open) await window.setExpanded(true);
+    if (!mounted) return;
+    setState(() => _showChat = open);
+    if (!open) await window.setExpanded(false);
+  }
 
   MascotState _mascotState(WorkdayView view) {
     if (_showChat) return MascotState.chatting;
@@ -102,47 +110,56 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Chat ocupa el espacio disponible arriba
-            if (_showChat)
-              const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(8, 8, 8, 4),
-                  child: ChatBubble(),
-                ),
-              )
-            else
-              const Spacer(),
-
-            if (!_showChat) WorkdayBadge(view: view, speech: _speech),
-
-            // Mascota fija abajo
-            GestureDetector(
-              onPanStart: (_) async => await windowManager.startDragging(),
-              onTap: _toggleChat,
-              onSecondaryTapDown: (details) => showWorkdayMenu(
-                context: context,
-                globalPosition: details.globalPosition,
-                controller: ref.read(workdayControllerProvider.notifier),
-                view: ref.read(workdayControllerProvider),
-              ),
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) => CustomPaint(
-                  painter: MascotPainter(
-                    state: _mascotState(view),
-                    animValue: _controller.value,
+        // Ancho completo para que la mascota quede pegada a la derecha.
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            // La mascota vive en la esquina inferior derecha de la ventana.
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Chat ocupa el espacio disponible arriba
+              if (_showChat)
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(8, 8, 8, 4),
+                    child: ChatBubble(),
                   ),
-                  size: const Size(160, 160),
+                )
+              else
+                const Spacer(),
+
+              if (!_showChat)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: WorkdayBadge(view: view, speech: _speech),
+                ),
+
+              // Mascota fija abajo
+              GestureDetector(
+                onPanStart: (_) async => await windowManager.startDragging(),
+                onTap: _toggleChat,
+                onSecondaryTapDown: (details) => showWorkdayMenu(
+                  context: context,
+                  globalPosition: details.globalPosition,
+                  controller: ref.read(workdayControllerProvider.notifier),
+                  view: ref.read(workdayControllerProvider),
+                ),
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => CustomPaint(
+                    painter: MascotPainter(
+                      state: _mascotState(view),
+                      animValue: _controller.value,
+                    ),
+                    size: const Size(160, 160),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

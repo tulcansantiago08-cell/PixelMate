@@ -2,18 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
+import 'application/desktop/mascot_window_port.dart';
 import 'application/workday/workday_providers.dart';
+import 'infrastructure/desktop/native_mascot_window.dart';
+import 'infrastructure/desktop/system_notifier.dart';
 import 'infrastructure/persistence/sqlite_workday_store.dart';
+import 'presentation/desktop/desktop_shell.dart';
 import 'presentation/mascot/mascot_window.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Base de datos local (jornada activa + historial).
+  final dataDir = await getApplicationSupportDirectory();
+  await dataDir.create(recursive: true);
+  final store = SqliteWorkdayStore.open(p.join(dataDir.path, 'pixelmate.db'));
+  final prefs = await SharedPreferences.getInstance();
+
   await windowManager.ensureInitialized();
+  final window = NativeMascotWindow(prefs);
   const options = WindowOptions(
-    size: Size(320, 480), // más grande para acomodar el chat
-    minimumSize: Size(160, 200),
+    size: NativeMascotWindow.compactSize,
     backgroundColor: Colors.transparent,
     skipTaskbar: true,
     titleBarStyle: TitleBarStyle.hidden,
@@ -22,22 +33,32 @@ void main() async {
   );
   await windowManager.waitUntilReadyToShow(options, () async {
     await windowManager.setAsFrameless();
-    await windowManager.setIgnoreMouseEvents(false);
+    await windowManager.setHasShadow(false);
+    await window.init(); // esquina inferior derecha o última posición
     await windowManager.show();
-    await windowManager.focus();
   });
 
-  // Base de datos local (jornada activa + historial).
-  final dataDir = await getApplicationSupportDirectory();
-  await dataDir.create(recursive: true);
-  final store = SqliteWorkdayStore.open(p.join(dataDir.path, 'pixelmate.db'));
+  final container = ProviderContainer(overrides: [
+    workdayStoreProvider.overrideWithValue(store),
+    mascotWindowProvider.overrideWithValue(window),
+  ]);
 
-  runApp(
-    ProviderScope(
-      overrides: [workdayStoreProvider.overrideWithValue(store)],
-      child: const PixelMateApp(),
-    ),
+  final shell = DesktopShell(
+    container: container,
+    window: window,
+    notifier: SystemNotifier(),
+    quitApp: () async {
+      container.dispose();
+      store.close();
+      await windowManager.destroy();
+    },
   );
+
+  runApp(UncontrolledProviderScope(
+    container: container,
+    child: const PixelMateApp(),
+  ));
+  await shell.start();
 }
 
 class PixelMateApp extends StatelessWidget {
