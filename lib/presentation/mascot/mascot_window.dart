@@ -22,6 +22,7 @@ import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
 import '../../application/assistant/chat_controller.dart';
 import '../../application/workday/workday_event.dart';
+import '../../application/workday/wellbeing.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
@@ -91,10 +92,24 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         ref.read(workdayControllerProvider.notifier).events.listen((event) {
       final mode = ref.read(workdayControllerProvider.notifier).currentMode;
       _wake(animate: false);
+      if (event is WorkdayStarted) {
+        ref.read(activityDetectionProvider.notifier).dismissWelcome();
+      }
       final reaction = reactionFor(event, mode: mode);
       if (reaction == null || !mounted) return;
       _react(reaction, replace: true);
       if (event is WorkdayFinished) _summarize(event, mode);
+      // En los descansos de trabajo o estudio, un consejo de bienestar
+      // (en modo juego ya hay consejos para la vista).
+      if (event is PhaseStarted &&
+          mode != ActivityMode.gaming &&
+          ref.read(mascotSettingsProvider).wellnessTips) {
+        final tip = ref.read(wellnessCoachProvider).next(event.phase.kind);
+        if (tip != null) {
+          _react(MascotReaction(tip.message, MascotState.resting),
+              duration: const Duration(seconds: 20), animation: tip.animation);
+        }
+      }
     });
   }
 
@@ -114,27 +129,31 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
 
   /// Reacciones que esperan su turno (por ejemplo, un logro justo al
   /// terminar la jornada se dice después del mensaje de fin).
-  final _pendingReactions = <(MascotReaction, Duration?)>[];
+  final _pendingReactions = <(MascotReaction, Duration?, PetAnimation?)>[];
 
   /// Muestra un mensaje con su estado de ánimo durante unos segundos.
   /// Con [replace] sustituye al actual; si no, espera a que termine.
+  /// [animation] se reproduce una vez al mostrar el mensaje (por ejemplo,
+  /// estirarse junto con el consejo de estirarse).
   void _react(MascotReaction reaction,
-      {bool replace = false, Duration? duration}) {
+      {bool replace = false, Duration? duration, PetAnimation? animation}) {
     if (!mounted) return;
     if (!replace && _reactionTimer?.isActive == true) {
-      _pendingReactions.add((reaction, duration));
+      _pendingReactions.add((reaction, duration, animation));
       return;
     }
     _reactionTimer?.cancel();
     setState(() {
       _speech = reaction.message;
       _reactionMood = reaction.mood;
+      if (animation != null) _oneShot = animation;
     });
     _reactionTimer = Timer(duration ?? _reactionDuration, () {
       if (!mounted) return;
       if (_pendingReactions.isNotEmpty) {
-        final (next, nextDuration) = _pendingReactions.removeAt(0);
-        _react(next, duration: nextDuration);
+        final (next, nextDuration, nextAnimation) =
+            _pendingReactions.removeAt(0);
+        _react(next, duration: nextDuration, animation: nextAnimation);
         return;
       }
       setState(() {

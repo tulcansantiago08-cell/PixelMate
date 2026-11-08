@@ -129,19 +129,21 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('species-dog')));
     await tester.pumpAndSettle();
     expect(env.mascot.species, PetKind.cat, reason: 'bloqueado: no cambia');
-    await tester.tap(find.byKey(const ValueKey('settings-walk')));
-    await tester.tap(find.byKey(const ValueKey('settings-guard')));
-    await tester.tap(find.byKey(const ValueKey('settings-detection')));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('settings-night')), 100,
-        scrollable: find.byType(Scrollable).first);
-    await tester.tap(find.byKey(const ValueKey('settings-night')));
-    await tester.pumpAndSettle();
+    // Cada interruptor, bajando hasta él (están en este orden).
+    for (final key in ['walk', 'guard', 'wellness', 'night', 'detection']) {
+      final f = find.byKey(ValueKey('settings-$key'));
+      await tester.scrollUntilVisible(f, 80,
+          scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(f);
+      await tester.pumpAndSettle();
+      await tester.tap(f);
+      await tester.pumpAndSettle();
+    }
     expect(env.mascot.walkEnabled, isFalse);
     expect(env.guard.enabled, isFalse);
-    expect(env.detection.enabled, isFalse);
+    expect(env.mascot.wellnessTips, isFalse);
     expect(env.mascot.nightReminders, isFalse);
+    expect(env.detection.enabled, isFalse);
 
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-goal')), -100,
