@@ -168,6 +168,13 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onChanged: guard.setEnabled,
                   ),
                   _Switch(
+                    keyName: 'night',
+                    label: 'Recordarme descansar de noche',
+                    help: 'Desde las 22:00, si sigue una jornada.',
+                    value: mascot.nightReminders,
+                    onChanged: mascot.setNightReminders,
+                  ),
+                  _Switch(
                     keyName: 'detection',
                     label: 'Detectar apps y sugerir modo',
                     help: 'Al abrir tu editor o un juego, te propone '

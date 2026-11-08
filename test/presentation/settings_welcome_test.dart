@@ -133,10 +133,21 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-guard')));
     await tester.tap(find.byKey(const ValueKey('settings-detection')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settings-night')), 100,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.byKey(const ValueKey('settings-night')));
+    await tester.pumpAndSettle();
     expect(env.mascot.walkEnabled, isFalse);
     expect(env.guard.enabled, isFalse);
     expect(env.detection.enabled, isFalse);
+    expect(env.mascot.nightReminders, isFalse);
 
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settings-goal')), -100,
+        scrollable: find.byType(Scrollable).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 150));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-goal')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('2 h al día').last);

@@ -26,6 +26,7 @@ import '../../application/activity/focus_guard_controller.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/idle_behavior.dart';
+import '../../application/mascot/late_night.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/mascot/mascot_walker.dart';
 import '../../application/progress/progress_providers.dart';
@@ -333,6 +334,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         _walker.stop();
         _react(MascotReaction(
             progressMessage(event).message, MascotState.celebrating));
+      }
+    });
+    // De noche, si sigue la jornada: recordar descansar.
+    ref.listen(lateNightProvider, (before, message) {
+      if (message != null && before == null) {
+        _walker.stop();
+        _react(MascotReaction(message, MascotState.tired),
+            replace: true, duration: const Duration(seconds: 15));
       }
     });
     // Guardián del enfoque: un aviso amable si hay una distracción al frente.
