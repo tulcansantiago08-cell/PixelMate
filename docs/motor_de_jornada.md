@@ -32,10 +32,25 @@ Pruebas: `test/domain/phase_planner_test.dart` y `test/domain/workday_timer_test
 9. **Recuperación**: `toJson()` / `fromJson()` con campo `version` para
    migraciones futuras. Guardarlo en SQLite (drift) queda para SAN-27.
 
+## Integración en la app
+
+| Capa | Archivo | Qué hace |
+|---|---|---|
+| Aplicación | `lib/application/workday/workday_controller.dart` | Una sola jornada activa; la guarda en cada cambio; tic de 1 s; emite sucesos sin repetirlos |
+| Aplicación | `lib/application/workday/workday_event.dart` | Sucesos: inicio, cambio de fase, quedan 5 min / 30 s, quedan 30 / 5 min de jornada, pausa, fin |
+| Aplicación | `lib/application/workday/workday_dialogue.dart` | Frase y estado de ánimo de la mascota para cada suceso |
+| Infraestructura | `lib/infrastructure/persistence/sqlite_workday_store.dart` | SQLite: tabla `active_workday` (máx. 1 fila) y `workday_history` |
+| Presentación | `lib/presentation/workday/` | Globo con fase, cuenta regresiva y progreso; menú de clic derecho |
+
+- Base de datos: `~/Library/Application Support/<bundle id>/pixelmate.db`
+  (o el contenedor del sandbox en Release).
+- Al abrir la app se recupera la jornada. Si terminó mientras estaba cerrada,
+  se registra en el historial; no se repiten avisos de fases ya pasadas.
+- Si el Mac despierta y se cruzan dos avisos a la vez, solo sale el más cercano.
+
 ## Pendiente
 
-- Controlador en la capa de aplicación (Riverpod) que guarde una única jornada
-  activa y programe un solo aviso con `nextTransitionAt()`.
-- Persistencia en SQLite y recuperación al abrir la app.
-- Avisos de 5 min / 30 s y diálogos de la mascota en cada transición.
-- Interfaz: iniciar, pausar, saltar y finalizar desde el menú.
+- Icono en la barra de menú (SAN-8) con las mismas acciones.
+- Configurar tiempos personalizados desde un panel (hoy solo 4/6/8/9 h).
+- Modo estudio y gamer reutilizando este motor (SAN-22, SAN-23).
+- Estadísticas a partir de `workday_history` (SAN-26).
