@@ -20,6 +20,24 @@ class WorkdayConfig {
     this.workday = const Duration(hours: 8),
   });
 
+  /// Estudio: bloques algo más cortos que el trabajo.
+  static const study = WorkdayConfig(
+    focus: Duration(minutes: 45),
+    shortBreak: Duration(minutes: 10),
+    longBreak: Duration(minutes: 20),
+    focusesPerCycle: 3,
+    workday: Duration(hours: 3),
+  );
+
+  /// Gamer: 60 min de juego y 5 de descanso visual, repetido.
+  static const gaming = WorkdayConfig(
+    focus: Duration(minutes: 60),
+    shortBreak: Duration(minutes: 5),
+    longBreak: Duration(minutes: 5),
+    focusesPerCycle: 1,
+    workday: Duration(hours: 3),
+  );
+
   /// Duraciones de jornada ofrecidas en la interfaz (además de personalizada).
   static const presetWorkdays = [
     Duration(hours: 4),
@@ -30,9 +48,7 @@ class WorkdayConfig {
 
   /// Duración de un ciclo completo, incluido el descanso largo.
   Duration get cycleLength =>
-      focus * focusesPerCycle +
-      shortBreak * (focusesPerCycle - 1) +
-      longBreak;
+      focus * focusesPerCycle + shortBreak * (focusesPerCycle - 1) + longBreak;
 
   /// Lanza [ArgumentError] si la configuración no es utilizable.
   void validate() {

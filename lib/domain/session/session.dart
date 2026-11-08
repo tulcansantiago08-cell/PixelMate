@@ -43,9 +43,8 @@ class Session {
 
   /// Número de bloques de enfoque que caben en [plannedDuration]
   /// (el último puede estar recortado). Usa el mismo plan que el temporizador.
-  int get totalCycles => planWorkday(config)
-      .where((p) => p.kind == SessionPhase.focus)
-      .length;
+  int get totalCycles =>
+      planWorkday(config).where((p) => p.kind == SessionPhase.focus).length;
 
   Session copyWith({
     bool? completed,

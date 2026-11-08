@@ -61,6 +61,12 @@ class WorkdayController extends StateNotifier<WorkdayView> {
 
   Stream<WorkdayEvent> get events => _events.stream;
 
+  ActivityMode? _lastMode;
+
+  /// Modo de la sesión actual o de la última que terminó (para que el aviso
+  /// de fin use las frases correctas).
+  ActivityMode get currentMode => state.mode ?? _lastMode ?? ActivityMode.work;
+
   // ---------------------------------------------------------------------------
   // Acciones
   // ---------------------------------------------------------------------------
@@ -74,6 +80,7 @@ class WorkdayController extends StateNotifier<WorkdayView> {
     final timer = WorkdayTimer.start(id: _newId(), config: config, now: _now());
     _lastPhaseIndex = 0;
     _sentWarnings.clear();
+    _lastMode = mode;
     _apply(ActiveWorkday(mode, timer));
     _emit(const WorkdayStarted());
     _startTicker();
@@ -118,6 +125,7 @@ class WorkdayController extends StateNotifier<WorkdayView> {
   void _recover() {
     final active = _store.loadActive();
     if (active == null) return;
+    _lastMode = active.mode;
     final status = active.timer.statusAt(_now());
     // Al recuperar no se repiten avisos de fases que ya pasaron.
     _lastPhaseIndex = status.phase?.index;
@@ -153,7 +161,8 @@ class WorkdayController extends StateNotifier<WorkdayView> {
     if (phase == null) return;
 
     if (_lastPhaseIndex != phase.index) {
-      final previous = _lastPhaseIndex == null ? null : timer.plan[_lastPhaseIndex!];
+      final previous =
+          _lastPhaseIndex == null ? null : timer.plan[_lastPhaseIndex!];
       _lastPhaseIndex = phase.index;
       _emit(PhaseStarted(phase, previous));
     }
