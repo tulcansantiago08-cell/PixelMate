@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/activity/detection_settings.dart';
 import 'package:pixelmate/application/desktop/login_item.dart';
+import 'package:pixelmate/domain/session/workday_config.dart';
+import 'package:pixelmate/application/desktop/sounds.dart';
+import 'package:pixelmate/application/desktop/global_shortcut.dart';
 import 'package:pixelmate/application/desktop/mascot_panel.dart';
 import 'package:pixelmate/application/desktop/mascot_window_port.dart';
 import 'package:pixelmate/application/mascot/mascot_settings.dart';
@@ -73,8 +76,13 @@ void main() {
     return null;
   }
 
-  Future<(ProviderContainer, NoopMascotWindow)> startShell(
-      {LoginItemPort? loginItem}) async {
+  Future<(ProviderContainer, NoopMascotWindow)> startShell({
+    LoginItemPort? loginItem,
+    GlobalShortcutPort? shortcut,
+    ShortcutSettings? shortcutSettings,
+    SoundPlayer? sounds,
+    SoundSettings? soundSettings,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final window = NoopMascotWindow();
@@ -90,6 +98,10 @@ void main() {
       detection: DetectionSettings(prefs),
       mascot: MascotSettings(),
       launchAtLogin: LaunchAtLogin(loginItem ?? NoopLoginItem()),
+      shortcut: shortcut,
+      shortcutSettings: shortcutSettings,
+      sounds: sounds,
+      soundSettings: soundSettings,
       quitApp: () async {},
     );
     await shell.start();
@@ -147,5 +159,59 @@ void main() {
     await click('Abrir al iniciar sesión');
     expect(login.enabled, isFalse);
     expect(itemOf('Abrir al iniciar sesión')!['checked'], isFalse);
+  });
+
+  test('el atajo global abre y cierra el chat, y muestra la mascota', () async {
+    final shortcut = NoopGlobalShortcut();
+    final settings = ShortcutSettings();
+    final (container, window) =
+        await startShell(shortcut: shortcut, shortcutSettings: settings);
+    expect(shortcut.registered, isTrue, reason: 'activado por defecto');
+    expect(settings.working, isTrue);
+
+    await click('Ocultar mascota');
+    shortcut.press();
+    await pumpEventQueue();
+    expect(window.visible.value, isTrue);
+    expect(container.read(mascotPanelProvider), MascotPanel.chat);
+    shortcut.press();
+    await pumpEventQueue();
+    expect(container.read(mascotPanelProvider), MascotPanel.none);
+
+    await settings.setEnabled(false);
+    await pumpEventQueue();
+    expect(shortcut.registered, isFalse);
+  });
+
+  test('si otra app usa el atajo, se avisa en Ajustes', () async {
+    final settings = ShortcutSettings();
+    await startShell(
+        shortcut: NoopGlobalShortcut(available: false),
+        shortcutSettings: settings);
+    expect(settings.working, isFalse);
+  });
+
+  test('los sonidos acompañan la jornada solo si están activados', () async {
+    final player = NoopSoundPlayer();
+    final sound = SoundSettings();
+    final (container, _) =
+        await startShell(sounds: player, soundSettings: sound);
+    final workday = container.read(workdayControllerProvider.notifier);
+
+    workday.start(const WorkdayConfig());
+    await pumpEventQueue();
+    expect(player.played, isEmpty, reason: 'apagados por defecto');
+    workday.finish();
+    await pumpEventQueue();
+
+    await sound.setEnabled(true);
+    workday.start(const WorkdayConfig(workday: Duration(hours: 4)));
+    await pumpEventQueue();
+    workday.skipPhase(); // enfoque -> descanso
+    await pumpEventQueue();
+    workday.finish();
+    await pumpEventQueue();
+    expect(player.played.take(3),
+        [PetSound.focus, PetSound.rest, PetSound.finish]);
   });
 }

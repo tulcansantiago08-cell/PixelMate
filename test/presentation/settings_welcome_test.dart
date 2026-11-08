@@ -8,6 +8,8 @@ import 'package:pixelmate/application/activity/focus_guard_controller.dart';
 import 'package:pixelmate/application/assistant/chat_assistant.dart';
 import 'package:pixelmate/application/assistant/chat_controller.dart';
 import 'package:pixelmate/application/desktop/login_item.dart';
+import 'package:pixelmate/application/desktop/sounds.dart';
+import 'package:pixelmate/application/desktop/global_shortcut.dart';
 import 'package:pixelmate/application/desktop/mascot_panel.dart';
 import 'package:pixelmate/application/desktop/mascot_window_port.dart';
 import 'package:pixelmate/application/desktop/tray_model.dart';
@@ -120,9 +122,6 @@ void main() {
         SettingsPanel(onClose: () {}, onShowWelcome: () => welcome++));
 
     expect(find.text('Pixel ✏️'), findsOneWidget);
-    expect(
-        find.textContaining('IA de Apple · en tu Mac: gratis'), findsOneWidget);
-
     await tester.tap(find.byKey(const ValueKey('settings-walk')));
     await tester.tap(find.byKey(const ValueKey('settings-guard')));
     await tester.tap(find.byKey(const ValueKey('settings-detection')));
@@ -138,12 +137,18 @@ void main() {
     expect(env.goal.goal, const Duration(hours: 2));
     expect(find.text('2 h ▾'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settings-login')), 100,
+        scrollable: find.byType(Scrollable).first);
     await tester.tap(find.byKey(const ValueKey('settings-login')));
     await tester.pumpAndSettle();
     expect(env.launch.enabled, isFalse);
     expect(find.textContaining('Ítems de inicio'), findsOneWidget,
         reason: 'explica dónde aprobarlo');
 
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settings-rename')), -100,
+        scrollable: find.byType(Scrollable).first);
     await tester.tap(find.byKey(const ValueKey('settings-rename')));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -156,6 +161,8 @@ void main() {
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-welcome')), 100,
         scrollable: find.byType(Scrollable).first);
+    expect(
+        find.textContaining('IA de Apple · en tu Mac: gratis'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('settings-welcome')));
     expect(welcome, 1);
   });
@@ -243,8 +250,8 @@ void main() {
       overrides: env.overrides,
       child: const MaterialApp(home: MascotWindow()),
     ));
-    final container = ProviderScope.containerOf(
-        tester.element(find.byType(MascotWindow)));
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(MascotWindow)));
     container.read(mascotPanelProvider.notifier).state = MascotPanel.settings;
     await frames(tester);
     expect(find.byType(SettingsPanel), findsOneWidget);
@@ -252,12 +259,54 @@ void main() {
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-welcome')), 100,
         scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.byKey(const ValueKey('settings-welcome')));
+    await frames(tester, 4);
     await tester.tap(find.byKey(const ValueKey('settings-welcome')));
     await frames(tester);
     expect(find.byType(WelcomePanel), findsOneWidget,
         reason: 'se puede volver a ver la bienvenida');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 70));
+  });
+
+  testWidgets('Extras: atajo y sonidos', (tester) async {
+    final env = await Env.create();
+    final shortcut = ShortcutSettings();
+    final sound = SoundSettings();
+    final player = NoopSoundPlayer();
+    tester.view.physicalSize = const Size(320, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        ...env.overrides,
+        shortcutSettingsProvider.overrideWithValue(shortcut),
+        soundSettingsProvider.overrideWithValue(sound),
+        soundPlayerProvider.overrideWithValue(player),
+      ],
+      child: MaterialApp(
+          home: Scaffold(
+              body: SettingsPanel(onClose: () {}, onShowWelcome: () {}))),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Atajo ⌃⌥P para abrir el chat'), findsOneWidget);
+    expect(shortcut.enabled, isTrue, reason: 'activado por defecto');
+    shortcut.reportWorking(false);
+    await tester.pump();
+    expect(find.text('⚠️ Otra app ya usa ⌃⌥P.'), findsOneWidget);
+
+    expect(sound.enabled, isFalse, reason: 'apagados por defecto');
+    expect(find.byKey(const ValueKey('settings-sound-test')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-sound')));
+    await tester.pumpAndSettle();
+    expect(sound.enabled, isTrue);
+    await tester.tap(find.byKey(const ValueKey('settings-sound-test')));
+    expect(player.played, [PetSound.level]);
+
+    await tester.tap(find.byKey(const ValueKey('settings-shortcut')));
+    await tester.pumpAndSettle();
+    expect(shortcut.enabled, isFalse);
   });
 
   test('"Ajustes…" en la barra de menú', () {
