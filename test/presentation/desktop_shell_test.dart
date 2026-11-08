@@ -89,7 +89,7 @@ void main() {
       notifier: SystemNotifier(),
       detection: DetectionSettings(prefs),
       mascot: MascotSettings(),
-      loginItem: loginItem ?? NoopLoginItem(),
+      launchAtLogin: LaunchAtLogin(loginItem ?? NoopLoginItem()),
       quitApp: () async {},
     );
     await shell.start();

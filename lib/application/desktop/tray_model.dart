@@ -11,6 +11,7 @@ enum TrayAction {
   skipPhase,
   finish,
   showStats,
+  showSettings,
   toggleMascot,
   toggleDetection,
   toggleWalk,
@@ -101,6 +102,7 @@ List<TrayEntry> trayEntries(
   entries
     ..add(const TrayEntry.separator())
     ..add(const TrayEntry('Estadísticas', action: TrayAction.showStats))
+    ..add(const TrayEntry('Ajustes…', action: TrayAction.showSettings))
     ..add(TrayEntry(mascotVisible ? 'Ocultar mascota' : 'Mostrar mascota',
         action: TrayAction.toggleMascot))
     ..add(TrayEntry('Detectar apps y sugerir modo',

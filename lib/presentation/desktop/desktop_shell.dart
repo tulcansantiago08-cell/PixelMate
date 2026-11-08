@@ -27,7 +27,7 @@ class DesktopShell {
   final SystemNotifier notifier;
   final DetectionSettings detection;
   final MascotSettings mascot;
-  final LoginItemPort loginItem;
+  final LaunchAtLogin launchAtLogin;
   final FocusGuardSettings focusGuard;
   final Future<void> Function() quitApp;
 
@@ -40,23 +40,19 @@ class DesktopShell {
     required this.notifier,
     required this.detection,
     required this.mascot,
-    this.loginItem = const _NoLoginItem(),
+    LaunchAtLogin? launchAtLogin,
     FocusGuardSettings? focusGuard,
     required this.quitApp,
-  }) : focusGuard = focusGuard ?? FocusGuardSettings();
+  })  : focusGuard = focusGuard ?? FocusGuardSettings(),
+        launchAtLogin = launchAtLogin ?? LaunchAtLogin(NoopLoginItem());
 
   WorkdayController get _workday =>
       container.read(workdayControllerProvider.notifier);
 
-  /// `null` si no hay soporte; si no, si está activado.
-  bool? _launchAtLogin;
-
   Future<void> start() async {
     await _tray.init();
     await notifier.init();
-    if (await loginItem.isSupported()) {
-      _launchAtLogin = await loginItem.isEnabled();
-    }
+    await launchAtLogin.load();
 
     final sub = container.listen<WorkdayView>(
       workdayControllerProvider,
@@ -75,6 +71,8 @@ class DesktopShell {
     _cleanup.add(() => mascot.removeListener(onVisibility));
     focusGuard.addListener(onVisibility);
     _cleanup.add(() => focusGuard.removeListener(onVisibility));
+    launchAtLogin.addListener(onVisibility);
+    _cleanup.add(() => launchAtLogin.removeListener(onVisibility));
 
     final events = _workday.events.listen((event) {
       final notice = noticeFor(event, mode: _workday.currentMode);
@@ -130,7 +128,7 @@ class DesktopShell {
         detectionEnabled: detection.enabled,
         walkEnabled: mascot.walkEnabled,
         focusGuardEnabled: focusGuard.enabled,
-        launchAtLogin: _launchAtLogin,
+        launchAtLogin: launchAtLogin.supported ? launchAtLogin.enabled : null,
       ),
     ));
   }
@@ -150,12 +148,9 @@ class DesktopShell {
       case TrayAction.finish:
         _workday.finish();
       case TrayAction.showStats:
-        if (!window.visible.value) await window.show();
-        await setMascotPanel(
-          window: window,
-          panel: container.read(mascotPanelProvider.notifier),
-          next: MascotPanel.stats,
-        );
+        await _showPanel(MascotPanel.stats);
+      case TrayAction.showSettings:
+        await _showPanel(MascotPanel.settings);
       case TrayAction.toggleMascot:
         await window.toggle();
       case TrayAction.toggleDetection:
@@ -165,21 +160,25 @@ class DesktopShell {
       case TrayAction.toggleFocusGuard:
         await focusGuard.setEnabled(!focusGuard.enabled);
       case TrayAction.toggleLaunchAtLogin:
-        final want = !(_launchAtLogin ?? false);
-        _launchAtLogin = await loginItem.setEnabled(want);
-        if (want && _launchAtLogin != true) {
+        if (!await launchAtLogin.setEnabled(!launchAtLogin.enabled)) {
           unawaited(notifier.show(const WorkdayNotice(
-              'Falta un permiso',
-              'Para abrir PixelMate al iniciar sesión, actívala en '
-                  'Configuración del Sistema → General → Ítems de inicio.')));
+              'Falta un permiso', launchAtLoginApprovalHint)));
         }
-        _refreshTray(container.read(workdayControllerProvider));
       case TrayAction.quit:
         await dispose();
         await quitApp();
       case null:
         break;
     }
+  }
+
+  Future<void> _showPanel(MascotPanel next) async {
+    if (!window.visible.value) await window.show();
+    await setMascotPanel(
+      window: window,
+      panel: container.read(mascotPanelProvider.notifier),
+      next: next,
+    );
   }
 
   Future<void> dispose() async {
@@ -189,17 +188,4 @@ class DesktopShell {
     _cleanup.clear();
     await _tray.dispose();
   }
-}
-
-class _NoLoginItem implements LoginItemPort {
-  const _NoLoginItem();
-
-  @override
-  Future<bool> isSupported() async => false;
-
-  @override
-  Future<bool> isEnabled() async => false;
-
-  @override
-  Future<bool> setEnabled(bool enabled) async => false;
 }

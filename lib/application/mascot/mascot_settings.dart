@@ -9,6 +9,7 @@ class MascotSettings extends ChangeNotifier {
   static const _walkKey = 'mascot.walk';
   static const _accessoryKey = 'mascot.accessory';
   static const _nameKey = 'mascot.name';
+  static const _onboardingKey = 'onboarding.done';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -57,6 +58,15 @@ class MascotSettings extends ChangeNotifier {
     await _prefs?.setString(_nameKey, name);
     notifyListeners();
     return name;
+  }
+
+  /// Si ya vio la bienvenida de la primera vez. Sin preferencias guardadas
+  /// (pruebas) se da por vista.
+  bool get onboardingDone => _prefs?.getBool(_onboardingKey) ?? _prefs == null;
+
+  Future<void> completeOnboarding() async {
+    await _prefs?.setBool(_onboardingKey, true);
+    notifyListeners();
   }
 
   /// Accesorio elegido (o ninguno). Solo se ve si ya está desbloqueado.

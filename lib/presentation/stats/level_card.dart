@@ -140,19 +140,10 @@ class _LevelCardState extends State<LevelCard> {
           const Text('Accesorios',
               style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
           const SizedBox(height: 4),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final a in PetAccessory.values)
-                _AccessoryChip(
-                  accessory: a,
-                  unlocked: a.unlockedAt(progress.level),
-                  equipped: a == equipped,
-                  // Tocar el que lleva puesto se lo quita.
-                  onTap: () => onEquip(a == equipped ? null : a),
-                ),
-            ],
+          AccessoryPicker(
+            level: progress.level,
+            equipped: equipped,
+            onEquip: onEquip,
           ),
         ],
       ];
@@ -184,6 +175,37 @@ class _Badge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Accesorios: los desbloqueados se ponen y se quitan con un toque; los
+/// bloqueados muestran el nivel que piden.
+class AccessoryPicker extends StatelessWidget {
+  final int level;
+  final PetAccessory? equipped;
+  final ValueChanged<PetAccessory?> onEquip;
+
+  const AccessoryPicker({
+    super.key,
+    required this.level,
+    required this.equipped,
+    required this.onEquip,
+  });
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          for (final a in PetAccessory.values)
+            _AccessoryChip(
+              accessory: a,
+              unlocked: a.unlockedAt(level),
+              equipped: a == equipped,
+              // Tocar el que lleva puesto se lo quita.
+              onTap: () => onEquip(a == equipped ? null : a),
+            ),
+        ],
+      );
 }
 
 class _AccessoryChip extends StatelessWidget {
