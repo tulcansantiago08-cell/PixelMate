@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../application/workday/workday_controller.dart';
+import '../../application/workday/workday_format.dart';
 import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_timer.dart';
 
@@ -11,28 +12,13 @@ class WorkdayBadge extends StatelessWidget {
 
   const WorkdayBadge({super.key, required this.view, this.speech});
 
-  static String formatDuration(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return h > 0 ? '$h:$m:$s' : '$m:$s';
-  }
-
   static String? statusLine(WorkdayView view) {
     final status = view.status;
     final phase = status?.phase;
     if (status == null || phase == null) return null;
-    final icon = switch (phase.kind) {
-      SessionPhase.focus => '🎯',
-      SessionPhase.shortBreak => '☕',
-      SessionPhase.longBreak => '🌿',
-      SessionPhase.idle => '',
-    };
     final paused = status.state == WorkdayRunState.paused ? ' ⏸' : '';
-    // Cuenta regresiva: se redondea hacia arriba (al empezar muestra 50:00).
-    final remaining = Duration(
-        seconds: (status.phaseRemaining.inMilliseconds / 1000).ceil());
-    return '$icon ${phase.kind.displayName} ${formatDuration(remaining)}$paused';
+    return '${phaseIcon(phase.kind)} ${phase.kind.displayName} '
+        '${formatCountdown(status.phaseRemaining)}$paused';
   }
 
   @override
