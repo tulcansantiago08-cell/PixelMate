@@ -20,7 +20,10 @@ import 'stats_style.dart';
 class StatsPanel extends ConsumerWidget {
   final VoidCallback onClose;
 
-  const StatsPanel({super.key, required this.onClose});
+  /// Abre el resumen semanal (si no se da, no se muestra el botón).
+  final VoidCallback? onShowWeekly;
+
+  const StatsPanel({super.key, required this.onClose, this.onShowWeekly});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,6 +103,14 @@ class StatsPanel extends ConsumerWidget {
                 if (stats.days.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   StatsDayChart(days: stats.days),
+                ],
+                if (onShowWeekly != null) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: const ValueKey('open-weekly'),
+                    onPressed: onShowWeekly,
+                    child: const Text('📅 Resumen de la semana'),
+                  ),
                 ],
                 const SizedBox(height: 12),
                 _RecentSessions(sessions: stats.sessions, liveId: liveId),

@@ -16,6 +16,7 @@ import 'application/desktop/mascot_window_port.dart';
 import 'application/goals/daily_goal.dart';
 import 'application/mascot/late_night.dart';
 import 'application/mascot/mascot_settings.dart';
+import 'application/stats/weekly_report.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
 import 'infrastructure/assistant/assistant_setup.dart';
@@ -64,6 +65,7 @@ void main() async {
   final shortcutSettings = ShortcutSettings(prefs);
   final soundSettings = SoundSettings(prefs);
   final sounds = MacosSoundPlayer();
+  final weeklyStore = WeeklyReportStore(prefs);
   final catalog = await loadAppCatalog(
       userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
 
@@ -78,6 +80,7 @@ void main() async {
     shortcutSettingsProvider.overrideWithValue(shortcutSettings),
     soundSettingsProvider.overrideWithValue(soundSettings),
     soundPlayerProvider.overrideWithValue(sounds),
+    weeklyReportStoreProvider.overrideWithValue(weeklyStore),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),

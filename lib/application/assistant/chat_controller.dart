@@ -11,6 +11,7 @@ import '../mascot/mascot_settings.dart';
 import '../desktop/mascot_window_port.dart';
 import '../goals/daily_goal.dart';
 import '../progress/progress_providers.dart';
+import '../stats/weekly_report.dart';
 import '../workday/workday_providers.dart';
 import 'assistant_actions.dart';
 import 'assistant_context.dart';
@@ -77,6 +78,22 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       context: _context(),
     );
     if (text != null) addFromMascot('📝 $text');
+    return text;
+  }
+
+  /// Comentario de la IA del Mac sobre una semana (se guarda: al reabrir el
+  /// resumen no se vuelve a generar). `null` si no hay IA local.
+  Future<String?> commentWeek(WeeklyReport report) async {
+    final store = _ref.read(weeklyReportStoreProvider);
+    final saved = store.comment(report);
+    if (saved != null) return saved;
+    final choice = await _ref.read(assistantChoiceProvider.future);
+    final text = await summarizeWorkday(
+      choice.assistant,
+      prompt: weeklyPrompt(report),
+      context: _context(),
+    );
+    if (text != null) await store.saveComment(report, text);
     return text;
   }
 
