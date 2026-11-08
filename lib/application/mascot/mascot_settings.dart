@@ -14,6 +14,7 @@ class MascotSettings extends ChangeNotifier {
   static const _speciesKey = 'mascot.species';
   static const _nightKey = 'mascot.nightReminders';
   static const _wellnessKey = 'mascot.wellnessTips';
+  static const _deepFocusKey = 'mascot.deepFocus';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -92,6 +93,17 @@ class MascotSettings extends ChangeNotifier {
   Future<void> setWellnessTips(bool value) async {
     _wellnessTips = value;
     await _prefs?.setBool(_wellnessKey, value);
+    notifyListeners();
+  }
+
+  /// Modo enfoque profundo: durante el enfoque, las celebraciones (nivel,
+  /// logros, racha) esperan al descanso. Desactivado por defecto.
+  bool get deepFocus => _prefs?.getBool(_deepFocusKey) ?? _deepFocus;
+  bool _deepFocus = false;
+
+  Future<void> setDeepFocus(bool value) async {
+    _deepFocus = value;
+    await _prefs?.setBool(_deepFocusKey, value);
     notifyListeners();
   }
 

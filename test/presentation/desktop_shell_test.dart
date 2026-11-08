@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/activity/detection_settings.dart';
 import 'package:pixelmate/application/desktop/login_item.dart';
+import 'package:pixelmate/application/progress/celebrations.dart';
 import 'package:pixelmate/domain/session/workday_config.dart';
 import 'package:pixelmate/application/desktop/sounds.dart';
 import 'package:pixelmate/application/desktop/global_shortcut.dart';
@@ -213,5 +214,23 @@ void main() {
     await pumpEventQueue();
     expect(player.played.take(3),
         [PetSound.focus, PetSound.rest, PetSound.finish]);
+  });
+
+  test('las celebraciones suenan y avisan', () async {
+    final player = NoopSoundPlayer();
+    final sound = SoundSettings();
+    await sound.setEnabled(true);
+    final (container, _) =
+        await startShell(sounds: player, soundSettings: sound);
+    container
+        .read(celebrationProvider.notifier)
+        .add(const Celebration('¡Nivel 4!', 'Subiste', levelUp: true));
+    await pumpEventQueue();
+    expect(player.played, [PetSound.level]);
+    container
+        .read(celebrationProvider.notifier)
+        .add(const Celebration('Logro', 'Hasta el final'));
+    await pumpEventQueue();
+    expect(player.played, [PetSound.level], reason: 'solo el nivel suena');
   });
 }
