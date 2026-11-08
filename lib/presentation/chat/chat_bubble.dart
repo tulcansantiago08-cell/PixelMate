@@ -208,6 +208,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    autofocus: true, // listo para escribir (también con ⌃⌥P)
                     onSubmitted: (_) => _send(),
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                     decoration: InputDecoration(

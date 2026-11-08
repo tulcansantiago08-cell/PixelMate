@@ -9,7 +9,9 @@ import 'application/activity/detection_settings.dart';
 import 'application/activity/focus_guard.dart';
 import 'application/activity/focus_guard_controller.dart';
 import 'application/assistant/chat_controller.dart';
+import 'application/desktop/global_shortcut.dart';
 import 'application/desktop/login_item.dart';
+import 'application/desktop/sounds.dart';
 import 'application/desktop/mascot_window_port.dart';
 import 'application/goals/daily_goal.dart';
 import 'application/mascot/mascot_settings.dart';
@@ -19,6 +21,7 @@ import 'infrastructure/assistant/assistant_setup.dart';
 import 'infrastructure/claude/claude_provider.dart';
 import 'infrastructure/screenshot/screenshot_service.dart';
 import 'infrastructure/desktop/macos_login_item.dart';
+import 'infrastructure/desktop/native_effects.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
 import 'infrastructure/desktop/system_notifier.dart';
 import 'infrastructure/persistence/sqlite_workday_store.dart';
@@ -57,6 +60,9 @@ void main() async {
   final dailyGoal = DailyGoalSettings(prefs);
   final focusGuard = FocusGuardSettings(prefs);
   final launchAtLogin = LaunchAtLogin(MacosLoginItem());
+  final shortcutSettings = ShortcutSettings(prefs);
+  final soundSettings = SoundSettings(prefs);
+  final sounds = MacosSoundPlayer();
   final catalog = await loadAppCatalog(
       userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
 
@@ -68,6 +74,9 @@ void main() async {
     dailyGoalSettingsProvider.overrideWithValue(dailyGoal),
     focusGuardSettingsProvider.overrideWithValue(focusGuard),
     launchAtLoginProvider.overrideWithValue(launchAtLogin),
+    shortcutSettingsProvider.overrideWithValue(shortcutSettings),
+    soundSettingsProvider.overrideWithValue(soundSettings),
+    soundPlayerProvider.overrideWithValue(sounds),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),
@@ -85,6 +94,10 @@ void main() async {
     mascot: mascotSettings,
     launchAtLogin: launchAtLogin,
     focusGuard: focusGuard,
+    shortcut: MacosGlobalShortcut(),
+    shortcutSettings: shortcutSettings,
+    sounds: sounds,
+    soundSettings: soundSettings,
     quitApp: () async {
       container.dispose();
       store.close();

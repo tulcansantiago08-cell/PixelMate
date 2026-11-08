@@ -10,6 +10,8 @@ class AppDelegate: FlutterAppDelegate {
       activityMonitor = AppActivityMonitor.register(with: controller.engine.binaryMessenger)
       LoginItem.register(with: controller.engine.binaryMessenger)
       AppleAssistant.register(with: controller.engine.binaryMessenger)
+      GlobalHotKey.register(with: controller.engine.binaryMessenger)
+      SoundPlayer.register(with: controller.engine.binaryMessenger)
     }
     super.applicationDidFinishLaunching(notification)
   }

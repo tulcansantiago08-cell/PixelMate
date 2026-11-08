@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/detection_settings.dart';
 import '../../application/activity/focus_guard.dart';
 import '../../application/activity/focus_guard_controller.dart';
+import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/login_item.dart';
+import '../../application/desktop/sounds.dart';
 import '../../application/desktop/mascot_panel.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/mascot_settings.dart';
@@ -29,6 +31,10 @@ class DesktopShell {
   final MascotSettings mascot;
   final LaunchAtLogin launchAtLogin;
   final FocusGuardSettings focusGuard;
+  final GlobalShortcutPort shortcut;
+  final ShortcutSettings shortcutSettings;
+  final SoundPlayer sounds;
+  final SoundSettings soundSettings;
   final Future<void> Function() quitApp;
 
   late final MenuBarTray _tray = MenuBarTray(onSelected: _onTrayAction);
@@ -42,9 +48,17 @@ class DesktopShell {
     required this.mascot,
     LaunchAtLogin? launchAtLogin,
     FocusGuardSettings? focusGuard,
+    GlobalShortcutPort? shortcut,
+    ShortcutSettings? shortcutSettings,
+    SoundPlayer? sounds,
+    SoundSettings? soundSettings,
     required this.quitApp,
   })  : focusGuard = focusGuard ?? FocusGuardSettings(),
-        launchAtLogin = launchAtLogin ?? LaunchAtLogin(NoopLoginItem());
+        launchAtLogin = launchAtLogin ?? LaunchAtLogin(NoopLoginItem()),
+        shortcut = shortcut ?? NoopGlobalShortcut(),
+        shortcutSettings = shortcutSettings ?? ShortcutSettings(),
+        sounds = sounds ?? NoopSoundPlayer(),
+        soundSettings = soundSettings ?? SoundSettings();
 
   WorkdayController get _workday =>
       container.read(workdayControllerProvider.notifier);
@@ -77,6 +91,7 @@ class DesktopShell {
     final events = _workday.events.listen((event) {
       final notice = noticeFor(event, mode: _workday.currentMode);
       if (notice != null) unawaited(notifier.show(notice));
+      _play(soundForEvent(event));
     });
     _cleanup.add(events.cancel);
 
@@ -86,6 +101,7 @@ class DesktopShell {
       (before, after) {
         if (before == null) return;
         for (final event in progressEvents(before, after)) {
+          if (event is LeveledUp) _play(PetSound.level);
           final m = progressMessage(event);
           unawaited(notifier.show(WorkdayNotice(m.title, m.message)));
         }
@@ -97,6 +113,7 @@ class DesktopShell {
       dailyGoalProvider,
       (before, after) {
         if (goalJustReached(before, after)) {
+          _play(PetSound.goal);
           unawaited(notifier.show(WorkdayNotice(
               'Meta diaria cumplida', goalReachedMessage(after!.goal))));
         }
@@ -117,6 +134,13 @@ class DesktopShell {
       },
     );
     _cleanup.add(guard.close);
+
+    // Atajo global: abre o cierra el chat desde cualquier app.
+    await _applyShortcut();
+    shortcutSettings.addListener(_applyShortcut);
+    _cleanup.add(() => shortcutSettings.removeListener(_applyShortcut));
+    final presses = shortcut.presses.listen((_) => _toggleChat());
+    _cleanup.add(presses.cancel);
   }
 
   void _refreshTray(WorkdayView view) {
@@ -170,6 +194,26 @@ class DesktopShell {
       case null:
         break;
     }
+  }
+
+  Future<void> _applyShortcut() async {
+    final ok = await shortcut.setEnabled(shortcutSettings.enabled);
+    shortcutSettings.reportWorking(ok);
+  }
+
+  void _play(PetSound? sound) {
+    if (sound != null && soundSettings.enabled) unawaited(sounds.play(sound));
+  }
+
+  /// El atajo: muestra la mascota y abre el chat (o lo cierra si ya está).
+  Future<void> _toggleChat() async {
+    final panel = container.read(mascotPanelProvider);
+    if (!window.visible.value) await window.show();
+    await setMascotPanel(
+      window: window,
+      panel: container.read(mascotPanelProvider.notifier),
+      next: panel == MascotPanel.chat ? MascotPanel.none : MascotPanel.chat,
+    );
   }
 
   Future<void> _showPanel(MascotPanel next) async {

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/activity_providers.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/assistant/chat_controller.dart';
+import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/login_item.dart';
+import '../../application/desktop/sounds.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/mascot_settings.dart';
@@ -39,6 +41,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final level = ref.watch(progressProvider.select((p) => p.level));
     final equipped = ref.watch(equippedAccessoryProvider);
     final ai = ref.watch(assistantChoiceProvider).valueOrNull;
+    final shortcut = ref.watch(shortcutSettingsProvider);
+    final sound = ref.watch(soundSettingsProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -67,8 +71,15 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
           ]),
           Expanded(
             child: ListenableBuilder(
-              listenable:
-                  Listenable.merge([mascot, goal, guard, detection, launch]),
+              listenable: Listenable.merge([
+                mascot,
+                goal,
+                guard,
+                detection,
+                launch,
+                shortcut,
+                sound,
+              ]),
               builder: (context, _) => ListView(
                 padding: const EdgeInsets.only(right: 4),
                 children: [
@@ -152,6 +163,34 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     value: detection.enabled,
                     onChanged: detection.setEnabled,
                   ),
+                  const _Section('Extras'),
+                  _Switch(
+                    keyName: 'shortcut',
+                    label: 'Atajo $shortcutLabel para abrir el chat',
+                    help: shortcut.enabled && !shortcut.working
+                        ? '⚠️ Otra app ya usa $shortcutLabel.'
+                        : 'Funciona desde cualquier app.',
+                    value: shortcut.enabled,
+                    onChanged: shortcut.setEnabled,
+                  ),
+                  _Switch(
+                    keyName: 'sound',
+                    label: 'Sonidos 8-bit',
+                    help: 'Al empezar el enfoque, descansar, cumplir la '
+                        'meta y subir de nivel.',
+                    value: sound.enabled,
+                    onChanged: sound.setEnabled,
+                  ),
+                  if (sound.enabled)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        key: const ValueKey('settings-sound-test'),
+                        onPressed: () =>
+                            ref.read(soundPlayerProvider).play(PetSound.level),
+                        child: const Text('▶️ Probar sonido'),
+                      ),
+                    ),
                   if (launch.supported) ...[
                     const _Section('Sistema'),
                     _Switch(
