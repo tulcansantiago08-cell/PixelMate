@@ -11,10 +11,8 @@ import '../../application/desktop/sounds.dart';
 import '../../application/desktop/mascot_panel.dart';
 import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/late_night.dart';
-import '../../application/stats/consistency.dart';
 import '../../application/mascot/mascot_settings.dart';
-import '../../application/progress/progress_providers.dart';
-import '../../application/progress/progression.dart';
+import '../../application/progress/celebrations.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/desktop/tray_model.dart';
 import '../../application/workday/workday_controller.dart';
@@ -97,19 +95,16 @@ class DesktopShell {
     });
     _cleanup.add(events.cancel);
 
-    // Subidas de nivel y logros: también se avisan si la mascota está oculta.
-    final progress = container.listen<PlayerProgress>(
-      progressProvider,
-      (before, after) {
-        if (before == null) return;
-        for (final event in progressEvents(before, after)) {
-          if (event is LeveledUp) _play(PetSound.level);
-          final m = progressMessage(event);
-          unawaited(notifier.show(WorkdayNotice(m.title, m.message)));
-        }
-      },
-    );
-    _cleanup.add(progress.close);
+    // Nivel, logros y racha (con enfoque profundo, esperan al descanso).
+    final celebrations =
+        container.listen<Celebration?>(celebrationProvider, (before, c) {
+      if (c == null || identical(before, c)) return;
+      if (c.levelUp) _play(PetSound.level);
+      if (c.alwaysNotify || !window.visible.value) {
+        unawaited(notifier.show(WorkdayNotice(c.title, c.message)));
+      }
+    });
+    _cleanup.add(celebrations.close);
 
     final goal = container.listen<DailyGoalStatus?>(
       dailyGoalProvider,
@@ -136,16 +131,6 @@ class DesktopShell {
       },
     );
     _cleanup.add(guard.close);
-
-    // Racha amable: el hito también se avisa si la mascota está oculta.
-    final streak = container.listen<Consistency>(consistencyProvider,
-        (before, after) {
-      final message = consistencyMilestone(before, after);
-      if (message != null && !window.visible.value) {
-        unawaited(notifier.show(WorkdayNotice('¡Buen ritmo!', message)));
-      }
-    });
-    _cleanup.add(streak.close);
 
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {

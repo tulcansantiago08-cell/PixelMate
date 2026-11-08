@@ -31,14 +31,13 @@ import '../../application/mascot/late_night.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/mascot/mascot_walker.dart';
 import '../../application/progress/progress_providers.dart';
-import '../../application/progress/progression.dart';
+import '../../application/progress/celebrations.dart';
 import '../../domain/mascot/pet_species.dart';
 import 'pet_sprites.dart';
 import 'rename_dialog.dart';
 import '../onboarding/welcome_panel.dart';
 import '../settings/settings_panel.dart';
 import '../stats/weekly_report_panel.dart';
-import '../../application/stats/consistency.dart';
 import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
 
@@ -373,22 +372,12 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     ref.listen(activityDetectionProvider, (_, s) {
       if (s != null) _walker.stop();
     });
-    // Subir de nivel o desbloquear un logro: lo celebra.
-    ref.listen(progressProvider, (before, after) {
-      if (before == null) return;
-      for (final event in progressEvents(before, after)) {
-        _walker.stop();
-        _react(MascotReaction(
-            progressMessage(event).message, MascotState.celebrating));
-      }
-    });
-    // Racha amable: celebra al llegar a 5 y a 7 de los últimos 7 días.
-    ref.listen(consistencyProvider, (before, after) {
-      final message = consistencyMilestone(before, after);
-      if (message != null) {
-        _react(MascotReaction(message, MascotState.celebrating),
-            duration: const Duration(seconds: 10));
-      }
+    // Nivel, logros y racha (con enfoque profundo, esperan al descanso).
+    ref.listen(celebrationProvider, (before, c) {
+      if (c == null || identical(before, c)) return;
+      _walker.stop();
+      _react(MascotReaction(c.message, MascotState.celebrating),
+          duration: const Duration(seconds: 10));
     });
     // De noche, si sigue la jornada: recordar descansar.
     ref.listen(lateNightProvider, (before, message) {

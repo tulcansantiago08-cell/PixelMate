@@ -130,7 +130,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(env.mascot.species, PetKind.cat, reason: 'bloqueado: no cambia');
     // Cada interruptor, bajando hasta él (están en este orden).
-    for (final key in ['walk', 'guard', 'wellness', 'night', 'detection']) {
+    for (final key in [
+      'walk',
+      'guard',
+      'deepfocus',
+      'wellness',
+      'night',
+      'detection'
+    ]) {
       final f = find.byKey(ValueKey('settings-$key'));
       await tester.scrollUntilVisible(f, 80,
           scrollable: find.byType(Scrollable).first);
@@ -141,6 +148,7 @@ void main() {
     }
     expect(env.mascot.walkEnabled, isFalse);
     expect(env.guard.enabled, isFalse);
+    expect(env.mascot.deepFocus, isTrue, reason: 'apagado por defecto');
     expect(env.mascot.wellnessTips, isFalse);
     expect(env.mascot.nightReminders, isFalse);
     expect(env.detection.enabled, isFalse);
@@ -185,6 +193,8 @@ void main() {
         scrollable: find.byType(Scrollable).first);
     expect(
         find.textContaining('IA de Apple · en tu Mac: gratis'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('settings-welcome')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-welcome')));
     expect(welcome, 1);
   });

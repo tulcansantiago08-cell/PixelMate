@@ -168,6 +168,14 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onChanged: guard.setEnabled,
                   ),
                   _Switch(
+                    keyName: 'deepfocus',
+                    label: 'Enfoque profundo',
+                    help: 'Durante el enfoque, los festejos (nivel, logros, '
+                        'racha) esperan al descanso.',
+                    value: mascot.deepFocus,
+                    onChanged: mascot.setDeepFocus,
+                  ),
+                  _Switch(
                     keyName: 'wellness',
                     label: 'Consejos de bienestar en los descansos',
                     help: 'Agua, estirarse, descansar la vista…',
