@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'application/workday/workday_providers.dart';
+import 'infrastructure/persistence/sqlite_workday_store.dart';
 import 'presentation/mascot/mascot_window.dart';
 
 void main() async {
@@ -23,9 +27,15 @@ void main() async {
     await windowManager.focus();
   });
 
+  // Base de datos local (jornada activa + historial).
+  final dataDir = await getApplicationSupportDirectory();
+  await dataDir.create(recursive: true);
+  final store = SqliteWorkdayStore.open(p.join(dataDir.path, 'pixelmate.db'));
+
   runApp(
-    const ProviderScope(
-      child: PixelMateApp(),
+    ProviderScope(
+      overrides: [workdayStoreProvider.overrideWithValue(store)],
+      child: const PixelMateApp(),
     ),
   );
 }
