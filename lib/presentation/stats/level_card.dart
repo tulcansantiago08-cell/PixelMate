@@ -4,8 +4,10 @@ import '../../application/progress/progression.dart';
 import '../../domain/mascot/pet_accessory.dart';
 import 'stats_style.dart';
 
-/// Nivel, barra de XP y logros, arriba del panel de estadísticas.
-class LevelCard extends StatelessWidget {
+/// Nivel y barra de XP, arriba del panel de estadísticas. Al tocarla se
+/// despliegan los logros y los accesorios (plegada por defecto para que lo
+/// de hoy quede a la vista).
+class LevelCard extends StatefulWidget {
   final PlayerProgress progress;
 
   /// Accesorio puesto ahora (o ninguno).
@@ -14,16 +16,31 @@ class LevelCard extends StatelessWidget {
   /// Elegir un accesorio; `null` para quitárselo.
   final ValueChanged<PetAccessory?>? onEquip;
 
+  final bool initiallyExpanded;
+
   const LevelCard({
     super.key,
     required this.progress,
     this.equipped,
     this.onEquip,
+    this.initiallyExpanded = false,
   });
 
   @override
+  State<LevelCard> createState() => _LevelCardState();
+}
+
+class _LevelCardState extends State<LevelCard> {
+  late bool _expanded = widget.initiallyExpanded;
+
+  @override
   Widget build(BuildContext context) {
+    final progress = widget.progress;
+    final equipped = widget.equipped;
+    final onEquip = widget.onEquip;
     final unlocked = achievements.where(progress.isUnlocked).length;
+    // Solo la cabecera pliega y despliega: tocar un logro o un accesorio
+    // (aunque esté bloqueado) no debe cerrar la tarjeta.
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
@@ -33,83 +50,112 @@ class LevelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            Text('Nv. ${progress.level}',
-                key: const ValueKey('level'),
-                style: const TextStyle(
-                    color: StatsStyle.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700)),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(progress.title,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: StatsStyle.textSecondary, fontSize: 12)),
-            ),
-            Text('${progress.xp} XP',
-                style: const TextStyle(
-                    color: StatsStyle.textMuted,
-                    fontSize: 11,
-                    fontFeatures: [FontFeature.tabularFigures()])),
-          ]),
-          const SizedBox(height: 6),
-          Tooltip(
-            message: '${progress.xpIntoLevel} de ${progress.xpNeededForNext} XP'
-                ' para el nivel ${progress.level + 1}',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress.levelFraction.clamp(0, 1),
-                minHeight: 8,
-                backgroundColor: StatsStyle.grid,
-                color: StatsStyle.accent,
-              ),
+          GestureDetector(
+            key: const ValueKey('level-card'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  Text('Nv. ${progress.level}',
+                      key: const ValueKey('level'),
+                      style: const TextStyle(
+                          color: StatsStyle.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(progress.title,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: StatsStyle.textSecondary, fontSize: 12)),
+                  ),
+                  Text('${progress.xp} XP',
+                      style: const TextStyle(
+                          color: StatsStyle.textMuted,
+                          fontSize: 11,
+                          fontFeatures: [FontFeature.tabularFigures()])),
+                ]),
+                const SizedBox(height: 6),
+                Tooltip(
+                  message:
+                      '${progress.xpIntoLevel} de ${progress.xpNeededForNext} XP'
+                      ' para el nivel ${progress.level + 1}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress.levelFraction.clamp(0, 1),
+                      minHeight: 8,
+                      backgroundColor: StatsStyle.grid,
+                      color: StatsStyle.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Row(children: [
+                  Expanded(
+                    child: Text(
+                      'Faltan ${progress.xpNeededForNext - progress.xpIntoLevel} XP '
+                      'para el nivel ${progress.level + 1}',
+                      style: const TextStyle(
+                          color: StatsStyle.textMuted, fontSize: 10),
+                    ),
+                  ),
+                  Text(
+                    _expanded
+                        ? 'Ocultar ▴'
+                        : '🏅 $unlocked/${achievements.length}'
+                            '${onEquip != null ? ' · accesorios' : ''} ▾',
+                    style: const TextStyle(
+                        color: StatsStyle.textSecondary, fontSize: 10),
+                  ),
+                ]),
+              ],
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            'Faltan ${progress.xpNeededForNext - progress.xpIntoLevel} XP '
-            'para el nivel ${progress.level + 1}',
-            style: const TextStyle(color: StatsStyle.textMuted, fontSize: 10),
-          ),
+          if (_expanded) ..._details(progress, equipped, onEquip, unlocked),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _details(PlayerProgress progress, PetAccessory? equipped,
+          ValueChanged<PetAccessory?>? onEquip, int unlocked) =>
+      [
+        const SizedBox(height: 8),
+        Text('Logros $unlocked/${achievements.length}',
+            style:
+                const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            for (final a in achievements) _Badge(a, progress.isUnlocked(a)),
+          ],
+        ),
+        if (onEquip != null) ...[
           const SizedBox(height: 8),
-          Text('Logros $unlocked/${achievements.length}',
-              style: const TextStyle(
-                  color: StatsStyle.textSecondary, fontSize: 11)),
+          const Text('Accesorios',
+              style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
           const SizedBox(height: 4),
           Wrap(
             spacing: 4,
             runSpacing: 4,
             children: [
-              for (final a in achievements) _Badge(a, progress.isUnlocked(a)),
+              for (final a in PetAccessory.values)
+                _AccessoryChip(
+                  accessory: a,
+                  unlocked: a.unlockedAt(progress.level),
+                  equipped: a == equipped,
+                  // Tocar el que lleva puesto se lo quita.
+                  onTap: () => onEquip(a == equipped ? null : a),
+                ),
             ],
           ),
-          if (onEquip != null) ...[
-            const SizedBox(height: 8),
-            const Text('Accesorios',
-                style:
-                    TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final a in PetAccessory.values)
-                  _AccessoryChip(
-                    accessory: a,
-                    unlocked: a.unlockedAt(progress.level),
-                    equipped: a == equipped,
-                    // Tocar el que lleva puesto se lo quita.
-                    onTap: () => onEquip!(a == equipped ? null : a),
-                  ),
-              ],
-            ),
-          ],
         ],
-      ),
-    );
-  }
+      ];
 }
 
 class _Badge extends StatelessWidget {

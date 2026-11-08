@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/activity/detection_settings.dart';
+import '../../application/desktop/login_item.dart';
 import '../../application/desktop/mascot_panel.dart';
+import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
 import '../../application/progress/progression.dart';
@@ -23,6 +25,7 @@ class DesktopShell {
   final SystemNotifier notifier;
   final DetectionSettings detection;
   final MascotSettings mascot;
+  final LoginItemPort loginItem;
   final Future<void> Function() quitApp;
 
   late final MenuBarTray _tray = MenuBarTray(onSelected: _onTrayAction);
@@ -34,15 +37,22 @@ class DesktopShell {
     required this.notifier,
     required this.detection,
     required this.mascot,
+    this.loginItem = const _NoLoginItem(),
     required this.quitApp,
   });
 
   WorkdayController get _workday =>
       container.read(workdayControllerProvider.notifier);
 
+  /// `null` si no hay soporte; si no, si está activado.
+  bool? _launchAtLogin;
+
   Future<void> start() async {
     await _tray.init();
     await notifier.init();
+    if (await loginItem.isSupported()) {
+      _launchAtLogin = await loginItem.isEnabled();
+    }
 
     final sub = container.listen<WorkdayView>(
       workdayControllerProvider,
@@ -78,6 +88,17 @@ class DesktopShell {
       },
     );
     _cleanup.add(progress.close);
+
+    final goal = container.listen<DailyGoalStatus?>(
+      dailyGoalProvider,
+      (before, after) {
+        if (goalJustReached(before, after)) {
+          unawaited(notifier.show(WorkdayNotice(
+              'Meta diaria cumplida', goalReachedMessage(after!.goal))));
+        }
+      },
+    );
+    _cleanup.add(goal.close);
   }
 
   void _refreshTray(WorkdayView view) {
@@ -88,6 +109,7 @@ class DesktopShell {
         mascotVisible: window.visible.value,
         detectionEnabled: detection.enabled,
         walkEnabled: mascot.walkEnabled,
+        launchAtLogin: _launchAtLogin,
       ),
     ));
   }
@@ -119,6 +141,16 @@ class DesktopShell {
         await detection.setEnabled(!detection.enabled);
       case TrayAction.toggleWalk:
         await mascot.setWalkEnabled(!mascot.walkEnabled);
+      case TrayAction.toggleLaunchAtLogin:
+        final want = !(_launchAtLogin ?? false);
+        _launchAtLogin = await loginItem.setEnabled(want);
+        if (want && _launchAtLogin != true) {
+          unawaited(notifier.show(const WorkdayNotice(
+              'Falta un permiso',
+              'Para abrir PixelMate al iniciar sesión, actívala en '
+                  'Configuración del Sistema → General → Ítems de inicio.')));
+        }
+        _refreshTray(container.read(workdayControllerProvider));
       case TrayAction.quit:
         await dispose();
         await quitApp();
@@ -134,4 +166,17 @@ class DesktopShell {
     _cleanup.clear();
     await _tray.dispose();
   }
+}
+
+class _NoLoginItem implements LoginItemPort {
+  const _NoLoginItem();
+
+  @override
+  Future<bool> isSupported() async => false;
+
+  @override
+  Future<bool> isEnabled() async => false;
+
+  @override
+  Future<bool> setEnabled(bool enabled) async => false;
 }
