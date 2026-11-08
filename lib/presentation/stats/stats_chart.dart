@@ -141,10 +141,13 @@ class _StackedBar extends StatelessWidget {
     if (segments.isEmpty) return const SizedBox.shrink();
 
     final children = <Widget>[];
+    // Las separaciones entre colores también ocupan alto: se descuentan
+    // para que la barra del día más largo no se salga del gráfico.
+    final available = maxHeight - StatsDayChart._gap * (segments.length - 1);
     // Orden fijo de abajo arriba: trabajo, estudio, juego.
     for (final (i, (mode, d)) in segments.reversed.indexed) {
       final isTop = i == 0;
-      final h = math.max(2.0, maxHeight * d.inSeconds / scale.inSeconds);
+      final h = math.max(2.0, available * d.inSeconds / scale.inSeconds);
       if (!isTop) children.add(const SizedBox(height: StatsDayChart._gap));
       children.add(Container(
         width: width,

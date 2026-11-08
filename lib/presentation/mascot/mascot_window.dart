@@ -36,6 +36,8 @@ import 'pet_sprites.dart';
 import 'rename_dialog.dart';
 import '../onboarding/welcome_panel.dart';
 import '../settings/settings_panel.dart';
+import '../stats/weekly_report_panel.dart';
+import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
 
 class MascotWindow extends ConsumerStatefulWidget {
@@ -80,7 +82,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       // hacer (si no hay sesión en curso).
       if (!ref.read(mascotSettingsProvider).onboardingDone) {
         _openPanel(MascotPanel.welcome);
-      } else {
+      } else if (!_maybeShowWeekly()) {
         ref.read(activityDetectionProvider.notifier).askWelcome();
       }
     });
@@ -208,14 +210,38 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         next: next,
       );
 
+  /// Abre el resumen de [week].
+  void _showWeekly(DateTime week) {
+    ref.read(weeklyReportWeekProvider.notifier).state = week;
+    _openPanel(MascotPanel.weekly);
+  }
+
+  /// Al empezar una semana nueva (o el domingo por la tarde), muestra el
+  /// resumen una sola vez. Devuelve `true` si lo abrió.
+  bool _maybeShowWeekly() {
+    final store = ref.read(weeklyReportStoreProvider);
+    final week = weekToReport(DateTime.now(), lastShown: store.lastShown);
+    if (week == null || ref.read(workdayControllerProvider).isActive) {
+      return false;
+    }
+    store.markShown(week);
+    final report = buildWeeklyReport(
+        history: ref.read(allHistoryProvider), weekStart: week);
+    if (report.isEmpty) return false; // semana sin sesiones: nada que contar
+    _showWeekly(week);
+    return true;
+  }
+
   /// Fin de la bienvenida (completa o saltada).
   Future<void> _finishWelcome() async {
     await ref.read(mascotSettingsProvider).completeOnboarding();
     await _openPanel(MascotPanel.none);
     if (!mounted) return;
     _react(
-        MascotReaction('¡Encantado de conocerte! Soy '
-            '${ref.read(petNameProvider)} 🐾', MascotState.celebrating),
+        MascotReaction(
+            '¡Encantado de conocerte! Soy '
+            '${ref.read(petNameProvider)} 🐾',
+            MascotState.celebrating),
         replace: true);
   }
 
@@ -386,13 +412,17 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                       MascotPanel.chat => const ChatBubble(),
                       MascotPanel.settings => SettingsPanel(
                           onClose: () => _openPanel(MascotPanel.none),
-                          onShowWelcome: () =>
-                              _openPanel(MascotPanel.welcome),
+                          onShowWelcome: () => _openPanel(MascotPanel.welcome),
                         ),
                       MascotPanel.welcome =>
                         WelcomePanel(onDone: _finishWelcome),
-                      _ => StatsPanel(
+                      MascotPanel.weekly => WeeklyReportPanel(
                           onClose: () => _openPanel(MascotPanel.none)),
+                      _ => StatsPanel(
+                          onClose: () => _openPanel(MascotPanel.none),
+                          onShowWeekly: () =>
+                              _showWeekly(weekStartOf(DateTime.now())),
+                        ),
                     },
                   ),
                 ),
