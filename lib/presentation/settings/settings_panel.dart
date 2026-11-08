@@ -168,6 +168,13 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onChanged: guard.setEnabled,
                   ),
                   _Switch(
+                    keyName: 'wellness',
+                    label: 'Consejos de bienestar en los descansos',
+                    help: 'Agua, estirarse, descansar la vista…',
+                    value: mascot.wellnessTips,
+                    onChanged: mascot.setWellnessTips,
+                  ),
+                  _Switch(
                     keyName: 'night',
                     label: 'Recordarme descansar de noche',
                     help: 'Desde las 22:00, si sigue una jornada.',

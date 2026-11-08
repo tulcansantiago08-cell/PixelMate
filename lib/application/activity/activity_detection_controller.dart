@@ -55,6 +55,12 @@ class ActivityDetectionController extends StateNotifier<Suggestion?> {
     _show(Suggestion.welcome(_now().toLocal()));
   }
 
+  /// Empezó una jornada por otro camino (menú, chat, atajo): la pregunta
+  /// de bienvenida ya no tiene sentido.
+  void dismissWelcome() {
+    if (state != null && state!.app == null) _clear();
+  }
+
   Future<void> choose(SuggestionAction action) async {
     final suggestion = state;
     if (suggestion == null) return;
