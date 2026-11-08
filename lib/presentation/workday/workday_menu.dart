@@ -10,6 +10,7 @@ Future<void> showWorkdayMenu({
   required Offset globalPosition,
   required WorkdayController controller,
   required WorkdayView view,
+  required VoidCallback onShowStats,
 }) async {
   final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final position = RelativeRect.fromRect(
@@ -45,6 +46,11 @@ Future<void> showWorkdayMenu({
       ),
     ];
   }
+
+  items
+    ..add(const PopupMenuDivider())
+    ..add(PopupMenuItem(
+        value: onShowStats, child: const Text('📊  Estadísticas')));
 
   final action = await showMenu<VoidCallback>(
     context: context,

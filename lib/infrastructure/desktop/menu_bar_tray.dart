@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:tray_manager/tray_manager.dart';
 
@@ -7,12 +9,24 @@ import '../../application/desktop/tray_model.dart';
 ///
 /// Solo habla con el plugin cuando algo cambia: el título (cuenta regresiva)
 /// una vez por segundo y el menú cuando cambia su contenido.
+///
+/// tray_manager identifica el clic por el id del elemento en el menú
+/// *actual*: si el menú se reemplaza mientras está abierto, el clic se pierde
+/// sin error. Por eso el contenido del menú cambia solo en transiciones y,
+/// mientras está abierto, los cambios esperan a que se cierre o se use.
 class MenuBarTray with TrayListener {
   final void Function(TrayEntry entry) onSelected;
+
+  /// Cuánto tiempo se considera abierto el menú tras hacer clic en el icono.
+  static const menuOpenGrace = Duration(seconds: 20);
 
   String? _title;
   String? _menuSignature;
   final Map<String, TrayEntry> _entriesByKey = {};
+
+  DateTime? _menuOpenedAt;
+  List<TrayEntry>? _pending;
+  Timer? _pendingTimer;
 
   MenuBarTray({required this.onSelected});
 
@@ -31,10 +45,34 @@ class MenuBarTray with TrayListener {
 
     final signature = entries.map((e) => e.key).join('|');
     if (signature == _menuSignature) return;
+
+    final openedAt = _menuOpenedAt;
+    if (openedAt != null &&
+        DateTime.now().difference(openedAt) < menuOpenGrace) {
+      // El menú puede estar abierto: aplicar después.
+      _pending = entries;
+      _pendingTimer ??= Timer(menuOpenGrace, _applyPending);
+      return;
+    }
+    await _setMenu(signature, entries);
+  }
+
+  Future<void> _setMenu(String signature, List<TrayEntry> entries) async {
     _menuSignature = signature;
     _entriesByKey.clear();
     await trayManager
         .setContextMenu(Menu(items: entries.map(_toItem).toList()));
+  }
+
+  void _applyPending() {
+    _pendingTimer?.cancel();
+    _pendingTimer = null;
+    _menuOpenedAt = null;
+    final pending = _pending;
+    _pending = null;
+    if (pending != null) {
+      unawaited(_setMenu(pending.map((e) => e.key).join('|'), pending));
+    }
   }
 
   MenuItem _toItem(TrayEntry entry) {
@@ -62,23 +100,28 @@ class MenuBarTray with TrayListener {
     );
   }
 
-  @override
-  void onTrayIconMouseDown() => trayManager.popUpContextMenu();
+  void _openMenu() {
+    _menuOpenedAt = DateTime.now();
+    trayManager.popUpContextMenu();
+  }
 
   @override
-  void onTrayIconRightMouseDown() => trayManager.popUpContextMenu();
+  void onTrayIconMouseDown() => _openMenu();
+
+  @override
+  void onTrayIconRightMouseDown() => _openMenu();
 
   @override
   void onTrayMenuItemClick(MenuItem menuItem) {
     final entry = _entriesByKey[menuItem.key];
-    if (entry == null) {
-      debugPrint('Elemento de menú desconocido: ${menuItem.key}');
-      return;
-    }
-    onSelected(entry);
+    debugPrint('[barra de menú] clic: ${menuItem.label} → ${entry?.action}');
+    if (entry != null) onSelected(entry);
+    // El menú ya se cerró: aplica cualquier cambio que estuviera esperando.
+    _applyPending();
   }
 
   Future<void> dispose() async {
+    _pendingTimer?.cancel();
     trayManager.removeListener(this);
     await trayManager.destroy();
   }

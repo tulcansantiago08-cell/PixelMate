@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../application/activity/activity_providers.dart';
+import '../../application/desktop/mascot_panel.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/workday/workday_controller.dart';
 import '../../application/workday/workday_dialogue.dart';
@@ -15,6 +16,8 @@ import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_timer.dart';
 import '../activity/suggestion_bubble.dart';
 import '../chat/chat_bubble.dart';
+import '../stats/stats_panel.dart';
+import 'mascot_quick_actions.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
 import 'mascot_painter.dart';
@@ -29,7 +32,6 @@ class MascotWindow extends ConsumerStatefulWidget {
 class _MascotWindowState extends ConsumerState<MascotWindow>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  bool _showChat = false;
   bool _greeting = true;
 
   // Reacción temporal a un suceso de la jornada.
@@ -84,19 +86,28 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
     super.dispose();
   }
 
-  Future<void> _toggleChat() async {
-    final open = !_showChat;
-    final window = ref.read(mascotWindowProvider);
-    // Al abrir, primero se agranda la ventana; al cerrar, primero se oculta
-    // el chat. Así nunca se dibuja el chat en una ventana pequeña.
-    if (open) await window.setExpanded(true);
-    if (!mounted) return;
-    setState(() => _showChat = open);
-    if (!open) await window.setExpanded(false);
-  }
+  Future<void> _openPanel(MascotPanel next) => setMascotPanel(
+        window: ref.read(mascotWindowProvider),
+        panel: ref.read(mascotPanelProvider.notifier),
+        next: next,
+      );
 
-  MascotState _mascotState(WorkdayView view) {
-    if (_showChat) return MascotState.chatting;
+  void _showMenu(BuildContext context, Offset position) => showWorkdayMenu(
+        context: context,
+        globalPosition: position,
+        controller: ref.read(workdayControllerProvider.notifier),
+        view: ref.read(workdayControllerProvider),
+        onShowStats: () => _openPanel(MascotPanel.stats),
+      );
+
+  /// Clic en la mascota: abre o cierra el chat (o cierra otro panel).
+  Future<void> _togglePanel() =>
+      _openPanel(ref.read(mascotPanelProvider) == MascotPanel.none
+          ? MascotPanel.chat
+          : MascotPanel.none);
+
+  MascotState _mascotState(WorkdayView view, MascotPanel panel) {
+    if (panel == MascotPanel.chat) return MascotState.chatting;
     if (_reactionMood != null) return _reactionMood!;
     if (_greeting) return MascotState.greeting;
     final status = view.status;
@@ -114,6 +125,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
   Widget build(BuildContext context) {
     final view = ref.watch(workdayControllerProvider);
     final suggestion = ref.watch(activityDetectionProvider);
+    final panel = ref.watch(mascotPanelProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -126,18 +138,21 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
             // La mascota vive en la esquina inferior derecha de la ventana.
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Chat ocupa el espacio disponible arriba
-              if (_showChat)
-                const Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(8, 8, 8, 4),
-                    child: ChatBubble(),
-                  ),
-                )
+              // El panel abierto ocupa el espacio disponible arriba.
+              if (panel == MascotPanel.none)
+                const Spacer()
               else
-                const Spacer(),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                    child: panel == MascotPanel.chat
+                        ? const ChatBubble()
+                        : StatsPanel(
+                            onClose: () => _openPanel(MascotPanel.none)),
+                  ),
+                ),
 
-              if (!_showChat)
+              if (panel == MascotPanel.none)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: suggestion != null
@@ -150,26 +165,35 @@ class _MascotWindowState extends ConsumerState<MascotWindow>
                       : WorkdayBadge(view: view, speech: _speech),
                 ),
 
-              // Mascota fija abajo
-              GestureDetector(
-                onPanStart: (_) async => await windowManager.startDragging(),
-                onTap: _toggleChat,
-                onSecondaryTapDown: (details) => showWorkdayMenu(
-                  context: context,
-                  globalPosition: details.globalPosition,
-                  controller: ref.read(workdayControllerProvider.notifier),
-                  view: ref.read(workdayControllerProvider),
-                ),
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, _) => CustomPaint(
-                    painter: MascotPainter(
-                      state: _mascotState(view),
-                      animValue: _controller.value,
-                    ),
-                    size: const Size(160, 160),
+              // Mascota fija abajo, con accesos rápidos a su izquierda.
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MascotQuickActions(
+                    statsOpen: panel == MascotPanel.stats,
+                    onStats: () => _openPanel(panel == MascotPanel.stats
+                        ? MascotPanel.none
+                        : MascotPanel.stats),
+                    onMenu: (position) => _showMenu(context, position),
                   ),
-                ),
+                  GestureDetector(
+                    onPanStart: (_) async =>
+                        await windowManager.startDragging(),
+                    onTap: _togglePanel,
+                    onSecondaryTapDown: (details) =>
+                        _showMenu(context, details.globalPosition),
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, _) => CustomPaint(
+                        painter: MascotPainter(
+                          state: _mascotState(view, panel),
+                          animValue: _controller.value,
+                        ),
+                        size: const Size(160, 160),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 8),

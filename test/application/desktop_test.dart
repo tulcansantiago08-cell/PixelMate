@@ -88,12 +88,16 @@ void main() {
       expect(label(false), 'Mostrar mascota');
     });
 
-    test('el menú no cambia cada segundo (solo el título)', () {
+    test('el menú no cambia con el tiempo, solo en transiciones', () {
       String signature(DateTime now) =>
           trayEntries(viewAt(timer, now), mascotVisible: true)
               .map((e) => e.key)
               .join('|');
       expect(signature(at(10, 1)), signature(at(10, 40)));
+      // Tampoco cada minuto: solo cambia al pasar de fase. Si cambiara con el
+      // menú abierto, tray_manager descartaría el clic.
+      expect(signature(at(1)), signature(at(49, 59)));
+      expect(signature(at(49, 59)), isNot(signature(at(50))));
     });
 
     test('las claves son únicas para identificar el clic', () {

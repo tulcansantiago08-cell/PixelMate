@@ -7,6 +7,7 @@ import 'package:pixelmate/application/activity/detection_settings.dart';
 import 'package:pixelmate/application/workday/workday_providers.dart';
 import 'package:pixelmate/infrastructure/persistence/sqlite_workday_store.dart';
 import 'package:pixelmate/presentation/mascot/mascot_window.dart';
+import 'package:pixelmate/presentation/stats/stats_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// La mascota anima en bucle, así que no se puede usar pumpAndSettle.
@@ -60,6 +61,21 @@ void main() {
     await settleMenu(tester);
     expect(store.loadActive(), isNull);
     expect(store.history(), hasLength(1));
+
+    // El botón 📊 junto a la mascota abre y cierra las estadísticas.
+    await tester.tap(find.byTooltip('Estadísticas'));
+    await settleMenu(tester);
+    expect(find.byType(StatsPanel), findsOneWidget);
+    await tester.tap(find.byTooltip('Cerrar estadísticas'));
+    await settleMenu(tester);
+    expect(find.byType(StatsPanel), findsNothing);
+
+    // El botón ⋯ abre el mismo menú que el clic derecho.
+    await tester.tap(find.byTooltip('Menú: jornada, pausa…'));
+    await settleMenu(tester);
+    expect(find.text('Iniciar jornada'), findsOneWidget);
+    await tester.tapAt(const Offset(5, 5));
+    await settleMenu(tester);
 
     // Deja pasar los temporizadores de saludo y del globo.
     await tester.pump(const Duration(seconds: 10));
