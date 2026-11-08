@@ -23,6 +23,8 @@ import '../workday/workday_menu.dart';
 import '../../application/mascot/idle_behavior.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/mascot/mascot_walker.dart';
+import '../../application/progress/progress_providers.dart';
+import '../../application/progress/progression.dart';
 import '../../domain/mascot/pet_species.dart';
 import 'pet_sprites.dart';
 import 'sprite_mascot.dart';
@@ -75,18 +77,36 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       _wake(animate: false);
       final reaction = reactionFor(event, mode: mode);
       if (reaction == null || !mounted) return;
-      _reactionTimer?.cancel();
+      _react(reaction, replace: true);
+    });
+  }
+
+  /// Reacciones que esperan su turno (por ejemplo, un logro justo al
+  /// terminar la jornada se dice después del mensaje de fin).
+  final _pendingReactions = <MascotReaction>[];
+
+  /// Muestra un mensaje con su estado de ánimo durante unos segundos.
+  /// Con [replace] sustituye al actual; si no, espera a que termine.
+  void _react(MascotReaction reaction, {bool replace = false}) {
+    if (!mounted) return;
+    if (!replace && _reactionTimer?.isActive == true) {
+      _pendingReactions.add(reaction);
+      return;
+    }
+    _reactionTimer?.cancel();
+    setState(() {
+      _speech = reaction.message;
+      _reactionMood = reaction.mood;
+    });
+    _reactionTimer = Timer(_reactionDuration, () {
+      if (!mounted) return;
+      if (_pendingReactions.isNotEmpty) {
+        _react(_pendingReactions.removeAt(0));
+        return;
+      }
       setState(() {
-        _speech = reaction.message;
-        _reactionMood = reaction.mood;
-      });
-      _reactionTimer = Timer(_reactionDuration, () {
-        if (mounted) {
-          setState(() {
-            _speech = null;
-            _reactionMood = null;
-          });
-        }
+        _speech = null;
+        _reactionMood = null;
       });
     });
   }
@@ -196,6 +216,15 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     // Si la mascota pregunta algo, deja de pasear.
     ref.listen(activityDetectionProvider, (_, s) {
       if (s != null) _walker.stop();
+    });
+    // Subir de nivel o desbloquear un logro: lo celebra.
+    ref.listen(progressProvider, (before, after) {
+      if (before == null) return;
+      for (final event in progressEvents(before, after)) {
+        _walker.stop();
+        _react(MascotReaction(
+            progressMessage(event).message, MascotState.celebrating));
+      }
     });
     final walking = _walker.walking;
 
