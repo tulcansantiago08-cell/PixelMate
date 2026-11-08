@@ -35,7 +35,7 @@ void main() {
       child: const MaterialApp(home: MascotWindow()),
     ));
 
-    final mascot = find.byType(CustomPaint).last;
+    final mascot = find.byKey(mascotKey);
     await tester.tap(mascot, buttons: kSecondaryButton);
     await settleMenu(tester);
     expect(find.text('Iniciar jornada'), findsOneWidget);
