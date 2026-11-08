@@ -10,6 +10,7 @@ enum TrayAction {
   resume,
   skipPhase,
   finish,
+  showStats,
   toggleMascot,
   toggleDetection,
   quit,
@@ -79,11 +80,6 @@ List<TrayEntry> trayEntries(
         '${phase.kind.displayName} · ciclo ${phase.cycle}',
         enabled: false,
       ));
-      entries.add(TrayEntry(
-        'Jornada: ${(status.progress * 100).floor()} % · '
-        'quedan ${formatHoursMinutes(status.workdayRemaining)}',
-        enabled: false,
-      ));
       entries.add(const TrayEntry.separator());
     }
     entries.add(status.state == WorkdayRunState.paused
@@ -96,6 +92,7 @@ List<TrayEntry> trayEntries(
 
   entries
     ..add(const TrayEntry.separator())
+    ..add(const TrayEntry('Estadísticas', action: TrayAction.showStats))
     ..add(TrayEntry(mascotVisible ? 'Ocultar mascota' : 'Mostrar mascota',
         action: TrayAction.toggleMascot))
     ..add(TrayEntry('Detectar apps y sugerir modo',

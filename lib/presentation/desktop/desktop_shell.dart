@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/activity/detection_settings.dart';
+import '../../application/desktop/mascot_panel.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/desktop/tray_model.dart';
 import '../../application/workday/workday_controller.dart';
@@ -84,6 +85,13 @@ class DesktopShell {
         _workday.skipPhase();
       case TrayAction.finish:
         _workday.finish();
+      case TrayAction.showStats:
+        if (!window.visible.value) await window.show();
+        await setMascotPanel(
+          window: window,
+          panel: container.read(mascotPanelProvider.notifier),
+          next: MascotPanel.stats,
+        );
       case TrayAction.toggleMascot:
         await window.toggle();
       case TrayAction.toggleDetection:
