@@ -33,6 +33,8 @@ import '../../application/progress/progression.dart';
 import '../../domain/mascot/pet_species.dart';
 import 'pet_sprites.dart';
 import 'rename_dialog.dart';
+import '../onboarding/welcome_panel.dart';
+import '../settings/settings_panel.dart';
 import 'sprite_mascot.dart';
 
 class MascotWindow extends ConsumerStatefulWidget {
@@ -73,8 +75,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       setState(() => _greeting = false);
-      // Tras saludar, pregunta qué vamos a hacer (si no hay sesión en curso).
-      ref.read(activityDetectionProvider.notifier).askWelcome();
+      // La primera vez, la bienvenida guiada; si no, pregunta qué vamos a
+      // hacer (si no hay sesión en curso).
+      if (!ref.read(mascotSettingsProvider).onboardingDone) {
+        _openPanel(MascotPanel.welcome);
+      } else {
+        ref.read(activityDetectionProvider.notifier).askWelcome();
+      }
     });
 
     _eventsSub =
@@ -200,6 +207,17 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         next: next,
       );
 
+  /// Fin de la bienvenida (completa o saltada).
+  Future<void> _finishWelcome() async {
+    await ref.read(mascotSettingsProvider).completeOnboarding();
+    await _openPanel(MascotPanel.none);
+    if (!mounted) return;
+    _react(
+        MascotReaction('¡Encantado de conocerte! Soy '
+            '${ref.read(petNameProvider)} 🐾', MascotState.celebrating),
+        replace: true);
+  }
+
   /// Mientras sea > 0 la ventana sigue ampliada (menú o diálogo abiertos).
   int _holdExpanded = 0;
 
@@ -235,6 +253,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
           await _walker.start();
         },
         onRename: () => _rename(context),
+        onSettings: () => _openPanel(MascotPanel.settings),
       );
     } finally {
       _holdExpanded--;
@@ -283,6 +302,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
 
   MascotState _mascotState(WorkdayView view, MascotPanel panel) {
     if (panel == MascotPanel.chat) return MascotState.chatting;
+    if (panel == MascotPanel.welcome) return MascotState.greeting;
     if (_reactionMood != null) return _reactionMood!;
     if (_greeting) return MascotState.greeting;
     final status = view.status;
@@ -353,10 +373,18 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                    child: panel == MascotPanel.chat
-                        ? const ChatBubble()
-                        : StatsPanel(
-                            onClose: () => _openPanel(MascotPanel.none)),
+                    child: switch (panel) {
+                      MascotPanel.chat => const ChatBubble(),
+                      MascotPanel.settings => SettingsPanel(
+                          onClose: () => _openPanel(MascotPanel.none),
+                          onShowWelcome: () =>
+                              _openPanel(MascotPanel.welcome),
+                        ),
+                      MascotPanel.welcome =>
+                        WelcomePanel(onDone: _finishWelcome),
+                      _ => StatsPanel(
+                          onClose: () => _openPanel(MascotPanel.none)),
+                    },
                   ),
                 ),
 

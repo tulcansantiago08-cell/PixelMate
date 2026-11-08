@@ -20,6 +20,7 @@ Future<MenuAction?> showWorkdayMenu({
   required MenuAction onShowStats,
   MenuAction? onWalk,
   MenuAction? onRename,
+  MenuAction? onSettings,
 }) async {
   final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final position = RelativeRect.fromRect(
@@ -68,6 +69,11 @@ Future<MenuAction?> showWorkdayMenu({
   if (onRename != null) {
     items.add(PopupMenuItem(
         value: onRename, child: const Text('✏️  Cambiar nombre')));
+  }
+
+  if (onSettings != null) {
+    items.add(
+        PopupMenuItem(value: onSettings, child: const Text('⚙️  Ajustes')));
   }
 
   return showMenu<MenuAction>(

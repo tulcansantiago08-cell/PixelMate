@@ -9,6 +9,7 @@ import 'application/activity/detection_settings.dart';
 import 'application/activity/focus_guard.dart';
 import 'application/activity/focus_guard_controller.dart';
 import 'application/assistant/chat_controller.dart';
+import 'application/desktop/login_item.dart';
 import 'application/desktop/mascot_window_port.dart';
 import 'application/goals/daily_goal.dart';
 import 'application/mascot/mascot_settings.dart';
@@ -55,6 +56,7 @@ void main() async {
   final mascotSettings = MascotSettings(prefs);
   final dailyGoal = DailyGoalSettings(prefs);
   final focusGuard = FocusGuardSettings(prefs);
+  final launchAtLogin = LaunchAtLogin(MacosLoginItem());
   final catalog = await loadAppCatalog(
       userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
 
@@ -65,6 +67,7 @@ void main() async {
     mascotSettingsProvider.overrideWithValue(mascotSettings),
     dailyGoalSettingsProvider.overrideWithValue(dailyGoal),
     focusGuardSettingsProvider.overrideWithValue(focusGuard),
+    launchAtLoginProvider.overrideWithValue(launchAtLogin),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),
@@ -80,7 +83,7 @@ void main() async {
     notifier: SystemNotifier(),
     detection: detection,
     mascot: mascotSettings,
-    loginItem: MacosLoginItem(),
+    launchAtLogin: launchAtLogin,
     focusGuard: focusGuard,
     quitApp: () async {
       container.dispose();
