@@ -6,6 +6,8 @@ import '../../application/stats/stats_providers.dart';
 import '../../application/workday/workday_providers.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../../application/workday/workday_store.dart';
+import '../../application/progress/progress_providers.dart';
+import 'level_card.dart';
 import 'stats_chart.dart';
 import 'stats_style.dart';
 
@@ -56,6 +58,8 @@ class StatsPanel extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.only(right: 4),
               children: [
+                LevelCard(progress: ref.watch(progressProvider)),
+                const SizedBox(height: 12),
                 _Hero(stats: stats),
                 const SizedBox(height: 10),
                 for (final mode in trackedModes)

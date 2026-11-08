@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/detection_settings.dart';
 import '../../application/desktop/mascot_panel.dart';
 import '../../application/mascot/mascot_settings.dart';
+import '../../application/progress/progress_providers.dart';
+import '../../application/progress/progression.dart';
 import '../../application/desktop/mascot_window_port.dart';
 import '../../application/desktop/tray_model.dart';
 import '../../application/workday/workday_controller.dart';
@@ -63,6 +65,19 @@ class DesktopShell {
       if (notice != null) unawaited(notifier.show(notice));
     });
     _cleanup.add(events.cancel);
+
+    // Subidas de nivel y logros: también se avisan si la mascota está oculta.
+    final progress = container.listen<PlayerProgress>(
+      progressProvider,
+      (before, after) {
+        if (before == null) return;
+        for (final event in progressEvents(before, after)) {
+          final m = progressMessage(event);
+          unawaited(notifier.show(WorkdayNotice(m.title, m.message)));
+        }
+      },
+    );
+    _cleanup.add(progress.close);
   }
 
   void _refreshTray(WorkdayView view) {
