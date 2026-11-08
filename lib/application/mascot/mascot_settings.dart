@@ -12,6 +12,7 @@ class MascotSettings extends ChangeNotifier {
   static const _nameKey = 'mascot.name';
   static const _onboardingKey = 'onboarding.done';
   static const _speciesKey = 'mascot.species';
+  static const _nightKey = 'mascot.nightReminders';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -70,6 +71,16 @@ class MascotSettings extends ChangeNotifier {
 
   Future<void> completeOnboarding() async {
     await _prefs?.setBool(_onboardingKey, true);
+    notifyListeners();
+  }
+
+  /// Recordar descansar si se trabaja hasta muy tarde.
+  bool get nightReminders => _prefs?.getBool(_nightKey) ?? _nightReminders;
+  bool _nightReminders = true;
+
+  Future<void> setNightReminders(bool value) async {
+    _nightReminders = value;
+    await _prefs?.setBool(_nightKey, value);
     notifyListeners();
   }
 

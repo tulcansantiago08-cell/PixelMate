@@ -1,4 +1,5 @@
 import '../../domain/activity/detectable_app.dart';
+import '../../domain/time/day_part.dart';
 
 enum SuggestionAction {
   startWork,
@@ -73,14 +74,14 @@ class Suggestion {
 
   /// Pregunta al abrir PixelMate.
   static Suggestion welcome(DateTime localNow) {
-    final h = localNow.hour;
-    final greeting = h < 12
-        ? '¡Buenos días!'
-        : h < 19
-            ? '¡Buenas tardes!'
-            : '¡Buenas noches!';
+    final message = switch (DayPart.of(localNow)) {
+      DayPart.morning => '¡Buenos días! ☀️ ¿Qué aventuras tenemos hoy?',
+      DayPart.afternoon => '¡Buenas tardes! ¿Qué hacemos?',
+      DayPart.evening => '¡Buenas noches! ¿Un rato más o algo tranquilo?',
+      DayPart.night => 'Es muy tarde 🌙 ¿Algo rápido, o mejor descansamos?',
+    };
     return Suggestion(
-      message: '$greeting ¿Qué aventuras tenemos hoy?',
+      message: message,
       options: const [
         SuggestionOption('💼 Trabajar', SuggestionAction.startWork),
         SuggestionOption('📚 Estudiar', SuggestionAction.startStudy),

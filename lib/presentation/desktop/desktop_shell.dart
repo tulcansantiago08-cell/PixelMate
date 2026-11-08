@@ -10,6 +10,7 @@ import '../../application/desktop/login_item.dart';
 import '../../application/desktop/sounds.dart';
 import '../../application/desktop/mascot_panel.dart';
 import '../../application/goals/daily_goal.dart';
+import '../../application/mascot/late_night.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
 import '../../application/progress/progression.dart';
@@ -134,6 +135,14 @@ class DesktopShell {
       },
     );
     _cleanup.add(guard.close);
+
+    // Recordatorio nocturno: si la mascota está oculta, por notificación.
+    final night = container.listen<String?>(lateNightProvider, (before, msg) {
+      if (msg != null && before == null && !window.visible.value) {
+        unawaited(notifier.show(WorkdayNotice('Es tarde 🌙', msg)));
+      }
+    });
+    _cleanup.add(night.close);
 
     // Atajo global: abre o cierra el chat desde cualquier app.
     await _applyShortcut();

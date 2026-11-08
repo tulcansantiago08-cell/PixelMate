@@ -14,6 +14,7 @@ import 'application/desktop/login_item.dart';
 import 'application/desktop/sounds.dart';
 import 'application/desktop/mascot_window_port.dart';
 import 'application/goals/daily_goal.dart';
+import 'application/mascot/late_night.dart';
 import 'application/mascot/mascot_settings.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
@@ -113,6 +114,7 @@ void main() async {
   // Empieza a escuchar la app activa desde el arranque.
   container.read(activityDetectionProvider);
   container.read(focusGuardProvider);
+  container.read(lateNightProvider);
 }
 
 class PixelMateApp extends StatelessWidget {
