@@ -171,6 +171,8 @@ void main() {
     await tester.scrollUntilVisible(find.textContaining('máx. 3 h'), -100,
         scrollable: find.byType(Scrollable).last);
     expect(find.textContaining('máx. 3 h'), findsOneWidget);
+    await tester.scrollUntilVisible(find.textContaining('1 día activo'), -100,
+        scrollable: find.byType(Scrollable).last);
     expect(find.textContaining('1 día activo'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Cerrar'));

@@ -16,6 +16,7 @@ import 'application/desktop/mascot_window_port.dart';
 import 'application/goals/daily_goal.dart';
 import 'application/mascot/late_night.dart';
 import 'application/mascot/mascot_settings.dart';
+import 'application/stats/file_saver.dart';
 import 'application/stats/weekly_report.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
@@ -24,6 +25,7 @@ import 'infrastructure/claude/claude_provider.dart';
 import 'infrastructure/screenshot/screenshot_service.dart';
 import 'infrastructure/desktop/macos_login_item.dart';
 import 'infrastructure/desktop/native_effects.dart';
+import 'infrastructure/files/macos_file_saver.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
 import 'infrastructure/desktop/system_notifier.dart';
 import 'infrastructure/persistence/sqlite_workday_store.dart';
@@ -81,6 +83,7 @@ void main() async {
     soundSettingsProvider.overrideWithValue(soundSettings),
     soundPlayerProvider.overrideWithValue(sounds),
     weeklyReportStoreProvider.overrideWithValue(weeklyStore),
+    fileSaverProvider.overrideWithValue(MacosFileSaver()),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),

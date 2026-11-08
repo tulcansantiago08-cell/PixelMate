@@ -290,7 +290,8 @@ void main() {
         ),
       ),
     ));
-    expect(find.textContaining('aventuras'), findsOneWidget);
+    // El saludo cambia con la hora; las opciones no.
+    expect(find.text('💼 Trabajar'), findsOneWidget);
     await tester.tap(find.text('📚 Estudiar'));
     await tester.pump();
     final view = container.read(workdayControllerProvider);
