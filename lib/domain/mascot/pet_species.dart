@@ -1,4 +1,5 @@
 import 'mascot_state.dart';
+import 'pet_accessory.dart';
 
 /// Animaciones que toda especie debe incluir en su spritesheet.
 enum PetAnimation {
@@ -57,6 +58,9 @@ class PetSpecies {
   final int frameHeight;
   final Map<PetAnimation, AnimationSpec> animations;
 
+  /// Capas de accesorios disponibles para esta especie (puede no haber).
+  final Map<PetAccessory, String> accessoryAssets;
+
   const PetSpecies({
     required this.id,
     required this.name,
@@ -64,6 +68,7 @@ class PetSpecies {
     required this.frameWidth,
     required this.frameHeight,
     required this.animations,
+    this.accessoryAssets = const {},
   });
 
   /// Lee `pet.json`. Lanza [FormatException] si falta alguna animación, para
@@ -86,6 +91,11 @@ class PetSpecies {
       frameWidth: json['frameWidth'] as int,
       frameHeight: json['frameHeight'] as int,
       animations: animations,
+      accessoryAssets: {
+        for (final MapEntry(:key, :value)
+            in ((json['accessories'] as Map<String, dynamic>?) ?? {}).entries)
+          if (PetAccessory.byName(key) case final a?) a: value as String
+      },
     );
   }
 

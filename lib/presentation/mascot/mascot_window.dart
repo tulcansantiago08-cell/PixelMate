@@ -20,6 +20,7 @@ import '../stats/stats_panel.dart';
 import 'mascot_quick_actions.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
+import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/idle_behavior.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/mascot/mascot_walker.dart';
@@ -306,6 +307,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                             // se voltea al caminar hacia la derecha.
                             flipped: walking && !_walker.facingLeft,
                             oneShot: walking ? null : _oneShot,
+                            accessory: pet.accessories[
+                                ref.watch(equippedAccessoryProvider)],
                             onOneShotDone: () {
                               if (mounted) setState(() => _oneShot = null);
                             },

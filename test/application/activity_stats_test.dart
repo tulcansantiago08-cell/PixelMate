@@ -154,11 +154,13 @@ void main() {
       ),
     ));
 
+    expect(find.text('Nv. 2'), findsOneWidget, reason: 'nivel arriba');
+    await tester.scrollUntilVisible(find.text('Juego'), 100,
+        scrollable: find.byType(Scrollable).last);
     expect(find.text('2 h 5 min'), findsWidgets);
     expect(find.text('Trabajo'), findsOneWidget);
     expect(find.text('Estudio'), findsOneWidget);
     expect(find.text('Juego'), findsOneWidget);
-    expect(find.text('Nv. 2'), findsOneWidget, reason: 'nivel arriba');
     await tester.scrollUntilVisible(find.textContaining('✓ completa'), 100,
         scrollable: find.byType(Scrollable).last);
     expect(find.textContaining('✓ completa'), findsOneWidget);

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/mascot/idle_behavior.dart';
 import 'package:pixelmate/domain/mascot/mascot_state.dart';
+import 'package:pixelmate/domain/mascot/pet_accessory.dart';
 import 'package:pixelmate/domain/mascot/pet_species.dart';
 import 'package:pixelmate/presentation/mascot/pet_sprites.dart';
 import 'package:pixelmate/presentation/mascot/sprite_mascot.dart';
@@ -31,6 +32,16 @@ void main() {
       expect(cat.spec(PetAnimation.stretch).loop, isFalse);
       expect(cat.spec(PetAnimation.wave).loop, isFalse);
       expect(cat.spec(PetAnimation.idle).loop, isTrue);
+    });
+
+    test('el gato declara una capa por accesorio; las desconocidas se ignoran',
+        () {
+      final json = catJson();
+      expect(PetSpecies.fromJson(json).accessoryAssets.keys,
+          containsAll(PetAccessory.values));
+      (json['accessories'] as Map)['capa_rara'] = 'x.png';
+      json.remove('accessories');
+      expect(PetSpecies.fromJson(json).accessoryAssets, isEmpty);
     });
 
     test('una especie incompleta se rechaza al cargar', () {
@@ -112,6 +123,23 @@ void main() {
       expect(state.frame, 1);
       await tester.pump(const Duration(milliseconds: 250 * 3));
       expect(state.frame, 0, reason: 'vuelve al inicio (bucle)');
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('carga las capas de accesorios del mismo tamaño que la hoja',
+        (tester) async {
+      await load(tester);
+      expect(pet.accessories.keys, containsAll(PetAccessory.values));
+      for (final layer in pet.accessories.values) {
+        expect(layer.width, pet.sheet.width);
+        expect(layer.height, pet.sheet.height);
+      }
+      await tester.pumpWidget(Center(
+          child: SpriteMascot(
+              pet: pet,
+              animation: PetAnimation.idle,
+              accessory: pet.accessories[PetAccessory.crown])));
+      expect(find.byType(SpriteMascot), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });
 

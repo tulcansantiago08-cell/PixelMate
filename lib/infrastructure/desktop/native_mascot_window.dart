@@ -44,6 +44,10 @@ class NativeMascotWindow extends MascotWindowPort with WindowListener {
       visibleAreas: areas,
     );
     await windowManager.setBounds(origin & compactSize);
+    // Sin barra de título visible, un doble clic arriba del panel haría
+    // "zoom" (maximizar). El tamaño lo controla solo la app.
+    await windowManager.setMaximizable(false);
+    await windowManager.setResizable(false);
     await windowManager.setVisibleOnAllWorkspaces(true,
         visibleOnFullScreen: false);
   }
