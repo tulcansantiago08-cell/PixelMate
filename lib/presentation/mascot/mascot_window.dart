@@ -38,6 +38,7 @@ import 'rename_dialog.dart';
 import '../onboarding/welcome_panel.dart';
 import '../settings/settings_panel.dart';
 import '../stats/weekly_report_panel.dart';
+import '../../application/stats/consistency.dart';
 import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
 
@@ -379,6 +380,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         _walker.stop();
         _react(MascotReaction(
             progressMessage(event).message, MascotState.celebrating));
+      }
+    });
+    // Racha amable: celebra al llegar a 5 y a 7 de los últimos 7 días.
+    ref.listen(consistencyProvider, (before, after) {
+      final message = consistencyMilestone(before, after);
+      if (message != null) {
+        _react(MascotReaction(message, MascotState.celebrating),
+            duration: const Duration(seconds: 10));
       }
     });
     // De noche, si sigue la jornada: recordar descansar.
