@@ -20,6 +20,7 @@ import '../stats/stats_panel.dart';
 import 'mascot_quick_actions.dart';
 import '../workday/workday_badge.dart';
 import '../workday/workday_menu.dart';
+import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/idle_behavior.dart';
 import '../../application/mascot/mascot_settings.dart';
@@ -225,6 +226,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         _walker.stop();
         _react(MascotReaction(
             progressMessage(event).message, MascotState.celebrating));
+      }
+    });
+    ref.listen(dailyGoalProvider, (before, after) {
+      if (goalJustReached(before, after)) {
+        _walker.stop();
+        _react(MascotReaction(goalReachedMessage(after!.goal),
+            MascotState.celebrating));
       }
     });
     final walking = _walker.walking;

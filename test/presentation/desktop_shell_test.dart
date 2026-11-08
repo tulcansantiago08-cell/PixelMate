@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/activity/detection_settings.dart';
+import 'package:pixelmate/application/desktop/login_item.dart';
 import 'package:pixelmate/application/desktop/mascot_panel.dart';
 import 'package:pixelmate/application/desktop/mascot_window_port.dart';
 import 'package:pixelmate/application/mascot/mascot_settings.dart';
@@ -63,7 +64,17 @@ void main() {
     await pumpEventQueue();
   }
 
-  Future<(ProviderContainer, NoopMascotWindow)> startShell() async {
+  /// Elemento del último menú con esa etiqueta (o `null`).
+  Map<String, dynamic>? itemOf(String label) {
+    for (final raw in menus.last['items'] as List) {
+      final item = Map<String, dynamic>.from(raw as Map);
+      if (item['label'] == label) return item;
+    }
+    return null;
+  }
+
+  Future<(ProviderContainer, NoopMascotWindow)> startShell(
+      {LoginItemPort? loginItem}) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final window = NoopMascotWindow();
@@ -78,6 +89,7 @@ void main() {
       notifier: SystemNotifier(),
       detection: DetectionSettings(prefs),
       mascot: MascotSettings(),
+      loginItem: loginItem ?? NoopLoginItem(),
       quitApp: () async {},
     );
     await shell.start();
@@ -108,5 +120,32 @@ void main() {
     await click('Estadísticas');
     expect(window.visible.value, isTrue);
     expect(container.read(mascotPanelProvider), MascotPanel.stats);
+  });
+
+  test('sin soporte no aparece "Abrir al iniciar sesión"', () async {
+    await startShell();
+    expect(itemOf('Abrir al iniciar sesión'), isNull);
+  });
+
+  test('"Abrir al iniciar sesión" se activa y desactiva', () async {
+    final login = NoopLoginItem(supported: true);
+    await startShell(loginItem: login);
+    expect(itemOf('Abrir al iniciar sesión')!['checked'], isFalse);
+
+    await click('Abrir al iniciar sesión');
+    expect(login.enabled, isTrue);
+    expect(itemOf('Abrir al iniciar sesión')!['checked'], isTrue);
+
+    await click('Abrir al iniciar sesión');
+    expect(login.enabled, isFalse);
+    expect(itemOf('Abrir al iniciar sesión')!['checked'], isFalse);
+  });
+
+  test('si macOS pide aprobarlo, la casilla queda sin marcar', () async {
+    final login = NoopLoginItem(supported: true, grant: false);
+    await startShell(loginItem: login);
+    await click('Abrir al iniciar sesión');
+    expect(login.enabled, isFalse);
+    expect(itemOf('Abrir al iniciar sesión')!['checked'], isFalse);
   });
 }

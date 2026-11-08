@@ -7,9 +7,11 @@ import 'package:window_manager/window_manager.dart';
 import 'application/activity/activity_providers.dart';
 import 'application/activity/detection_settings.dart';
 import 'application/desktop/mascot_window_port.dart';
+import 'application/goals/daily_goal.dart';
 import 'application/mascot/mascot_settings.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
+import 'infrastructure/desktop/macos_login_item.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
 import 'infrastructure/desktop/system_notifier.dart';
 import 'infrastructure/persistence/sqlite_workday_store.dart';
@@ -45,6 +47,7 @@ void main() async {
   // Detección de apps: catálogo incluido + el del usuario, si existe.
   final detection = DetectionSettings(prefs);
   final mascotSettings = MascotSettings(prefs);
+  final dailyGoal = DailyGoalSettings(prefs);
   final catalog = await loadAppCatalog(
       userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
 
@@ -53,6 +56,7 @@ void main() async {
     mascotWindowProvider.overrideWithValue(window),
     detectionSettingsProvider.overrideWithValue(detection),
     mascotSettingsProvider.overrideWithValue(mascotSettings),
+    dailyGoalSettingsProvider.overrideWithValue(dailyGoal),
     appCatalogProvider.overrideWithValue(catalog),
     foregroundAppsProvider.overrideWithValue(MacosAppActivity().foregroundApps),
   ]);
@@ -63,6 +67,7 @@ void main() async {
     notifier: SystemNotifier(),
     detection: detection,
     mascot: mascotSettings,
+    loginItem: MacosLoginItem(),
     quitApp: () async {
       container.dispose();
       store.close();

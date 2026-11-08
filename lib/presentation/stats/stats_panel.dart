@@ -9,6 +9,8 @@ import '../../application/workday/workday_store.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
+import '../../application/goals/daily_goal.dart';
+import 'daily_goal_row.dart';
 import 'level_card.dart';
 import 'stats_chart.dart';
 import 'stats_style.dart';
@@ -68,6 +70,15 @@ class StatsPanel extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 _Hero(stats: stats),
+                if (period == StatsPeriod.today) ...[
+                  const SizedBox(height: 8),
+                  DailyGoalRow(
+                    status: ref.watch(dailyGoalProvider),
+                    goal: ref.watch(dailyGoalSettingsProvider).goal,
+                    onGoalChanged: (g) =>
+                        ref.read(dailyGoalSettingsProvider).setGoal(g),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 for (final mode in trackedModes)
                   _ModeRow(mode: mode, totals: stats.totals(mode)),

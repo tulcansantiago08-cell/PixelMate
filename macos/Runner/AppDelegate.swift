@@ -8,6 +8,7 @@ class AppDelegate: FlutterAppDelegate {
   override func applicationDidFinishLaunching(_ notification: Notification) {
     if let controller = mainFlutterWindow?.contentViewController as? FlutterViewController {
       activityMonitor = AppActivityMonitor.register(with: controller.engine.binaryMessenger)
+      LoginItem.register(with: controller.engine.binaryMessenger)
     }
     super.applicationDidFinishLaunching(notification)
   }

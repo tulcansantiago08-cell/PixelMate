@@ -44,8 +44,7 @@ void main() {
       expect(xpForRecord(rec('a', focusMin: 0, breakMin: 0, blocks: 0)), 0);
       // 50 enfoque + 10/2 descanso + 1×5 bloque.
       expect(xpForRecord(rec('a', focusMin: 50, breakMin: 10)), 60);
-      expect(
-          xpForRecord(rec('a', focusMin: 50, breakMin: 10, completed: true)),
+      expect(xpForRecord(rec('a', focusMin: 50, breakMin: 10, completed: true)),
           85);
       // Una jornada de 8 h completa: 370 min de enfoque, 110 de descanso.
       expect(
@@ -130,8 +129,7 @@ void main() {
       expect(unlocked([rec('g', mode: ActivityMode.gaming)]),
           isNot(contains('gamer')),
           reason: 'hay que completarla');
-      expect(
-          unlocked([rec('g', mode: ActivityMode.gaming, completed: true)]),
+      expect(unlocked([rec('g', mode: ActivityMode.gaming, completed: true)]),
           contains('gamer'));
       expect(unlocked([rec('e', start: DateTime(2026, 11, 9, 7, 59))]),
           contains('early'));
@@ -232,9 +230,7 @@ void main() {
       expect(container.read(progressProvider).level, 2);
       expect(events.whereType<LeveledUp>().single.level, 2);
       expect(
-          events
-              .whereType<AchievementUnlocked>()
-              .map((e) => e.achievement.id),
+          events.whereType<AchievementUnlocked>().map((e) => e.achievement.id),
           ['first', 'complete']);
     });
   });
@@ -243,6 +239,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
         body: LevelCard(
+            initiallyExpanded: true,
             progress: PlayerProgress(xp: 400, unlocked: {'first', 'early'})),
       ),
     ));
@@ -265,6 +262,7 @@ void main() {
     Future<void> show(PetAccessory? equipped) => tester.pumpWidget(MaterialApp(
           home: Scaffold(
             body: LevelCard(
+              initiallyExpanded: true,
               progress: const PlayerProgress(xp: 650, unlocked: {}), // Nv. 4
               equipped: equipped,
               onEquip: chosen.add,
@@ -285,6 +283,40 @@ void main() {
 
     await show(PetAccessory.bow);
     await tester.tap(find.byKey(const ValueKey('accessory-bow')));
-    expect(chosen, [PetAccessory.bow, null], reason: 'tocarlo otra vez lo quita');
+    expect(chosen, [PetAccessory.bow, null],
+        reason: 'tocarlo otra vez lo quita');
+  });
+
+  testWidgets('plegada por defecto; al tocarla muestra logros y accesorios',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: LevelCard(
+          progress: const PlayerProgress(xp: 400, unlocked: {'first'}),
+          onEquip: (_) {},
+        ),
+      ),
+    ));
+    expect(find.text('Nv. 3'), findsOneWidget);
+    expect(find.text('🏅 1/${achievements.length} · accesorios ▾'),
+        findsOneWidget);
+    expect(find.text('Accesorios'), findsNothing);
+    expect(find.text('🐾'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('level-card')));
+    await tester.pump();
+    expect(find.text('Accesorios'), findsOneWidget);
+    expect(find.text('🐾'), findsOneWidget);
+    expect(find.text('Ocultar ▴'), findsOneWidget);
+
+    // Tocar un logro o un accesorio bloqueado no la pliega.
+    await tester.tap(find.text('🐾'));
+    await tester.tap(find.byKey(const ValueKey('accessory-crown')));
+    await tester.pump();
+    expect(find.text('Accesorios'), findsOneWidget);
+
+    await tester.tap(find.text('Ocultar ▴'));
+    await tester.pump();
+    expect(find.text('Accesorios'), findsNothing);
   });
 }
