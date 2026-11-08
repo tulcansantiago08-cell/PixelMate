@@ -14,6 +14,7 @@ import '../../application/goals/daily_goal.dart';
 import '../../application/stats/consistency.dart';
 import 'consistency_row.dart';
 import 'daily_goal_row.dart';
+import 'export_csv_button.dart';
 import 'level_card.dart';
 import 'stats_chart.dart';
 import 'stats_style.dart';
@@ -116,6 +117,8 @@ class StatsPanel extends ConsumerWidget {
                     child: const Text('📅 Resumen de la semana'),
                   ),
                 ],
+                const SizedBox(height: 6),
+                const ExportCsvButton(),
                 const SizedBox(height: 12),
                 _RecentSessions(sessions: stats.sessions, liveId: liveId),
               ],

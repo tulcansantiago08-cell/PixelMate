@@ -77,10 +77,11 @@ void main() {
       (tester) async {
     final c = await launch(tester);
     final workday = c.read(workdayControllerProvider.notifier);
-    expect(find.textContaining('¿Qué aventuras'), findsOneWidget);
+    // La pregunta de bienvenida (su saludo cambia con la hora).
+    expect(find.text('💼 Trabajar'), findsOneWidget);
     workday.start(const WorkdayConfig());
     await tester.pump();
-    expect(find.textContaining('¿Qué aventuras'), findsNothing,
+    expect(find.text('💼 Trabajar'), findsNothing,
         reason: 'al empezar la jornada se quita la pregunta de bienvenida');
     await tester.pump(const Duration(seconds: 7));
     workday.skipPhase(); // enfoque -> descanso corto
