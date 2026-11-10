@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/activity_providers.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/assistant/chat_controller.dart';
+import '../../application/desktop/app_info.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/login_item.dart';
 import '../../application/desktop/sounds.dart';
@@ -270,6 +271,31 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     key: const ValueKey('settings-welcome'),
                     onPressed: widget.onShowWelcome,
                     child: const Text('Ver la bienvenida otra vez'),
+                  ),
+                  const _Section('Acerca de'),
+                  Text(
+                    'PixelMate '
+                    '${ref.watch(appVersionProvider).valueOrNull ?? ''}',
+                    key: const ValueKey('settings-version'),
+                    style: const TextStyle(
+                        color: StatsStyle.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const Text(
+                    'Tu compañero pixel art para enfocarte, descansar y '
+                    'jugar.\n🔒 Tus datos se quedan en este Mac.',
+                    style: TextStyle(
+                        color: StatsStyle.textSecondary, fontSize: 11),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const ValueKey('settings-github'),
+                      onPressed: () =>
+                          ref.read(appInfoProvider).openRepository(),
+                      child: const Text('Ver el proyecto en GitHub ↗'),
+                    ),
                   ),
                 ],
               ),

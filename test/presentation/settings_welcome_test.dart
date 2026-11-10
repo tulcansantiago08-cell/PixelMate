@@ -185,6 +185,8 @@ void main() {
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-rename')), -100,
         scrollable: find.byType(Scrollable).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-rename')));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -203,6 +205,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-welcome')));
     expect(welcome, 1);
+
+    // Acerca de: versión y enlace al repositorio.
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settings-github')), 100,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('PixelMate dev'), findsOneWidget);
+    expect(
+        find.textContaining('Tus datos se quedan en este Mac'), findsOneWidget);
   });
 
   testWidgets('la bienvenida pide nombre, meta y arranque', (tester) async {

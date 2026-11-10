@@ -419,6 +419,8 @@ def tear(cv, frame):
 
 # --- Animaciones ---------------------------------------------------------------
 # (nombre, fps, loop, [fotogramas]) - cada fotograma es una función que pinta.
+# Las que duran mucho (reposo, trabajar, jugar) van a 3–4 fps: cada cuadro
+# redibuja la ventana, y la app se queda abierta todo el día.
 
 def anim_frames():
     A = {}
@@ -434,7 +436,7 @@ def anim_frames():
         draw.pose = dict(kw)
         return draw
 
-    A["idle"] = (4, True, [
+    A["idle"] = (3, True, [
         f(dy=0, tail=0), f(dy=0, tail=1), f(dy=1, tail=2), f(dy=1, tail=3, eyes="closed"),
     ])
     A["walk"] = (8, True, [
@@ -459,7 +461,7 @@ def anim_frames():
         f(eyes="open"), f(dy=-1, eyes="closed", arms="up"), f(dy=-2, eyes="closed", mouth="yawn", arms="up"),
         f(dy=-2, eyes="closed", mouth="yawn", arms="up"), f(dy=-1, eyes="happy", arms="up"), f(eyes="open"),
     ])
-    A["work"] = (6, True, [
+    A["work"] = (4, True, [
         f(eyes="down", arms="type1", tail=0, extra=lambda cv, i: laptop(cv, 0)),
         f(eyes="down", arms="type2", tail=1, extra=lambda cv, i: laptop(cv, 1)),
         f(eyes="down", arms="type1", tail=2, extra=lambda cv, i: laptop(cv, 2)),
@@ -471,7 +473,7 @@ def anim_frames():
         f(eyes="down", arms="hold", tail=2, extra=lambda cv, i: book(cv, 2)),
         f(eyes="closed", arms="hold", tail=3, extra=lambda cv, i: book(cv, 3)),
     ])
-    A["gaming"] = (6, True, [
+    A["gaming"] = (4, True, [
         f(eyes="wide", mouth="open", arms="hold", tail=0,
           extra=lambda cv, i: (gamepad(cv, 0), headphones(cv, 0))),
         f(dy=1, eyes="wide", mouth="smile", arms="hold", tail=1,

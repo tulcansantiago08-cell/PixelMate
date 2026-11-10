@@ -60,6 +60,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
   Timer? _idleTimer;
   PetAnimation? _oneShot;
   late final MascotWalker _walker;
+  late final MascotWindowPort _window;
   static const _idleCheck = Duration(seconds: 30);
 
   // Reacción temporal a un suceso de la jornada.
@@ -76,6 +77,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     _idleTimer = Timer.periodic(_idleCheck, (_) => _onIdleTick());
     _walker = MascotWalker(window: ref.read(mascotWindowProvider))
       ..addListener(_onWalkerChanged);
+    _window = ref.read(mascotWindowProvider)
+      ..visible.addListener(_onVisibility);
 
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
@@ -169,11 +172,17 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     _eventsSub?.cancel();
     _reactionTimer?.cancel();
     _idleTimer?.cancel();
+    _window.visible.removeListener(_onVisibility);
     _walker
       ..removeListener(_onWalkerChanged)
       ..stop()
       ..dispose();
     super.dispose();
+  }
+
+  /// Al ocultar o mostrar la mascota (pausa la animación oculta).
+  void _onVisibility() {
+    if (mounted) setState(() {});
   }
 
   void _onWalkerChanged() {
@@ -455,7 +464,10 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                               .read(activityDetectionProvider.notifier)
                               .choose(action),
                         )
-                      : WorkdayBadge(view: view, speech: _speech),
+                      // Capa propia: el contador cambia cada segundo sin
+                      // redibujar a la mascota.
+                      : RepaintBoundary(
+                          child: WorkdayBadge(view: view, speech: _speech)),
                 ),
 
               // Mascota fija abajo, con accesos rápidos a su izquierda.
@@ -499,6 +511,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                               // se voltea al caminar hacia la derecha.
                               flipped: walking && !_walker.facingLeft,
                               oneShot: walking ? null : _oneShot,
+                              paused:
+                                  !ref.read(mascotWindowProvider).visible.value,
                               accessory: pet.accessories[
                                   ref.watch(equippedAccessoryProvider)],
                               onOneShotDone: () {

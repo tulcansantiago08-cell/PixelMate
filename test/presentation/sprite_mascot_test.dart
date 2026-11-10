@@ -115,13 +115,12 @@ void main() {
       expect(pet.sheet.width, greaterThanOrEqualTo(32 * 4));
       await tester.pumpWidget(
           Center(child: SpriteMascot(pet: pet, animation: PetAnimation.idle)));
-      final state =
-          tester.state<SpriteMascotState>(find.byType(SpriteMascot));
+      final state = tester.state<SpriteMascotState>(find.byType(SpriteMascot));
       expect(state.frame, 0);
-      // idle va a 4 fps: 250 ms por fotograma.
-      await tester.pump(const Duration(milliseconds: 260));
+      // idle va a 3 fps: 333 ms por fotograma (poco consumo).
+      await tester.pump(const Duration(milliseconds: 340));
       expect(state.frame, 1);
-      await tester.pump(const Duration(milliseconds: 250 * 3));
+      await tester.pump(const Duration(milliseconds: 334 * 3));
       expect(state.frame, 0, reason: 'vuelve al inicio (bucle)');
       await tester.pumpWidget(const SizedBox());
     });
@@ -143,6 +142,29 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
+    testWidgets('pausada (mascota oculta) no anima y sigue donde iba',
+        (tester) async {
+      await load(tester);
+      Widget build(bool paused) => Center(
+          child: SpriteMascot(
+              pet: pet, animation: PetAnimation.work, paused: paused));
+      await tester.pumpWidget(build(false));
+      final state = tester.state<SpriteMascotState>(find.byType(SpriteMascot));
+      await tester.pump(const Duration(milliseconds: 260)); // work: 4 fps
+      expect(state.frame, 1);
+
+      await tester.pumpWidget(build(true));
+      expect(state.animating, isFalse);
+      await tester.pump(const Duration(seconds: 5));
+      expect(state.frame, 1, reason: 'oculta: sin temporizador');
+
+      await tester.pumpWidget(build(false));
+      expect(state.animating, isTrue);
+      await tester.pump(const Duration(milliseconds: 260));
+      expect(state.frame, 2, reason: 'sigue donde iba');
+      await tester.pumpWidget(const SizedBox());
+    });
+
     testWidgets('una animación de una sola vez avisa al terminar',
         (tester) async {
       await load(tester);
@@ -156,8 +178,7 @@ void main() {
             ),
           );
       await tester.pumpWidget(build(PetAnimation.wakeUp));
-      final state =
-          tester.state<SpriteMascotState>(find.byType(SpriteMascot));
+      final state = tester.state<SpriteMascotState>(find.byType(SpriteMascot));
       expect(state.playing, PetAnimation.wakeUp);
       final spec = pet.species.spec(PetAnimation.wakeUp);
       await tester.pump(spec.totalDuration + const Duration(milliseconds: 50));
@@ -176,8 +197,7 @@ void main() {
       await tester.pumpWidget(
           Center(child: SpriteMascot(pet: pet, animation: PetAnimation.work)));
       await tester.pump(const Duration(milliseconds: 400));
-      final state =
-          tester.state<SpriteMascotState>(find.byType(SpriteMascot));
+      final state = tester.state<SpriteMascotState>(find.byType(SpriteMascot));
       expect(state.frame, greaterThan(0));
       await tester.pumpWidget(
           Center(child: SpriteMascot(pet: pet, animation: PetAnimation.rest)));
