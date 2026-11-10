@@ -25,6 +25,10 @@ class SpriteMascot extends StatefulWidget {
   /// Capa de accesorio que se dibuja encima, con el mismo fotograma.
   final ui.Image? accessory;
 
+  /// Con la mascota oculta no hace falta animar: se para el temporizador
+  /// (ahorra batería) y sigue donde iba al volver.
+  final bool paused;
+
   const SpriteMascot({
     super.key,
     required this.pet,
@@ -34,6 +38,7 @@ class SpriteMascot extends StatefulWidget {
     this.size = 160,
     this.flipped = false,
     this.accessory,
+    this.paused = false,
   });
 
   @override
@@ -60,16 +65,29 @@ class SpriteMascotState extends State<SpriteMascot> {
   @override
   void didUpdateWidget(SpriteMascot oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_target != _playing || widget.pet != oldWidget.pet) _start(_target);
+    if (_target != _playing || widget.pet != oldWidget.pet) {
+      _start(_target);
+    } else if (widget.paused != oldWidget.paused) {
+      widget.paused ? _timer?.cancel() : _resume();
+    }
   }
 
   void _start(PetAnimation a) {
-    _timer?.cancel();
     _playing = a;
     _frame = 0;
-    final spec = widget.pet.species.spec(a);
+    _resume();
+  }
+
+  /// (Re)arranca el temporizador sin volver al primer fotograma.
+  void _resume() {
+    _timer?.cancel();
+    if (widget.paused) return;
+    final spec = widget.pet.species.spec(_playing);
     _timer = Timer.periodic(spec.frameDuration, (_) => _advance(spec));
   }
+
+  /// Si el temporizador está activo (para pruebas).
+  bool get animating => _timer?.isActive ?? false;
 
   void _advance(AnimationSpec spec) {
     if (!mounted) return;
@@ -95,7 +113,10 @@ class SpriteMascotState extends State<SpriteMascot> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
+    // Capa propia: cada fotograma redibuja solo a la mascota, no la
+    // ventana entera (globo, contador, botones).
+    return RepaintBoundary(
+        child: CustomPaint(
       size: Size.square(widget.size),
       painter: _SpritePainter(
         sheet: widget.pet.sheet,
@@ -105,7 +126,7 @@ class SpriteMascotState extends State<SpriteMascot> {
         flipped: widget.flipped,
         accessory: widget.accessory,
       ),
-    );
+    ));
   }
 }
 
