@@ -9,7 +9,9 @@ enum PetAccessory {
   bow('Moño', '🎀', 4),
   sunglasses('Gafas de sol', '🕶️', 6),
   headphones('Audífonos', '🎧', 9),
-  crown('Corona', '👑', 12);
+  crown('Corona', '👑', 12),
+  wizardHat('Gorro de mago', '🧙', 15),
+  cape('Capa de héroe', '🦸', 18);
 
   final String label;
   final String emoji;
@@ -28,3 +30,6 @@ enum PetAccessory {
   static PetAccessory? byName(String? name) =>
       values.where((a) => a.name == name).firstOrNull;
 }
+
+/// Nivel desde el que se puede activar el aura brillante.
+const auraUnlockLevel = 20;

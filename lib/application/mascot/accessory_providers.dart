@@ -30,3 +30,13 @@ final activeSpeciesProvider = Provider<PetKind>((ref) {
   final chosen = settings.species;
   return chosen.unlockedAt(level) ? chosen : PetKind.cat;
 });
+
+/// Si se ve el aura brillante: activada y con nivel suficiente.
+final auraActiveProvider = Provider<bool>((ref) {
+  final settings = ref.watch(mascotSettingsProvider);
+  void changed() => ref.invalidateSelf();
+  settings.addListener(changed);
+  ref.onDispose(() => settings.removeListener(changed));
+  final level = ref.watch(progressProvider.select((p) => p.level));
+  return settings.aura && level >= auraUnlockLevel;
+});

@@ -11,6 +11,7 @@ import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
+import '../../domain/mascot/pet_accessory.dart';
 import '../../domain/mascot/pet_kind.dart';
 import '../mascot/rename_dialog.dart';
 import '../stats/level_card.dart';
@@ -118,6 +119,15 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     level: level,
                     equipped: equipped,
                     onEquip: mascot.setAccessory,
+                  ),
+                  _Switch(
+                    keyName: 'aura',
+                    label: 'Aura brillante ✨',
+                    help: level >= auraUnlockLevel
+                        ? 'Chispitas alrededor de ${mascot.name}.'
+                        : '🔒 Se desbloquea en el nivel $auraUnlockLevel.',
+                    value: level >= auraUnlockLevel && mascot.aura,
+                    onChanged: level >= auraUnlockLevel ? mascot.setAura : null,
                   ),
                   _Switch(
                     keyName: 'walk',
@@ -308,7 +318,9 @@ class _Switch extends StatelessWidget {
   final String label;
   final String? help;
   final bool value;
-  final ValueChanged<bool> onChanged;
+
+  /// `null` = bloqueado (se ve apagado y no se puede tocar).
+  final ValueChanged<bool>? onChanged;
 
   const _Switch({
     required this.keyName,

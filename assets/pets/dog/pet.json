@@ -101,6 +101,8 @@
     "bow": "assets/pets/dog/accessories/bow.png",
     "sunglasses": "assets/pets/dog/accessories/sunglasses.png",
     "headphones": "assets/pets/dog/accessories/headphones.png",
-    "crown": "assets/pets/dog/accessories/crown.png"
+    "crown": "assets/pets/dog/accessories/crown.png",
+    "wizardHat": "assets/pets/dog/accessories/wizardHat.png",
+    "cape": "assets/pets/dog/accessories/cape.png"
   }
 }

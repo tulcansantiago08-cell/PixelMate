@@ -129,6 +129,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('species-dog')));
     await tester.pumpAndSettle();
     expect(env.mascot.species, PetKind.cat, reason: 'bloqueado: no cambia');
+    // El aura se ve bloqueada hasta el nivel 20.
+    expect(find.text('🔒 Se desbloquea en el nivel 20.'), findsOneWidget);
+    final aura =
+        tester.widget<Switch>(find.byKey(const ValueKey('settings-aura')));
+    expect(aura.onChanged, isNull);
+    expect(aura.value, isFalse);
     // Cada interruptor, bajando hasta él (están en este orden).
     for (final key in [
       'walk',

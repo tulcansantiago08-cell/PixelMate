@@ -101,6 +101,8 @@
     "bow": "assets/pets/fox/accessories/bow.png",
     "sunglasses": "assets/pets/fox/accessories/sunglasses.png",
     "headphones": "assets/pets/fox/accessories/headphones.png",
-    "crown": "assets/pets/fox/accessories/crown.png"
+    "crown": "assets/pets/fox/accessories/crown.png",
+    "wizardHat": "assets/pets/fox/accessories/wizardHat.png",
+    "cape": "assets/pets/fox/accessories/cape.png"
   }
 }
