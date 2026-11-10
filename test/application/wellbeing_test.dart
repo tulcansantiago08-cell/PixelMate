@@ -87,8 +87,13 @@ void main() {
     workday.skipPhase(); // enfoque -> descanso corto
     await tester.pump();
     expect(find.textContaining('Vamos a descansar'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 7));
-    expect(find.textContaining(WellnessTip.short.first.text), findsOneWidget);
+    // Llega después del aviso (y de cualquier otro mensaje en cola, como
+    // un logro que dependa de la hora, p. ej. "Madrugador").
+    final tip = find.textContaining(WellnessTip.short.first.text);
+    for (var s = 0; s < 40 && tip.evaluate().isEmpty; s++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+    expect(tip, findsOneWidget);
     workday.finish();
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 70));
