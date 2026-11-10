@@ -10,16 +10,47 @@ import '../workday/workday_controller.dart';
 /// memoria pequeña).
 const assistantInstructions = '''
 Eres la mascota de PixelMate: un animalito pixel art que vive en el
-escritorio del usuario y lo acompaña en su jornada. Tu nombre y qué animal
-eres vienen en el estado; úsalos cuando hables de ti. Eres alegre, cercano y motivador. Hablas siempre en
-español, en 1 a 3 oraciones, con algún emoji de vez en cuando.
-Antes de cada mensaje recibes el estado actual de la app: úsalo para
-responder con datos reales (tiempo restante, meta, nivel) y no inventes
-cifras. Si el usuario te pide hacer algo en la app (empezar, pausar,
-reanudar o terminar la jornada, cambiar su meta diaria o ver sus
-estadísticas), elige esa acción; si no lo pide de forma explícita, no
-elijas ninguna.
+escritorio del usuario, lo acompaña en su jornada y le ayuda como asistente.
+Tu nombre y qué animal eres vienen en el estado; úsalos cuando hables de ti.
+Hablas siempre en español, en 1 a 3 oraciones, con algún emoji de vez en
+cuando. No saludes en cada mensaje.
+Antes de cada mensaje recibes el estado actual de la app (hora, jornada,
+meta, nivel, tareas): úsalo y no inventes datos.
+Solo elige una acción si el usuario la pide de forma explícita con un verbo
+como recuérdame, añade, anota, abre, crea, agenda, empieza, pausa o terminé.
+Si solo conversa, saluda, pregunta cómo estás, pide un chiste o una
+opinión, la acción es "ninguna".
+Acciones: recordar algo (recordar), anotar una tarea (agregarTarea), marcar
+una tarea como hecha (completarTarea), ver tareas y recordatorios
+(verPendientes), abrir una app o web (abrir), ver la agenda (verAgenda),
+crear un evento en el calendario (crearEvento), o la jornada (iniciarTrabajo,
+iniciarEstudio, iniciarJuego, pausar, reanudar, terminar, cambiarMeta,
+abrirEstadisticas).
 ''';
+
+const _weekday = [
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+  'domingo'
+];
+const _month = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre'
+];
 
 String _dur(Duration d) {
   final m = d.inMinutes;
@@ -45,6 +76,7 @@ String _phase(SessionPhase p) => switch (p) {
 String describeContext({
   String petName = 'Pixel',
   PetKind species = PetKind.cat,
+  String tasks = '',
   required DateTime now,
   required WorkdayView workday,
   required DailyGoalStatus? goal,
@@ -53,7 +85,8 @@ String describeContext({
   final lines = <String>[
     'Te llamas $petName y eres ${species.withArticle}.',
     'Hora: ${now.hour.toString().padLeft(2, '0')}:'
-        '${now.minute.toString().padLeft(2, '0')}.',
+        '${now.minute.toString().padLeft(2, '0')} del '
+        '${_weekday[now.weekday - 1]} ${now.day} de ${_month[now.month - 1]}.',
   ];
   final status = workday.status;
   if (status == null) {
@@ -80,5 +113,6 @@ String describeContext({
       '${progress.xp} XP; faltan '
       '${progress.xpNeededForNext - progress.xpIntoLevel} XP para el '
       'nivel ${progress.level + 1}.');
+  if (tasks.isNotEmpty) lines.add(tasks);
   return lines.join(' ');
 }

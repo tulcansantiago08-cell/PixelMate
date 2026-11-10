@@ -59,5 +59,13 @@ String? runAssistantAction(
     case AssistantAction.openStats:
       openStats();
       return '📊 Abrí tus estadísticas.';
+    case AssistantAction.remind ||
+          AssistantAction.addTask ||
+          AssistantAction.completeTask ||
+          AssistantAction.showPending ||
+          AssistantAction.open ||
+          AssistantAction.showAgenda ||
+          AssistantAction.createEvent:
+      return null; // las hace AssistantExecutor
   }
 }

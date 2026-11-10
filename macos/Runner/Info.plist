@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>PixelMate muestra tu agenda y crea eventos cuando se lo pides en el chat.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>PixelMate muestra tu agenda y crea eventos cuando se lo pides en el chat.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>

@@ -9,6 +9,11 @@ import 'application/activity/detection_settings.dart';
 import 'application/activity/focus_guard.dart';
 import 'application/activity/focus_guard_controller.dart';
 import 'application/assistant/chat_controller.dart';
+import 'application/assistant/code_writer.dart';
+import 'application/assistant/mac_actions.dart';
+import 'application/assistant/personal_store.dart';
+import 'application/assistant/reminders.dart';
+import 'application/assistant/video_finder.dart';
 import 'application/desktop/app_info.dart';
 import 'application/desktop/global_shortcut.dart';
 import 'application/desktop/login_item.dart';
@@ -21,7 +26,10 @@ import 'application/stats/file_saver.dart';
 import 'application/stats/weekly_report.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
+import 'infrastructure/assistant/apple_assistant.dart';
 import 'infrastructure/assistant/assistant_setup.dart';
+import 'infrastructure/assistant/macos_actions.dart';
+import 'infrastructure/assistant/youtube_video_finder.dart';
 import 'infrastructure/claude/claude_provider.dart';
 import 'infrastructure/screenshot/screenshot_service.dart';
 import 'infrastructure/desktop/macos_login_item.dart';
@@ -70,6 +78,7 @@ void main() async {
   final soundSettings = SoundSettings(prefs);
   final sounds = MacosSoundPlayer();
   final weeklyStore = WeeklyReportStore(prefs);
+  final personal = PersonalStore(prefs);
   final catalog = await loadAppCatalog(
       userFilePath: p.join(dataDir.path, 'detectable_apps.json'));
 
@@ -87,6 +96,10 @@ void main() async {
     weeklyReportStoreProvider.overrideWithValue(weeklyStore),
     fileSaverProvider.overrideWithValue(MacosFileSaver()),
     appInfoProvider.overrideWithValue(MacosAppInfo()),
+    personalStoreProvider.overrideWithValue(personal),
+    macActionsProvider.overrideWithValue(MacosActions()),
+    videoFinderProvider.overrideWithValue(YouTubeVideoFinder()),
+    codeWriterProvider.overrideWithValue(AppleCodeWriter()),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),
@@ -124,6 +137,7 @@ void main() async {
   container.read(activityDetectionProvider);
   container.read(focusGuardProvider);
   container.read(lateNightProvider);
+  container.read(reminderProvider);
 }
 
 class PixelMateApp extends StatelessWidget {

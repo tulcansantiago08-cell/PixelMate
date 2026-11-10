@@ -36,7 +36,15 @@ enum AssistantAction {
   resume('reanudar'),
   finish('terminar'),
   setGoal('cambiarMeta'),
-  openStats('abrirEstadisticas');
+  openStats('abrirEstadisticas'),
+  // Asistente (las ejecuta AssistantExecutor).
+  remind('recordar'),
+  addTask('agregarTarea'),
+  completeTask('completarTarea'),
+  showPending('verPendientes'),
+  open('abrir'),
+  showAgenda('verAgenda'),
+  createEvent('crearEvento');
 
   /// Nombre que usa el modelo.
   final String wire;
@@ -53,8 +61,27 @@ class AssistantReply {
   /// Horas que pidió el usuario (jornada o meta); 0 si no dijo.
   final int hours;
 
+  /// Para el asistente: qué recordar, la tarea, la app o el evento.
+  final String detail;
+
+  /// "En X minutos" (recordatorios).
+  final int minutes;
+
+  /// Hora "HH:mm" y día ("hoy", "mañana" o "").
+  final String time;
+  final String day;
+
+  /// Número de tarea (1 = la primera).
+  final int number;
+
   const AssistantReply(this.text,
-      {this.action = AssistantAction.none, this.hours = 0});
+      {this.action = AssistantAction.none,
+      this.hours = 0,
+      this.detail = '',
+      this.minutes = 0,
+      this.time = '',
+      this.day = '',
+      this.number = 0});
 }
 
 /// Error con un mensaje listo para mostrar al usuario.
