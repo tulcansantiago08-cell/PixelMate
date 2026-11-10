@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 
 import '../../application/assistant/assistant_context.dart';
 import '../../application/assistant/chat_assistant.dart';
+import '../../application/assistant/code_writer.dart';
 
 /// Estado del modelo de Apple en este Mac.
 enum AppleAiAvailability {
@@ -20,13 +21,11 @@ enum AppleAiAvailability {
         appleIntelligenceNotEnabled =>
           'Para charlar gratis conmigo, activa Apple Intelligence en '
               'Configuración del Sistema → Apple Intelligence y Siri.',
-        modelNotReady =>
-          'Apple Intelligence aún está descargando su modelo. '
-              'Vuelve a intentarlo en un rato ⏳',
+        modelNotReady => 'Apple Intelligence aún está descargando su modelo. '
+            'Vuelve a intentarlo en un rato ⏳',
         deviceNotEligible =>
           'Este Mac no es compatible con Apple Intelligence.',
-        unsupported =>
-          'La IA de Apple necesita macOS 26 o posterior.',
+        unsupported => 'La IA de Apple necesita macOS 26 o posterior.',
       };
 }
 
@@ -76,6 +75,11 @@ class AppleAssistant implements ChatAssistant {
       text.isEmpty ? '🐾' : text,
       action: AssistantAction.parse(result?['action']),
       hours: (result?['hours'] as num?)?.toInt() ?? 0,
+      detail: (result?['detail'] as String?)?.trim() ?? '',
+      minutes: (result?['minutes'] as num?)?.toInt() ?? 0,
+      time: (result?['time'] as String?)?.trim() ?? '',
+      day: (result?['day'] as String?)?.trim() ?? '',
+      number: (result?['number'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -105,4 +109,20 @@ class AppleAssistant implements ChatAssistant {
           'Se me llenó la memoria 🧠. Empecemos una conversación nueva.',
         _ => 'Algo falló al pensar 😵. Inténtalo de nuevo.',
       };
+}
+
+/// Escribe código con la IA de Apple (sesión aparte de la charla).
+class AppleCodeWriter implements CodeWriter {
+  static const _channel = MethodChannel('com.pixelmate/apple_ai');
+
+  @override
+  Future<String?> write(String language, String description) async {
+    try {
+      final raw = await _channel.invokeMethod<String>('generateCode',
+          'Escribe un archivo de $language que haga esto: $description.');
+      return raw == null || raw.trim().isEmpty ? null : cleanCode(raw);
+    } catch (_) {
+      return null;
+    }
+  }
 }

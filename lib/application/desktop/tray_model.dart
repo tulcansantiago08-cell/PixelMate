@@ -12,6 +12,7 @@ enum TrayAction {
   finish,
   showStats,
   showSettings,
+  showPending,
   toggleMascot,
   toggleDetection,
   toggleWalk,
@@ -102,6 +103,7 @@ List<TrayEntry> trayEntries(
   entries
     ..add(const TrayEntry.separator())
     ..add(const TrayEntry('Estadísticas', action: TrayAction.showStats))
+    ..add(const TrayEntry('Pendientes', action: TrayAction.showPending))
     ..add(const TrayEntry('Ajustes…', action: TrayAction.showSettings))
     ..add(TrayEntry(mascotVisible ? 'Ocultar mascota' : 'Mostrar mascota',
         action: TrayAction.toggleMascot))

@@ -78,7 +78,7 @@ void main() {
             done: Duration(minutes: 90), goal: Duration(hours: 4)),
         progress: const PlayerProgress(xp: 400, unlocked: {}),
       );
-      expect(text, contains('Hora: 09:05.'));
+      expect(text, contains('Hora: 09:05 del domingo 8 de noviembre.'));
       expect(text, contains('No hay jornada en curso.'));
       expect(text, contains('Enfoque de hoy: 1 h 30 min de una meta de 4 h.'));
       expect(

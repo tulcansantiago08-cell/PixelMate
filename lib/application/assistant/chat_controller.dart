@@ -15,6 +15,9 @@ import '../stats/weekly_report.dart';
 import '../workday/workday_providers.dart';
 import 'assistant_actions.dart';
 import 'assistant_context.dart';
+import 'command_parser.dart';
+import 'personal_store.dart';
+import 'reminders.dart';
 import 'chat_assistant.dart';
 import 'workday_summary.dart';
 
@@ -107,6 +110,18 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     final text = message.trim();
     if ((text.isEmpty && !withScreenshot) || isLoading) return;
 
+    // Órdenes claras ("recuérdame…", "abre…", "apunta…"): se hacen al
+    // instante y sin IA, así funcionan siempre y nunca se inventan.
+    final command = withScreenshot || text.isEmpty
+        ? null
+        : parseCommand(text, DateTime.now());
+    if (command != null) {
+      _add(ChatMessage(text: text, isUser: true));
+      final note = await _ref.read(assistantExecutorProvider).run(command);
+      _add(ChatMessage(text: note, isUser: false, isNote: true));
+      return;
+    }
+
     final choice = await _ref.read(assistantChoiceProvider.future);
     final assistant = choice.assistant;
     if (assistant == null) {
@@ -158,6 +173,31 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
         context: _context(),
         imageBase64: image,
       );
+      final intent =
+          assistant.supportsActions ? _intentFor(reply.action) : null;
+      if (intent != null) {
+        // Acción de asistente que eligió la IA: solo si el mensaje la pide
+        // de verdad; y se muestra lo que pasó, no lo que la IA "cree".
+        if (mentionsAssistantAction(text)) {
+          final note = await _ref.read(assistantExecutorProvider).run(
+                commandFromAi(
+                  intent: intent,
+                  userText: text,
+                  detail: reply.detail,
+                  minutes: reply.minutes,
+                  time: reply.time,
+                  day: reply.day,
+                  number: reply.number,
+                  hours: reply.hours,
+                  now: DateTime.now(),
+                ),
+              );
+          _add(ChatMessage(text: note, isUser: false, isNote: true));
+        } else {
+          _add(ChatMessage(text: reply.text, isUser: false));
+        }
+        return;
+      }
       _add(ChatMessage(text: reply.text, isUser: false));
       if (assistant.supportsActions) {
         final note = runAssistantAction(
@@ -186,7 +226,19 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     }
   }
 
+  static AssistantIntent? _intentFor(AssistantAction a) => switch (a) {
+        AssistantAction.remind => AssistantIntent.remind,
+        AssistantAction.addTask => AssistantIntent.addTask,
+        AssistantAction.completeTask => AssistantIntent.completeTask,
+        AssistantAction.showPending => AssistantIntent.showPending,
+        AssistantAction.open => AssistantIntent.open,
+        AssistantAction.showAgenda => AssistantIntent.showAgenda,
+        AssistantAction.createEvent => AssistantIntent.createEvent,
+        _ => null,
+      };
+
   String _context() => describeContext(
+        tasks: _ref.read(personalStoreProvider).describe(),
         petName: _ref.read(petNameProvider),
         species: _ref.read(activeSpeciesProvider),
         now: DateTime.now(),

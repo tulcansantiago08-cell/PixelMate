@@ -37,7 +37,9 @@ import 'aura_sparkles.dart';
 import 'pet_sprites.dart';
 import 'rename_dialog.dart';
 import '../onboarding/welcome_panel.dart';
+import '../assistant/pending_panel.dart';
 import '../settings/settings_panel.dart';
+import '../../application/assistant/reminders.dart';
 import '../stats/weekly_report_panel.dart';
 import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
@@ -310,6 +312,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         },
         onRename: () => _rename(context),
         onSettings: () => _openPanel(MascotPanel.settings),
+        onPending: () => _openPanel(MascotPanel.pending),
       );
     } finally {
       _holdExpanded--;
@@ -382,6 +385,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     ref.listen(activityDetectionProvider, (_, s) {
       if (s != null) _walker.stop();
     });
+    // Recordatorios a su hora: se avisan aunque haya jornada.
+    ref.listen(reminderProvider, (before, alert) {
+      if (alert == null || identical(before, alert)) return;
+      _walker.stop();
+      _wake(animate: false);
+      _react(MascotReaction(alert.message, MascotState.alert),
+          replace: true, duration: const Duration(seconds: 30));
+    });
     // Nivel, logros y racha (con enfoque profundo, esperan al descanso).
     ref.listen(celebrationProvider, (before, c) {
       if (c == null || identical(before, c)) return;
@@ -443,6 +454,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                         ),
                       MascotPanel.welcome =>
                         WelcomePanel(onDone: _finishWelcome),
+                      MascotPanel.pending => PendingPanel(
+                          onClose: () => _openPanel(MascotPanel.none)),
                       MascotPanel.weekly => WeeklyReportPanel(
                           onClose: () => _openPanel(MascotPanel.none)),
                       _ => StatsPanel(

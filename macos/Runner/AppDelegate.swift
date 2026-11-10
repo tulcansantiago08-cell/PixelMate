@@ -13,6 +13,7 @@ class AppDelegate: FlutterAppDelegate {
       GlobalHotKey.register(with: controller.engine.binaryMessenger)
       SoundPlayer.register(with: controller.engine.binaryMessenger)
       FileExport.register(with: controller.engine.binaryMessenger)
+      AssistantBridge.register(with: controller.engine.binaryMessenger)
       registerAppInfo(with: controller.engine.binaryMessenger)
     }
     super.applicationDidFinishLaunching(notification)

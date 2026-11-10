@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/detection_settings.dart';
 import '../../application/activity/focus_guard.dart';
 import '../../application/activity/focus_guard_controller.dart';
+import '../../application/assistant/reminders.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/login_item.dart';
 import '../../application/desktop/sounds.dart';
@@ -132,6 +133,15 @@ class DesktopShell {
     );
     _cleanup.add(guard.close);
 
+    // Recordatorios del usuario: siempre con notificación (y sonido).
+    final reminders =
+        container.listen<ReminderAlert?>(reminderProvider, (before, alert) {
+      if (alert == null || identical(before, alert)) return;
+      _play(PetSound.focus);
+      unawaited(notifier.show(WorkdayNotice('Recordatorio', alert.message)));
+    });
+    _cleanup.add(reminders.close);
+
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {
       if (msg != null && before == null && !window.visible.value) {
@@ -180,6 +190,8 @@ class DesktopShell {
         await _showPanel(MascotPanel.stats);
       case TrayAction.showSettings:
         await _showPanel(MascotPanel.settings);
+      case TrayAction.showPending:
+        await _showPanel(MascotPanel.pending);
       case TrayAction.toggleMascot:
         await window.toggle();
       case TrayAction.toggleDetection:

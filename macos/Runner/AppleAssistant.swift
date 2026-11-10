@@ -15,6 +15,7 @@ import Foundation
 ///     o FlutterError con código: context | guardrail | language | busy |
 ///     unavailable | other
 ///   prewarm(instructions) → carga el modelo antes del primer mensaje
+///   generateCode(pedido) → texto con el código
 ///   reset → olvida la conversación
 enum AppleAssistant {
   static func register(with messenger: FlutterBinaryMessenger) {
@@ -57,6 +58,8 @@ enum AppleAssistant {
       .anyOf([
         "ninguna", "iniciarTrabajo", "iniciarEstudio", "iniciarJuego", "pausar",
         "reanudar", "terminar", "cambiarMeta", "abrirEstadisticas",
+        "recordar", "agregarTarea", "completarTarea", "verPendientes", "abrir",
+        "verAgenda", "crearEvento",
       ]))
     var action: String
 
@@ -65,6 +68,33 @@ enum AppleAssistant {
         "Horas que el usuario indicó para la jornada o para la meta diaria; 0 si no dijo ninguna.",
       .range(0...12))
     var hours: Int
+
+    @Guide(
+      description:
+        "Texto de la acción: lo que hay que recordar, la tarea, el nombre de la app o web a abrir, o el título del evento. Vacío si no aplica."
+    )
+    var detail: String
+
+    @Guide(
+      description:
+        "Para 'recordar' dentro de un rato: minutos desde ahora (\"en 20 minutos\" = 20). 0 si dijo una hora concreta o no aplica.",
+      .range(0...1440))
+    var minutes: Int
+
+    @Guide(
+      description:
+        "Hora concreta en formato 24 h HH:mm (\"a las 5 de la tarde\" = 17:00). Vacío si no dijo hora."
+    )
+    var time: String
+
+    @Guide(description: "Día: \"hoy\", \"mañana\" o vacío.", .anyOf(["", "hoy", "mañana"]))
+    var day: String
+
+    @Guide(
+      description:
+        "Número de la tarea para 'completarTarea' (la 1 es la primera de la lista). 0 si no aplica.",
+      .range(0...50))
+    var number: Int
   }
 
   @available(macOS 26.0, *)
@@ -77,6 +107,27 @@ enum AppleAssistant {
       switch call.method {
       case "availability":
         result(Self.availability())
+      case "generateCode":
+        // Sesión aparte: escribir código no se mezcla con la charla.
+        guard let request = call.arguments as? String else {
+          result(FlutterError(code: "other", message: nil, details: nil))
+          return
+        }
+        Task { @MainActor in
+          let coder = LanguageModelSession(
+            instructions:
+              "Eres un programador experto. Escribes programas completos, cortos y que funcionan. Responde SOLO con el código del archivo, sin explicaciones antes ni después. Los comentarios y los textos para el usuario, en español."
+          )
+          do {
+            let response = try await coder.respond(
+              to: request, options: GenerationOptions(temperature: 0.2))
+            result(response.content)
+          } catch {
+            result(
+              FlutterError(
+                code: Self.classify(error), message: error.localizedDescription, details: nil))
+          }
+        }
       case "reset":
         session = nil
         result(nil)
@@ -121,6 +172,11 @@ enum AppleAssistant {
             "reply": content.reply,
             "action": content.action,
             "hours": content.hours,
+            "detail": content.detail,
+            "minutes": content.minutes,
+            "time": content.time,
+            "day": content.day,
+            "number": content.number,
           ]
         } catch {
           let code = Self.classify(error)
