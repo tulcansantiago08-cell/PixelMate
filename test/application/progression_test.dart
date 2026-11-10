@@ -77,7 +77,9 @@ void main() {
       expect(titleForLevel(2), 'Gatito novato');
       expect(titleForLevel(3), 'Aprendiz curioso');
       expect(titleForLevel(19), 'Sabio zen');
-      expect(titleForLevel(99), 'Leyenda pixel');
+      expect(titleForLevel(24), 'Leyenda pixel');
+      expect(titleForLevel(25), 'Mito del enfoque');
+      expect(titleForLevel(99), 'Mito del enfoque');
     });
 
     test('progreso dentro del nivel', () {

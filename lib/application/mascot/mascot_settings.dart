@@ -15,6 +15,7 @@ class MascotSettings extends ChangeNotifier {
   static const _nightKey = 'mascot.nightReminders';
   static const _wellnessKey = 'mascot.wellnessTips';
   static const _deepFocusKey = 'mascot.deepFocus';
+  static const _auraKey = 'mascot.aura';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -104,6 +105,16 @@ class MascotSettings extends ChangeNotifier {
   Future<void> setDeepFocus(bool value) async {
     _deepFocus = value;
     await _prefs?.setBool(_deepFocusKey, value);
+    notifyListeners();
+  }
+
+  /// Aura brillante (desde el nivel 20). Activada por defecto.
+  bool get aura => _prefs?.getBool(_auraKey) ?? _aura;
+  bool _aura = true;
+
+  Future<void> setAura(bool value) async {
+    _aura = value;
+    await _prefs?.setBool(_auraKey, value);
     notifyListeners();
   }
 

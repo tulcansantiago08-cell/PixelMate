@@ -56,6 +56,7 @@ const _titles = <(int, String)>[
   (12, 'Maestro del ritmo'),
   (16, 'Sabio zen'),
   (20, 'Leyenda pixel'),
+  (25, 'Mito del enfoque'),
 ];
 
 String titleForLevel(int level) => _titles.lastWhere((t) => level >= t.$1).$2;
@@ -84,8 +85,11 @@ class _History {
   /// Sesiones en 5 de 7 días en algún tramo de una semana.
   final bool steady;
 
+  final int xp;
+
   _History(this.records)
-      : steady = hasSteadyWindow(activeDaySet(records)),
+      : xp = records.fold(0, (sum, r) => sum + xpForRecord(r)),
+        steady = hasSteadyWindow(activeDaySet(records)),
         focus = records.fold(Duration.zero, (s, r) => s + r.effectiveFocus),
         breaks = records.fold(Duration.zero, (s, r) => s + r.effectiveBreak),
         activeDays = records
@@ -149,6 +153,8 @@ final achievements = <Achievement>[
       'Madrugador',
       'Empieza una sesión antes de las 8:00.',
       (h) => h.records.any((r) => r.startedAt.toLocal().hour < 8)),
+  Achievement._('legend', '🌈', 'Leyenda', 'Llega al nivel 25.',
+      (h) => levelForXp(h.xp) >= 25),
 ];
 
 // ---------------------------------------------------------------------------
@@ -214,10 +220,14 @@ class LeveledUp extends ProgressEvent {
   /// Especies que se desbloquean con esta subida.
   final List<PetKind> species;
 
+  /// Si con esta subida se desbloquea el aura brillante.
+  final bool aura;
+
   const LeveledUp(this.level, this.title,
       {required this.newTitle,
       this.accessories = const [],
-      this.species = const []});
+      this.species = const [],
+      this.aura = false});
 }
 
 class AchievementUnlocked extends ProgressEvent {
@@ -234,7 +244,9 @@ List<ProgressEvent> progressEvents(
     events.add(LeveledUp(after.level, after.title,
         newTitle: after.title != before.title,
         accessories: PetAccessory.unlockedBetween(before.level, after.level),
-        species: PetKind.unlockedBetween(before.level, after.level)));
+        species: PetKind.unlockedBetween(before.level, after.level),
+        aura:
+            before.level < auraUnlockLevel && after.level >= auraUnlockLevel));
   }
   for (final a in achievements) {
     if (after.isUnlocked(a) && !before.isUnlocked(a)) {
@@ -252,7 +264,8 @@ List<ProgressEvent> progressEvents(
         :final title,
         :final newTitle,
         :final accessories,
-        :final species
+        :final species,
+        :final aura
       ) =>
         (
           title: '¡Nivel $level!',
@@ -262,6 +275,7 @@ List<ProgressEvent> progressEvents(
               _unlocks([
                 for (final k in species) '${k.emoji} ${k.label}',
                 for (final a in accessories) '${a.emoji} ${a.label}',
+                if (aura) '✨ Aura brillante',
               ]),
         ),
       AchievementUnlocked(:final achievement) => (

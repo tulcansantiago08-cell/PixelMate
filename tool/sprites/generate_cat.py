@@ -598,12 +598,51 @@ def acc_crown(cv, pose, anim, i):
     cv.outline_color(CROWN)
 
 
+WIZARD = (70, 74, 190)
+WIZARD_DARK = (46, 48, 140)
+STAR = (255, 230, 120)
+CAPE = (200, 40, 56)
+CAPE_DARK = (150, 26, 40)
+
+
+def acc_wizard_hat(cv, pose, anim, i):
+    """Gorro de mago: cono azul con estrellas, un poco ladeado."""
+    top = int(round(_head(pose) - 6.8))
+    cv.rect(9, top, 23, top + 1, WIZARD_DARK)          # ala
+    cv.triangle((11, top + 0.5), (21, top + 0.5), (18, top - 7), WIZARD, body=False)
+    cv.set(17, top - 7, WIZARD)                         # punta
+    cv.set(14, top - 2, STAR)
+    cv.set(17, top - 4, STAR)
+    cv.set(18, top - 1, STAR)
+    cv.outline_color(WIZARD)
+    cv.outline_color(WIZARD_DARK)
+
+
+def acc_cape(cv, pose, anim, i):
+    """Capa de héroe: cuello con broche y dos alas que asoman a los lados."""
+    hy = int(round(_head(pose)))
+    neck = hy + 6
+    cv.rect(10, neck, 22, neck, CAPE)
+    flutter = [0, 1, 1, 0][i % 4]
+    for side in (-1, 1):
+        x0 = 16 + side * 7
+        for y in range(neck + 1, min(neck + 9, 30)):
+            spread = (y - neck) // 3 + flutter
+            cv.rect(min(x0, x0 + side * spread), y, max(x0, x0 + side * spread), y,
+                    CAPE if y < neck + 7 else CAPE_DARK)
+    cv.set(16, neck, STAR)                               # broche
+    cv.outline_color(CAPE)
+    cv.outline_color(CAPE_DARK)
+
+
 ACCESSORIES = {
     "scarf": acc_scarf,
     "bow": acc_bow,
     "sunglasses": acc_sunglasses,
     "headphones": acc_headphones,
     "crown": acc_crown,
+    "wizardHat": acc_wizard_hat,
+    "cape": acc_cape,
 }
 
 

@@ -33,6 +33,7 @@ import '../../application/mascot/mascot_walker.dart';
 import '../../application/progress/progress_providers.dart';
 import '../../application/progress/celebrations.dart';
 import '../../domain/mascot/pet_species.dart';
+import 'aura_sparkles.dart';
 import 'pet_sprites.dart';
 import 'rename_dialog.dart';
 import '../onboarding/welcome_panel.dart';
@@ -488,21 +489,26 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                     },
                     child: pet == null
                         ? const SizedBox.square(dimension: 160)
-                        : SpriteMascot(
-                            pet: pet,
-                            animation: walking
-                                ? PetAnimation.walk
-                                : animationFor(_mascotState(view, panel)),
-                            // El gato mira a la izquierda (cola a la derecha):
-                            // se voltea al caminar hacia la derecha.
-                            flipped: walking && !_walker.facingLeft,
-                            oneShot: walking ? null : _oneShot,
-                            accessory: pet.accessories[
-                                ref.watch(equippedAccessoryProvider)],
-                            onOneShotDone: () {
-                              if (mounted) setState(() => _oneShot = null);
-                            },
-                          ),
+                        : Stack(alignment: Alignment.center, children: [
+                            SpriteMascot(
+                              pet: pet,
+                              animation: walking
+                                  ? PetAnimation.walk
+                                  : animationFor(_mascotState(view, panel)),
+                              // El gato mira a la izquierda (cola a la derecha):
+                              // se voltea al caminar hacia la derecha.
+                              flipped: walking && !_walker.facingLeft,
+                              oneShot: walking ? null : _oneShot,
+                              accessory: pet.accessories[
+                                  ref.watch(equippedAccessoryProvider)],
+                              onOneShotDone: () {
+                                if (mounted) setState(() => _oneShot = null);
+                              },
+                            ),
+                            // Nivel 20: chispitas alrededor.
+                            if (ref.watch(auraActiveProvider))
+                              const AuraSparkles(),
+                          ]),
                   ),
                 ],
               ),
