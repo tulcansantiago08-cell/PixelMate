@@ -8,11 +8,17 @@ class MascotQuickActions extends StatelessWidget {
   final VoidCallback onStats;
   final void Function(Offset globalPosition) onMenu;
 
+  /// Minijuego «Atrapa estrellas» (o `null` para no mostrar el botón).
+  final VoidCallback? onGame;
+  final bool gameOpen;
+
   const MascotQuickActions({
     super.key,
     required this.statsOpen,
     required this.onStats,
     required this.onMenu,
+    this.onGame,
+    this.gameOpen = false,
   });
 
   @override
@@ -28,6 +34,15 @@ class MascotQuickActions extends StatelessWidget {
             active: statsOpen,
             onPressed: (_) => onStats(),
           ),
+          if (onGame != null) ...[
+            const SizedBox(height: 6),
+            _RoundButton(
+              tooltip: gameOpen ? 'Cerrar el juego' : 'Atrapa estrellas',
+              icon: Icons.star_rounded,
+              active: gameOpen,
+              onPressed: (_) => onGame!(),
+            ),
+          ],
           const SizedBox(height: 6),
           _RoundButton(
             tooltip: 'Menú: jornada, pausa…',

@@ -17,6 +17,7 @@ import 'application/assistant/video_finder.dart';
 import 'application/desktop/app_info.dart';
 import 'application/desktop/global_shortcut.dart';
 import 'application/desktop/updates.dart';
+import 'application/game/star_catch.dart';
 import 'application/desktop/login_item.dart';
 import 'application/desktop/sounds.dart';
 import 'application/desktop/mascot_window_port.dart';
@@ -105,6 +106,7 @@ void main() async {
     updateCheckerProvider.overrideWithValue(GitHubUpdateChecker()),
     updateSettingsProvider.overrideWithValue(UpdateSettings(prefs)),
     updateScheduleProvider.overrideWithValue(true),
+    gameStoreProvider.overrideWith((_) => GameStore(prefs)),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),

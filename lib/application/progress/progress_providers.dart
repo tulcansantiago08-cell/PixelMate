@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../game/star_catch.dart';
 import '../workday/workday_providers.dart';
 import '../workday/workday_store.dart';
 import 'progression.dart';
@@ -19,6 +20,7 @@ final progressProvider = Provider<PlayerProgress>((ref) {
   final mode = view.mode;
   return computeProgress(
     history,
+    bonusXp: ref.watch(gameXpProvider),
     live: timer != null && mode != null
         ? WorkdayRecord.fromTimer(mode, timer, DateTime.now())
         : null,

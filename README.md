@@ -34,6 +34,15 @@
 - **Te cuida** — guardián del enfoque (avisa si WhatsApp, Mensajes o un
   juego siguen al frente durante el enfoque), consejos de bienestar en los
   descansos y recordatorio para descansar si trabajas hasta muy tarde.
+- **Minijuego en los descansos** — «Atrapa estrellas» (botón 🌟 junto a la
+  mascota): lleva la cesta con el ratón o las flechas, atrapa ⭐ y 🌟 y
+  esquiva las trampas hasta perder tus 3 vidas. Cada nivel cambia el cielo,
+  va más rápido, achica la cesta y trae trampas nuevas (💣 bombas, 🧊 hielo
+  que congela, 🌀 remolinos que invierten los controles, 🍄 hongos que
+  encogen, 💀 estrellas falsas) y ayudas (💖 vida, 🧲 imán, 🛡️ escudo).
+  Atrapar seguidas multiplica los puntos (combo 🔥) y 6 medallas desbloquean
+  cestas con truco (🪣 🎩 🍯 🛸 🌈 👑). En cada descanso, una partida da hasta
+  15 XP; fuera de ellos se juega por el récord.
 - **Progreso** — XP, niveles, títulos, 12 logros, accesorios y mascotas que
   se desbloquean, meta diaria y una racha amable que no castiga descansar.
 - **Estadísticas** — hoy, semana y mes por modo, resumen semanal con un
