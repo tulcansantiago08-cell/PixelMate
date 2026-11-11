@@ -87,8 +87,8 @@ class _History {
 
   final int xp;
 
-  _History(this.records)
-      : xp = records.fold(0, (sum, r) => sum + xpForRecord(r)),
+  _History(this.records, {int bonusXp = 0})
+      : xp = records.fold(bonusXp, (sum, r) => sum + xpForRecord(r)),
         steady = hasSteadyWindow(activeDaySet(records)),
         focus = records.fold(Duration.zero, (s, r) => s + r.effectiveFocus),
         breaks = records.fold(Duration.zero, (s, r) => s + r.effectiveBreak),
@@ -183,16 +183,17 @@ class PlayerProgress {
 }
 
 /// Progreso con todo el historial. [live] es la sesión en curso; si ya está
-/// guardada en el historial (mismo id) no se cuenta dos veces.
+/// guardada en el historial (mismo id) no se cuenta dos veces. [bonusXp] es
+/// la XP ganada fuera de las sesiones (el minijuego de los descansos).
 PlayerProgress computeProgress(List<WorkdayRecord> history,
-    {WorkdayRecord? live}) {
+    {WorkdayRecord? live, int bonusXp = 0}) {
   final records = [
     ...history,
     if (live != null && !history.any((r) => r.id == live.id)) live,
   ];
-  final h = _History(records);
+  final h = _History(records, bonusXp: bonusXp);
   return PlayerProgress(
-    xp: records.fold(0, (sum, r) => sum + xpForRecord(r)),
+    xp: h.xp,
     unlocked: {
       for (final a in achievements)
         if (a._unlocked(h)) a.id

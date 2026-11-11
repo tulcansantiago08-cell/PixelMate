@@ -41,6 +41,8 @@ import '../assistant/pending_panel.dart';
 import '../settings/settings_panel.dart';
 import '../../application/assistant/reminders.dart';
 import '../../application/desktop/updates.dart';
+import '../../application/game/star_catch.dart';
+import '../game/star_catch_panel.dart';
 import '../stats/weekly_report_panel.dart';
 import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
@@ -363,6 +365,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
   MascotState _mascotState(WorkdayView view, MascotPanel panel) {
     if (panel == MascotPanel.chat) return MascotState.chatting;
     if (panel == MascotPanel.welcome) return MascotState.greeting;
+    if (panel == MascotPanel.game) return MascotState.gaming;
     if (_reactionMood != null) return _reactionMood!;
     if (_greeting) return MascotState.greeting;
     final status = view.status;
@@ -465,6 +468,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                         WelcomePanel(onDone: _finishWelcome),
                       MascotPanel.pending => PendingPanel(
                           onClose: () => _openPanel(MascotPanel.none)),
+                      MascotPanel.game => StarCatchPanel(
+                          onClose: () => _openPanel(MascotPanel.none)),
                       MascotPanel.weekly => WeeklyReportPanel(
                           onClose: () => _openPanel(MascotPanel.none)),
                       _ => StatsPanel(
@@ -489,7 +494,19 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                       // Capa propia: el contador cambia cada segundo sin
                       // redibujar a la mascota.
                       : RepaintBoundary(
-                          child: WorkdayBadge(view: view, speech: _speech)),
+                          child: WorkdayBadge(
+                          view: view,
+                          speech: _speech,
+                          // En un descanso con XP por ganar, invita a jugar.
+                          onPlay: ref
+                                  .watch(gameStoreProvider)
+                                  .canEarnIn(currentBreakKey(view))
+                              ? () {
+                                  _wake(animate: false);
+                                  _openPanel(MascotPanel.game);
+                                }
+                              : null,
+                        )),
                 ),
 
               // Mascota fija abajo, con accesos rápidos a su izquierda.
@@ -503,6 +520,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                       _openPanel(panel == MascotPanel.stats
                           ? MascotPanel.none
                           : MascotPanel.stats);
+                    },
+                    gameOpen: panel == MascotPanel.game,
+                    onGame: () {
+                      _wake();
+                      _openPanel(panel == MascotPanel.game
+                          ? MascotPanel.none
+                          : MascotPanel.game);
                     },
                     onMenu: (position) {
                       _wake();

@@ -10,7 +10,10 @@ class WorkdayBadge extends StatelessWidget {
   final WorkdayView view;
   final String? speech;
 
-  const WorkdayBadge({super.key, required this.view, this.speech});
+  /// Si no es `null`, muestra «🌟 ¿Jugamos?» (minijuego del descanso).
+  final VoidCallback? onPlay;
+
+  const WorkdayBadge({super.key, required this.view, this.speech, this.onPlay});
 
   static String? statusLine(WorkdayView view) {
     final status = view.status;
@@ -61,6 +64,22 @@ class WorkdayBadge extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+          if (onPlay != null) ...[
+            const SizedBox(height: 4),
+            InkWell(
+              key: const ValueKey('badge-play'),
+              onTap: onPlay,
+              borderRadius: BorderRadius.circular(6),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Text('🌟 ¿Jugamos? (+XP)',
+                    style: TextStyle(
+                        color: Color(0xFFFFD54F),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ),
           ],
         ],
       ),
