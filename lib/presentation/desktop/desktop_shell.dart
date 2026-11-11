@@ -7,6 +7,7 @@ import '../../application/activity/focus_guard.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/assistant/reminders.dart';
 import '../../application/desktop/global_shortcut.dart';
+import '../../application/desktop/updates.dart';
 import '../../application/desktop/login_item.dart';
 import '../../application/desktop/sounds.dart';
 import '../../application/desktop/mascot_panel.dart';
@@ -132,6 +133,17 @@ class DesktopShell {
       },
     );
     _cleanup.add(guard.close);
+
+    // Versión nueva: se avisa una sola vez por versión.
+    final updates =
+        container.listen<UpdateState>(updateProvider, (before, now) {
+      final release = now.release;
+      if (release != null && now.announce > (before?.announce ?? 0)) {
+        unawaited(notifier.show(WorkdayNotice(
+            'PixelMate ${release.version}', updateMessage(release))));
+      }
+    });
+    _cleanup.add(updates.close);
 
     // Recordatorios del usuario: siempre con notificación (y sonido).
     final reminders =

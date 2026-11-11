@@ -40,6 +40,7 @@ import '../onboarding/welcome_panel.dart';
 import '../assistant/pending_panel.dart';
 import '../settings/settings_panel.dart';
 import '../../application/assistant/reminders.dart';
+import '../../application/desktop/updates.dart';
 import '../stats/weekly_report_panel.dart';
 import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
@@ -384,6 +385,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     // Si la mascota pregunta algo, deja de pasear.
     ref.listen(activityDetectionProvider, (_, s) {
       if (s != null) _walker.stop();
+    });
+    // Versión nueva de PixelMate (una vez por versión).
+    ref.listen(updateProvider, (before, now) {
+      final release = now.release;
+      if (release != null && now.announce > (before?.announce ?? 0)) {
+        _react(MascotReaction(updateMessage(release), MascotState.alert),
+            duration: const Duration(seconds: 15));
+      }
     });
     // Recordatorios a su hora: se avisan aunque haya jornada.
     ref.listen(reminderProvider, (before, alert) {
