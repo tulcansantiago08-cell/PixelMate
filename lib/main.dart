@@ -16,6 +16,7 @@ import 'application/assistant/reminders.dart';
 import 'application/assistant/video_finder.dart';
 import 'application/desktop/app_info.dart';
 import 'application/desktop/global_shortcut.dart';
+import 'application/desktop/updates.dart';
 import 'application/desktop/login_item.dart';
 import 'application/desktop/sounds.dart';
 import 'application/desktop/mascot_window_port.dart';
@@ -34,6 +35,7 @@ import 'infrastructure/claude/claude_provider.dart';
 import 'infrastructure/screenshot/screenshot_service.dart';
 import 'infrastructure/desktop/macos_login_item.dart';
 import 'infrastructure/desktop/native_effects.dart';
+import 'infrastructure/app/github_update_checker.dart';
 import 'infrastructure/app/macos_app_info.dart';
 import 'infrastructure/files/macos_file_saver.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
@@ -100,6 +102,9 @@ void main() async {
     macActionsProvider.overrideWithValue(MacosActions()),
     videoFinderProvider.overrideWithValue(YouTubeVideoFinder()),
     codeWriterProvider.overrideWithValue(AppleCodeWriter()),
+    updateCheckerProvider.overrideWithValue(GitHubUpdateChecker()),
+    updateSettingsProvider.overrideWithValue(UpdateSettings(prefs)),
+    updateScheduleProvider.overrideWithValue(true),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),
@@ -138,6 +143,7 @@ void main() async {
   container.read(focusGuardProvider);
   container.read(lateNightProvider);
   container.read(reminderProvider);
+  container.read(updateProvider);
 }
 
 class PixelMateApp extends StatelessWidget {

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/activity_providers.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/assistant/chat_controller.dart';
+import '../../application/assistant/mac_actions.dart';
 import '../../application/desktop/app_info.dart';
+import '../../application/desktop/updates.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/login_item.dart';
 import '../../application/desktop/sounds.dart';
@@ -45,6 +47,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final equipped = ref.watch(equippedAccessoryProvider);
     final ai = ref.watch(assistantChoiceProvider).valueOrNull;
     final shortcut = ref.watch(shortcutSettingsProvider);
+    final updates = ref.watch(updateSettingsProvider);
     final sound = ref.watch(soundSettingsProvider);
 
     return Container(
@@ -82,6 +85,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                 launch,
                 shortcut,
                 sound,
+                updates,
               ]),
               builder: (context, _) => ListView(
                 padding: const EdgeInsets.only(right: 4),
@@ -288,6 +292,21 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     style: TextStyle(
                         color: StatsStyle.textSecondary, fontSize: 11),
                   ),
+                  _UpdateRow(
+                    state: ref.watch(updateProvider),
+                    onCheck: () =>
+                        ref.read(updateProvider.notifier).check(manual: true),
+                    onDownload: (url) =>
+                        ref.read(macActionsProvider).openUrl(url),
+                  ),
+                  _Switch(
+                    keyName: 'updates',
+                    label: 'Buscar actualizaciones solo',
+                    help: 'Una vez al día pregunta a GitHub por la última '
+                        'versión (no envía datos tuyos).',
+                    value: updates.enabled,
+                    onChanged: updates.setEnabled,
+                  ),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
@@ -446,4 +465,64 @@ class _SpeciesPicker extends StatelessWidget {
             ),
         ],
       );
+}
+
+/// Estado de las actualizaciones y su botón.
+class _UpdateRow extends StatelessWidget {
+  final UpdateState state;
+  final VoidCallback onCheck;
+  final ValueChanged<Uri> onDownload;
+
+  const _UpdateRow(
+      {required this.state, required this.onCheck, required this.onDownload});
+
+  @override
+  Widget build(BuildContext context) {
+    final release = state.release;
+    final (text, button) = switch (state.status) {
+      UpdateStatus.available when release != null => (
+          '🆕 Versión ${release.version} disponible.',
+          TextButton(
+            key: const ValueKey('update-download'),
+            onPressed: () => onDownload(release.page),
+            child: const Text('Descargar ↗'),
+          ),
+        ),
+      UpdateStatus.checking => ('Buscando…', null),
+      UpdateStatus.upToDate => (
+          '✅ Tienes la última versión.',
+          TextButton(
+              key: const ValueKey('update-check'),
+              onPressed: onCheck,
+              child: const Text('Buscar otra vez')),
+        ),
+      UpdateStatus.failed => (
+          '⚠️ No pude conectar con GitHub.',
+          TextButton(
+              key: const ValueKey('update-check'),
+              onPressed: onCheck,
+              child: const Text('Reintentar')),
+        ),
+      _ => (
+          '',
+          TextButton(
+              key: const ValueKey('update-check'),
+              onPressed: onCheck,
+              child: const Text('Buscar actualizaciones')),
+        ),
+    };
+    // Texto y botón uno debajo del otro si no caben en una línea.
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 4,
+      children: [
+        if (text.isNotEmpty)
+          Text(text,
+              key: const ValueKey('update-status'),
+              style: const TextStyle(
+                  color: StatsStyle.textSecondary, fontSize: 11)),
+        if (button != null) button,
+      ],
+    );
+  }
 }

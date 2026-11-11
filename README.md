@@ -59,7 +59,8 @@ Todo se guarda solo en tu Mac (SQLite y preferencias locales). La IA de
 Apple funciona en el propio equipo. La detección de apps solo mira qué app
 está al frente, nunca lo que ves o escribes. Cuando pides reproducir algo
 («reproduce Despacito»), la app busca esa canción en YouTube para abrir el
-video. Las capturas de pantalla solo se envían si usas Claude y pulsas el
+video. Una vez al día pregunta a GitHub cuál es la última versión (sin
+enviar datos tuyos; se puede apagar en Ajustes). Las capturas de pantalla solo se envían si usas Claude y pulsas el
 botón de la cámara.
 
 ## Compilar desde el código
