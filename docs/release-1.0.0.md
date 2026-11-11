@@ -41,4 +41,4 @@ La detección de apps solo mira qué app está al frente. Cuando pides
 reproducir algo, la app busca esa canción en YouTube para abrir el video. El
 Calendario solo se usa si se lo pides, y macOS te pide permiso la primera vez.
 
-SHA-256 del zip: `3ce4dc7c5ec1e638ee48230251d822168e23afc69e0753a81ea3ef3e720b6452`
+SHA-256 del zip: `29aa8caaba5ed1cb5431dce199e76492c46235cef79186c4dff46a5c76455cd7`
