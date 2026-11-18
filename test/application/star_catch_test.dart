@@ -307,6 +307,74 @@ void main() {
     expect(again.medalsDone, 5);
   });
 
+  group('reto del día', () {
+    test('el mismo todo el día y cambia entre días', () {
+      final a = DailyChallenge.of(DateTime(2026, 11, 11, 8));
+      final b = DailyChallenge.of(DateTime(2026, 11, 11, 23));
+      expect(a.text, b.text);
+      final texts = {
+        for (var d = 1; d <= 30; d++)
+          DailyChallenge.of(DateTime(2026, 11, d)).text
+      };
+      expect(texts.length, greaterThan(5));
+    });
+
+    test('se cumple una vez al día, da XP y lleva racha', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      var now = DateTime(2026, 11, 11, 10);
+      final store = GameStore(prefs, () => now);
+      const great =
+          GameRun(score: 500, level: 9, maxCombo: 40, stars: 200, seconds: 400);
+      const bad = GameRun();
+
+      var r = await store.finish(0, run: bad);
+      expect(r.dailyXp, 0);
+      expect(store.dailyDone, isFalse);
+
+      r = await store.finish(500, run: great);
+      expect(r.dailyXp, dailyXp(1));
+      expect(store.dailyDone, isTrue);
+      expect(store.streak, 1);
+      expect(store.bonusXp, 20);
+      r = await store.finish(500, run: great);
+      expect(r.dailyXp, 0, reason: 'una vez al día');
+
+      now = DateTime(2026, 11, 12, 9); // al día siguiente, sigue la racha
+      expect(store.dailyDone, isFalse);
+      expect(store.streak, 1);
+      r = await store.finish(500, run: great);
+      expect(r.dailyStreak, 2);
+      expect(r.dailyXp, 25);
+
+      now = DateTime(2026, 11, 15, 9); // pasaron días: se pierde
+      expect(store.streak, 0);
+      r = await store.finish(500, run: great);
+      expect(r.dailyStreak, 1);
+      expect(GameStore(prefs, () => now).stats.dailies, 3);
+      expect(dailyXp(10), 40);
+    });
+
+    test('7 retos dan la medalla Constante y el dragón', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      var now = DateTime(2026, 11, 1, 10);
+      final store = GameStore(prefs, () => now);
+      const great =
+          GameRun(score: 500, level: 9, maxCombo: 40, stars: 200, seconds: 400);
+      GameResult? last;
+      for (var d = 1; d <= 7; d++) {
+        now = DateTime(2026, 11, d, 10);
+        last = await store.finish(500, run: great);
+      }
+      expect(last!.newMedals.map((m) => m.id), contains('daily7'));
+      expect(store.isUnlocked(BasketSkin.dragon), isTrue);
+      expect(
+          StarCatchGame(skin: BasketSkin.dragon).weights[FallingKind.bigStar],
+          16);
+    });
+  });
+
   testWidgets('se juega una partida completa', (tester) async {
     tester.view.physicalSize = const Size(304, 420);
     tester.view.devicePixelRatio = 1;
@@ -322,6 +390,8 @@ void main() {
       child: MaterialApp(home: Scaffold(body: StarCatchPanel(onClose: () {}))),
     ));
     expect(find.textContaining('juegas por el récord'), findsOneWidget);
+    expect(find.byKey(const ValueKey('game-daily')), findsOneWidget);
+    expect(find.textContaining('Reto de hoy'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const ValueKey('game-start')));
     await tester.tap(find.byKey(const ValueKey('game-start')));
     await tester.pump();
@@ -342,7 +412,10 @@ void main() {
     expect(store.stats.games, 1);
 
     // Pantalla de medallas y cestas.
-    await tester.tap(find.text('🏅 ${store.medalsDone}/${gameMedals.length}'));
+    final medalsButton =
+        find.text('🏅 ${store.medalsDone}/${gameMedals.length}');
+    await tester.ensureVisible(medalsButton);
+    await tester.tap(medalsButton);
     await tester.pump();
     expect(find.text('Medallas'), findsOneWidget);
     expect(find.byKey(const ValueKey('skin-basket')), findsOneWidget);

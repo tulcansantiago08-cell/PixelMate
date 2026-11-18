@@ -73,6 +73,10 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
   /// Aviso de nivel nuevo: texto y cuándo apareció.
   (String, Duration)? _banner;
 
+  /// Reto de hoy y si ya se avisó que se cumplió en esta partida.
+  DailyChallenge? _daily;
+  bool _dailyAnnounced = false;
+
   @override
   void dispose() {
     _ticker.dispose();
@@ -83,7 +87,10 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
   void _start() {
     _breakKey = currentBreakKey(ref.read(workdayControllerProvider));
     setState(() {
-      _game = StarCatchGame(skin: ref.read(gameStoreProvider).skin);
+      final store = ref.read(gameStoreProvider);
+      _game = StarCatchGame(skin: store.skin);
+      _daily = store.dailyDone ? null : store.daily;
+      _dailyAnnounced = false;
       _result = null;
       _flashes.clear();
       _banner = ('Nivel 1 · ${GameTheme.forLevel(1).name}', Duration.zero);
@@ -120,6 +127,10 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
             ' · $challenge',
         game.elapsed
       );
+    }
+    if (!_dailyAnnounced && _daily != null && _daily!.met(GameRun.of(game))) {
+      _dailyAnnounced = true;
+      _banner = ('🎯 ¡Reto del día cumplido! Sigue jugando', game.elapsed);
     }
     if (_banner != null &&
         game.elapsed - _banner!.$2 > const Duration(milliseconds: 3500)) {
@@ -287,6 +298,8 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         const SizedBox(height: 6),
         Text('🏆 Récord: ${store.best}', style: _body),
       ],
+      const SizedBox(height: 8),
+      _dailyCard(store),
       const SizedBox(height: 6),
       Text(
           'Cesta: ${store.skin.emoji} ${store.skin.label} — ${store.skin.perk}',
@@ -328,6 +341,23 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
           'aguantaste ${_game!.elapsed.inSeconds} s · récord ${store.best}',
           textAlign: TextAlign.center,
           style: _body),
+      if (r.dailyXp > 0) ...[
+        const SizedBox(height: 6),
+        Text(
+            '🎯 ¡Reto del día cumplido! +${r.dailyXp} XP'
+            '${r.dailyStreak > 1 ? ' · racha de ${r.dailyStreak} días 🔥' : ''}',
+            key: const ValueKey('game-daily-done'),
+            textAlign: TextAlign.center,
+            style: _body.copyWith(
+                color: const Color(0xFF80CBC4), fontWeight: FontWeight.w600)),
+      ] else if (!store.dailyDone && _daily != null) ...[
+        const SizedBox(height: 6),
+        Text(
+            '🎯 Reto de hoy: ${_daily!.text} '
+            '(${_daily!.progress(GameRun.of(_game!))}/${_daily!.goal})',
+            textAlign: TextAlign.center,
+            style: _body),
+      ],
       for (final m in r.newMedals) ...[
         const SizedBox(height: 6),
         Text(
@@ -356,6 +386,32 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         ),
       ]),
     ]);
+  }
+
+  /// Tarjeta del reto de hoy (o cumplido, con la racha).
+  Widget _dailyCard(GameStore store) {
+    final done = store.dailyDone;
+    final streak = store.streak;
+    final text = done
+        ? '🎯 Reto de hoy cumplido ✅'
+            '${streak > 1 ? ' · racha de $streak días 🔥' : ''}\n'
+            'Vuelve mañana por otro.'
+        : '🎯 Reto de hoy: ${store.daily.text}\n'
+            '+${dailyXp(streak + 1)} XP'
+            '${streak > 0 ? ' · racha de $streak 🔥 (no la pierdas)' : ''}';
+    return Container(
+      key: const ValueKey('game-daily'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: StatsStyle.surfaceRaised,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+            color: done ? const Color(0xFF80CBC4) : const Color(0xFFFFD54F)),
+      ),
+      child: Text(text,
+          textAlign: TextAlign.center,
+          style: _body.copyWith(color: StatsStyle.textPrimary)),
+    );
   }
 
   /// La medalla más cercana a conseguirse, para tener un motivo para la

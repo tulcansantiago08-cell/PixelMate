@@ -69,7 +69,8 @@ enum BasketSkin {
   honey('🍯', 'Tarro de miel', 'Cada 🌟 da un punto más', bigStarBonus: 1),
   ufo('🛸', 'OVNI', 'Se mueve un 20 % más rápido', speedFactor: 1.2),
   rainbow('🌈', 'Arcoíris', '🧊 🌀 🍄 duran la mitad', trapFactor: 0.5),
-  crown('👑', 'Corona', 'Empieza con un 🛡️ escudo', startShield: true);
+  crown('👑', 'Corona', 'Empieza con un 🛡️ escudo', startShield: true),
+  dragon('🐉', 'Dragón', 'Caen el doble de 🌟', bigStarChance: 2);
 
   final String emoji;
   final String label;
@@ -80,9 +81,11 @@ enum BasketSkin {
   final int bigStarBonus;
   final bool startMagnet;
   final bool startShield;
+  final double bigStarChance;
 
   const BasketSkin(this.emoji, this.label, this.perk,
-      {this.widthFactor = 1,
+      {this.bigStarChance = 1,
+      this.widthFactor = 1,
       this.speedFactor = 1,
       this.trapFactor = 1,
       this.bigStarBonus = 0,
@@ -255,7 +258,7 @@ class StarCatchGame {
   /// Peso de cada cosa que puede caer en el nivel actual.
   Map<FallingKind, double> get weights => {
         FallingKind.star: 60,
-        FallingKind.bigStar: 8,
+        FallingKind.bigStar: 8 * skin.bigStarChance,
         FallingKind.cloud: min(10 + 3.0 * (level - 1), 26),
         if (level >= 2) FallingKind.bomb: min(5 + 2.0 * (level - 2), 14),
         if (level >= 2) FallingKind.magnet: 2.5,
@@ -510,19 +513,72 @@ bool focusRunning(WorkdayView view) {
 
 /// Lo que importa de una partida para las medallas.
 class GameRun {
+  final int score;
   final int level;
   final int maxCombo;
   final int stars;
   final int seconds;
   const GameRun(
-      {this.level = 1, this.maxCombo = 0, this.stars = 0, this.seconds = 0});
+      {this.score = 0,
+      this.level = 1,
+      this.maxCombo = 0,
+      this.stars = 0,
+      this.seconds = 0});
 
   factory GameRun.of(StarCatchGame g) => GameRun(
+      score: g.score,
       level: g.level,
       maxCombo: g.maxCombo,
       stars: g.starsCaught,
       seconds: g.elapsed.inSeconds);
 }
+
+// ---------------------------------------------------------------------------
+// Reto del día
+
+/// Una meta para una sola partida, distinta cada día (la misma todo el día).
+class DailyChallenge {
+  final String text;
+  final int goal;
+  final int Function(GameRun r) _value;
+
+  const DailyChallenge._(this.text, this.goal, this._value);
+
+  bool met(GameRun r) => _value(r) >= goal;
+  int progress(GameRun r) => min(_value(r), goal);
+
+  /// El reto de [day]: sale de la fecha, así no hay que guardarlo.
+  factory DailyChallenge.of(DateTime day) {
+    final random = Random(day.year * 10000 + day.month * 100 + day.day);
+    final pick = random.nextInt(5);
+    int step(int from, int to, int by) =>
+        from + random.nextInt((to - from) ~/ by + 1) * by;
+    switch (pick) {
+      case 0:
+        final n = step(4, 6, 1);
+        return DailyChallenge._('Llega al nivel $n', n, (r) => r.level);
+      case 1:
+        final n = step(60, 150, 10);
+        return DailyChallenge._('Haz $n puntos', n, (r) => r.score);
+      case 2:
+        final n = step(10, 20, 2);
+        return DailyChallenge._(
+            'Atrapa $n estrellas seguidas', n, (r) => r.maxCombo);
+      case 3:
+        final n = step(90, 150, 15);
+        return DailyChallenge._('Aguanta $n segundos', n, (r) => r.seconds);
+      default:
+        final n = step(40, 70, 5);
+        return DailyChallenge._('Atrapa $n estrellas', n, (r) => r.stars);
+    }
+  }
+}
+
+/// XP del reto: 20, y 5 más por cada día seguido de racha (hasta 40).
+int dailyXp(int streak) => min(20 + 5 * (streak - 1), 40);
+
+String _dayKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
 
 /// Récords de todas las partidas.
 class GameStats {
@@ -531,8 +587,12 @@ class GameStats {
   final int totalStars;
   final int longestSeconds;
   final int games;
+
+  /// Retos del día cumplidos.
+  final int dailies;
   const GameStats(
-      {this.bestLevel = 0,
+      {this.dailies = 0,
+      this.bestLevel = 0,
       this.bestCombo = 0,
       this.totalStars = 0,
       this.longestSeconds = 0,
@@ -587,6 +647,8 @@ final gameMedals = <GameMedal>[
       BasketSkin.rainbow),
   GameMedal._('level8', '👑', 'Leyenda estelar', 'Llega al nivel 8.', 8,
       (s) => s.bestLevel, BasketSkin.crown),
+  GameMedal._('daily7', '🎯', 'Constante', 'Cumple 7 retos del día.', 7,
+      (s) => s.dailies, BasketSkin.dragon),
 ];
 
 /// Resultado de una partida ya guardada.
@@ -601,11 +663,19 @@ class GameResult {
   /// Medallas conseguidas en esta partida.
   final List<GameMedal> newMedals;
 
+  /// XP del reto del día (0 si no se cumplió en esta partida).
+  final int dailyXp;
+
+  /// Días seguidos cumpliendo el reto.
+  final int dailyStreak;
+
   const GameResult(this.score,
       {required this.xp,
       required this.newBest,
       this.noXpReason,
-      this.newMedals = const []});
+      this.newMedals = const [],
+      this.dailyXp = 0,
+      this.dailyStreak = 0});
 }
 
 /// Récord y XP ganada jugando. Una partida premiada por descanso: así el
@@ -620,6 +690,9 @@ class GameStore extends ChangeNotifier {
   static const _totalKey = 'game.stars.totalStars';
   static const _longestKey = 'game.stars.longest';
   static const _gamesKey = 'game.stars.games';
+  static const _dailyKey = 'game.stars.dailyDone';
+  static const _streakKey = 'game.stars.dailyStreak';
+  static const _dailiesKey = 'game.stars.dailies';
 
   final SharedPreferences? _prefs;
   int _best;
@@ -627,9 +700,15 @@ class GameStore extends ChangeNotifier {
   String? _lastBreak;
   BasketSkin _skin;
   GameStats _stats;
+  final DateTime Function() _now;
+  String? _dailyDone;
+  int _streak;
 
-  GameStore([this._prefs])
-      : _best = _prefs?.getInt(_bestKey) ?? 0,
+  GameStore([this._prefs, DateTime Function()? now])
+      : _now = now ?? DateTime.now,
+        _dailyDone = _prefs?.getString(_dailyKey),
+        _streak = _prefs?.getInt(_streakKey) ?? 0,
+        _best = _prefs?.getInt(_bestKey) ?? 0,
         _bonusXp = _prefs?.getInt(_xpKey) ?? 0,
         _lastBreak = _prefs?.getString(_lastBreakKey),
         _skin = BasketSkin.byName(_prefs?.getString(_skinKey)),
@@ -639,7 +718,24 @@ class GameStore extends ChangeNotifier {
           totalStars: _prefs?.getInt(_totalKey) ?? 0,
           longestSeconds: _prefs?.getInt(_longestKey) ?? 0,
           games: _prefs?.getInt(_gamesKey) ?? 0,
+          dailies: _prefs?.getInt(_dailiesKey) ?? 0,
         );
+
+  /// Reto de hoy.
+  DailyChallenge get daily => DailyChallenge.of(_now());
+
+  /// `true` si el reto de hoy ya se cumplió.
+  bool get dailyDone => _dailyDone == _dayKey(_now());
+
+  /// Racha de retos: días seguidos (se pierde si pasa un día sin cumplir).
+  int get streak {
+    if (_dailyDone == null) return 0;
+    final today = _now();
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
+    return _dailyDone == _dayKey(today) || _dailyDone == _dayKey(yesterday)
+        ? _streak
+        : 0;
+  }
 
   int get best => _best;
   int get bonusXp => _bonusXp;
@@ -661,9 +757,10 @@ class GameStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<GameMedal>> _record(GameRun run) async {
+  Future<void> _record(GameRun run) async {
     final before = _stats;
     _stats = GameStats(
+      dailies: before.dailies,
       bestLevel: max(before.bestLevel, run.level),
       bestCombo: max(before.bestCombo, run.maxCombo),
       totalStars: before.totalStars + run.stars,
@@ -675,10 +772,30 @@ class GameStore extends ChangeNotifier {
     await _prefs?.setInt(_totalKey, _stats.totalStars);
     await _prefs?.setInt(_longestKey, _stats.longestSeconds);
     await _prefs?.setInt(_gamesKey, _stats.games);
-    return [
-      for (final m in gameMedals)
-        if (m.done(_stats) && !m.done(before)) m
-    ];
+  }
+
+  /// Si [run] cumple el reto de hoy (y aún no se había cumplido), lo
+  /// marca, suma la racha y devuelve la XP ganada.
+  Future<int> _checkDaily(GameRun run) async {
+    if (dailyDone || !daily.met(run)) return 0;
+    _streak = streak + 1;
+    _dailyDone = _dayKey(_now());
+    final s = _stats;
+    _stats = GameStats(
+      dailies: s.dailies + 1,
+      bestLevel: s.bestLevel,
+      bestCombo: s.bestCombo,
+      totalStars: s.totalStars,
+      longestSeconds: s.longestSeconds,
+      games: s.games,
+    );
+    final xp = dailyXp(_streak);
+    _bonusXp += xp;
+    await _prefs?.setString(_dailyKey, _dailyDone!);
+    await _prefs?.setInt(_streakKey, _streak);
+    await _prefs?.setInt(_dailiesKey, _stats.dailies);
+    await _prefs?.setInt(_xpKey, _bonusXp);
+    return xp;
   }
 
   /// `true` si en el descanso [breakKey] aún no se ganó XP jugando.
@@ -688,7 +805,13 @@ class GameStore extends ChangeNotifier {
   /// Guarda una partida que acabó con [score] durante [breakKey].
   Future<GameResult> finish(int score,
       {String? breakKey, GameRun run = const GameRun()}) async {
-    final medals = await _record(run);
+    final statsBefore = _stats;
+    await _record(run);
+    final daily = await _checkDaily(run);
+    final medals = [
+      for (final m in gameMedals)
+        if (m.done(_stats) && !m.done(statsBefore)) m
+    ];
     final newBest = score > _best;
     if (newBest) {
       _best = score;
@@ -709,7 +832,12 @@ class GameStore extends ChangeNotifier {
     }
     notifyListeners();
     return GameResult(score,
-        xp: xp, newBest: newBest, noXpReason: reason, newMedals: medals);
+        xp: xp,
+        newBest: newBest,
+        noXpReason: reason,
+        newMedals: medals,
+        dailyXp: daily,
+        dailyStreak: daily > 0 ? _streak : 0);
   }
 }
 
