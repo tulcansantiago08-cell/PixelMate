@@ -26,7 +26,11 @@ class StatsPanel extends ConsumerWidget {
   /// Abre el resumen semanal (si no se da, no se muestra el botón).
   final VoidCallback? onShowWeekly;
 
-  const StatsPanel({super.key, required this.onClose, this.onShowWeekly});
+  /// Abre el álbum de colección (si no se da, no se muestra el botón).
+  final VoidCallback? onShowAlbum;
+
+  const StatsPanel(
+      {super.key, required this.onClose, this.onShowWeekly, this.onShowAlbum});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,6 +57,12 @@ class StatsPanel extends ConsumerWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
             ),
+            if (onShowAlbum != null)
+              TextButton(
+                key: const ValueKey('open-album'),
+                onPressed: onShowAlbum,
+                child: const Text('📖 Álbum'),
+              ),
             IconButton(
               tooltip: 'Cerrar',
               onPressed: onClose,

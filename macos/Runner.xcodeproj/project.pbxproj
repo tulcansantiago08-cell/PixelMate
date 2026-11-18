@@ -29,6 +29,7 @@
 		7A11C0DE00000000000000C2 /* AppleAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11C0DE00000000000000C1 /* AppleAssistant.swift */; };
 		7A11C0DE00000000000000D2 /* GlobalHotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11C0DE00000000000000D1 /* GlobalHotKey.swift */; };
 		7A11C0DE00000000000000E2 /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11C0DE00000000000000E1 /* SoundPlayer.swift */; };
+		7A11C0DE0000000000000112 /* Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11C0DE0000000000000111 /* Voice.swift */; };
 		7A11C0DE00000000000000F2 /* FileExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11C0DE00000000000000F1 /* FileExport.swift */; };
 		7A11C0DE0000000000000102 /* AssistantBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11C0DE0000000000000101 /* AssistantBridge.swift */; };
 		33CC10F32044A3C60003C045 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 33CC10F22044A3C60003C045 /* Assets.xcassets */; };
@@ -83,6 +84,7 @@
 		7A11C0DE00000000000000C1 /* AppleAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleAssistant.swift; sourceTree = "<group>"; };
 		7A11C0DE00000000000000D1 /* GlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKey.swift; sourceTree = "<group>"; };
 		7A11C0DE00000000000000E1 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
+		7A11C0DE0000000000000111 /* Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voice.swift; sourceTree = "<group>"; };
 		7A11C0DE00000000000000F1 /* FileExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExport.swift; sourceTree = "<group>"; };
 		7A11C0DE0000000000000101 /* AssistantBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantBridge.swift; sourceTree = "<group>"; };
 		33CC10F22044A3C60003C045 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Runner/Assets.xcassets; sourceTree = "<group>"; };
@@ -199,6 +201,7 @@
 				7A11C0DE00000000000000C1 /* AppleAssistant.swift */,
 				7A11C0DE00000000000000D1 /* GlobalHotKey.swift */,
 				7A11C0DE00000000000000E1 /* SoundPlayer.swift */,
+				7A11C0DE0000000000000111 /* Voice.swift */,
 				7A11C0DE00000000000000F1 /* FileExport.swift */,
 				7A11C0DE0000000000000101 /* AssistantBridge.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
@@ -475,6 +478,7 @@
 				7A11C0DE00000000000000C2 /* AppleAssistant.swift in Sources */,
 				7A11C0DE00000000000000D2 /* GlobalHotKey.swift in Sources */,
 				7A11C0DE00000000000000E2 /* SoundPlayer.swift in Sources */,
+				7A11C0DE0000000000000112 /* Voice.swift in Sources */,
 				7A11C0DE00000000000000F2 /* FileExport.swift in Sources */,
 				7A11C0DE0000000000000102 /* AssistantBridge.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,

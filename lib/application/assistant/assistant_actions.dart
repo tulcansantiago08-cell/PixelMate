@@ -4,6 +4,7 @@ import '../../domain/session/workday_timer.dart';
 import '../goals/daily_goal.dart';
 import '../workday/workday_controller.dart';
 import 'chat_assistant.dart';
+import 'command_parser.dart';
 
 /// Ejecuta la acción que pidió la IA, solo si tiene sentido ahora, y
 /// devuelve una confirmación visible para el chat (o `null` si no hizo nada).
@@ -69,3 +70,77 @@ String? runAssistantAction(
       return null; // las hace AssistantExecutor
   }
 }
+
+/// Órdenes claras sobre la jornada, sin pasar por la IA (así funcionan
+/// siempre, también por voz): «empieza mi jornada de estudio de 3 horas»,
+/// «pausa», «reanuda la jornada», «termina la jornada», «cambia mi meta a
+/// 6 horas», «muestra mis estadísticas». `null` si no es una de ellas.
+AssistantReply? workdayCommand(String message, {String? petName}) {
+  final m = fold(normalizeRequest(message, petName: petName))
+      .replaceAll(RegExp(r'[¿?¡!.,]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  final hoursMatch = RegExp(r'\b(\d{1,2})\s*(?:h|horas?)\b').firstMatch(m);
+  final hours = hoursMatch == null ? 0 : int.parse(hoursMatch.group(1)!);
+  AssistantReply reply(AssistantAction a) =>
+      AssistantReply('', action: a, hours: hours);
+
+  const session = r'(?:jornada|sesion|bloque|enfoque|temporizador|pomodoro)';
+  if (RegExp(r'^(?:empieza|empezar|empecemos|comienza|comenzar|inicia|iniciar|arranca|arrancar|activa|pon|ponme)\s+(?:(?:mi|la|una|el|un)\s+)?' +
+              session +
+              r'\b')
+          .hasMatch(m) ||
+      RegExp(r'^(?:vamos|voy)\s+a\s+(?:trabajar|estudiar|jugar)\b')
+          .hasMatch(m) ||
+      RegExp(r'^(?:a\s+)?(?:trabajar|estudiar)$').hasMatch(m)) {
+    if (RegExp(r'\b(?:estudi\w*)\b').hasMatch(m)) {
+      return reply(AssistantAction.startStudy);
+    }
+    if (RegExp(r'\b(?:jueg\w*|jugar|gaming)\b').hasMatch(m)) {
+      return reply(AssistantAction.startGaming);
+    }
+    return reply(AssistantAction.startWork);
+  }
+  if (RegExp(r'^(?:pausa|pausar|pausala|pon en pausa|deten|detener)(?:\s+(?:(?:mi|la|el)\s+)?' +
+              session +
+              r')?$')
+          .hasMatch(m) ||
+      RegExp(r'^(?:para|pon pausa a)\s+(?:(?:mi|la|el)\s+)?' + session + r'$')
+          .hasMatch(m)) {
+    return reply(AssistantAction.pause);
+  }
+  if (RegExp(
+          r'^(?:reanuda|reanudar|reanudala|continua|continuar|retoma|retomar|sigue con)(?:\s+(?:(?:mi|la|el)\s+)?' +
+              session +
+              r')?$')
+      .hasMatch(m)) {
+    return reply(AssistantAction.resume);
+  }
+  if (RegExp(
+          r'^(?:termina|terminar|acaba|acabar|finaliza|finalizar|cierra|detén|deten)\s+(?:(?:mi|la|el)\s+)?(?:jornada|sesion)$')
+      .hasMatch(m)) {
+    return reply(AssistantAction.finish);
+  }
+  if (hours > 0 &&
+      RegExp(r'\bmeta\b').hasMatch(m) &&
+      RegExp(r'^(?:cambia|pon|ponme|sube|baja|ajusta|mi meta|fija|establece)\b')
+          .hasMatch(m)) {
+    return reply(AssistantAction.setGoal);
+  }
+  if (RegExp(
+          r'^(?:muestra|muestrame|abre|abreme|ensename|ver|dame)\s+(?:mis\s+|las\s+)?estadisticas\b')
+      .hasMatch(m)) {
+    return reply(AssistantAction.openStats);
+  }
+  return null;
+}
+
+/// Qué decir si la orden de jornada no se pudo hacer ahora.
+String workdayCommandSkipped(AssistantAction a) => switch (a) {
+      AssistantAction.pause => 'ℹ️ No hay una jornada en marcha para pausar.',
+      AssistantAction.resume => 'ℹ️ No hay una jornada en pausa.',
+      AssistantAction.finish => 'ℹ️ No hay ninguna jornada en curso.',
+      AssistantAction.setGoal => 'ℹ️ Dime la meta en horas, por ejemplo '
+          '«cambia mi meta a 6 horas».',
+      _ => 'ℹ️ No pude hacerlo ahora.',
+    };

@@ -15,6 +15,60 @@ class MacosActions implements MacActions {
   }
 
   @override
+  Future<String?> closeApp(String name) async {
+    try {
+      return await _channel.invokeMethod<String>('closeApp', name);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<String?> hideApp(String name) async {
+    try {
+      return await _channel.invokeMethod<String>('hideApp', name);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<List<String>> runningApps() async {
+    try {
+      return (await _channel.invokeListMethod<String>('runningApps')) ?? [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<MediaResult> media(String action, {String? player}) async {
+    try {
+      final r = await _channel.invokeMapMethod<String, Object?>(
+          'media', {'action': action, 'player': player});
+      return (
+        player: r?['player'] as String?,
+        track: r?['track'] as String?,
+        error: r == null ? 'failed' : r['error'] as String?,
+      );
+    } catch (_) {
+      return (player: null, track: null, error: 'failed');
+    }
+  }
+
+  @override
+  Future<VolumeLevel?> volume(String action, [int value = 0]) async {
+    try {
+      final r = await _channel.invokeMethod<Map<Object?, Object?>>(
+          'volume', {'action': action, 'value': value});
+      if (r == null) return null;
+      return (level: (r['level'] as int?) ?? 0, muted: r['muted'] == true);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
   Future<bool> openUrl(Uri url, {String? browser}) async {
     try {
       return await _channel.invokeMethod<bool>(

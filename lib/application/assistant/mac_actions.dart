@@ -29,10 +29,37 @@ abstract class MacActions {
   Future<SavedCode?> saveCode(String fileName, String content,
       {String? editor});
 
+  /// Cierra una app abierta. Nombre de la app cerrada, o `null` si no
+  /// estaba abierta.
+  Future<String?> closeApp(String name);
+
+  /// Oculta una app abierta. Su nombre, o `null` si no estaba abierta.
+  Future<String?> hideApp(String name);
+
+  /// Nombres de las apps abiertas.
+  Future<List<String>> runningApps();
+
+  /// Controla Spotify o Música: [action] play, pause, toggle, next,
+  /// previous o now; [player] "Spotify", "Música" o `null` (la que suene).
+  Future<MediaResult> media(String action, {String? player});
+
+  /// Cambia el volumen: [action] up, down, set, mute, unmute o get, y
+  /// [value] el paso o el nivel (0–100). `null` si la salida de sonido no
+  /// deja cambiarlo.
+  Future<VolumeLevel?> volume(String action, [int value = 0]);
+
   /// Lanza [CalendarDenied] sin permiso.
   Future<List<CalendarEvent>> events(int dayOffset);
   Future<void> createEvent(String title, DateTime start, {int minutes = 60});
 }
+
+/// Lo que pasó al controlar la música: el reproductor, la canción (para
+/// "now") o el error: "none" (no hay reproductor abierto), "denied" (sin
+/// permiso) o "failed".
+typedef MediaResult = ({String? player, String? track, String? error});
+
+/// Volumen del Mac (0–100) y si está silenciado.
+typedef VolumeLevel = ({int level, bool muted});
 
 class SavedCode {
   final String path;
@@ -62,6 +89,72 @@ class FakeMacActions implements MacActions {
     final match = apps.where((a) => fold(a) == fold(name)).firstOrNull;
     if (match != null) opened.add(match);
     return match;
+  }
+
+  /// Apps abiertas (para pruebas).
+  Set<String> running = {};
+  final List<String> closed = [];
+
+  @override
+  Future<String?> closeApp(String name) async {
+    final match = running.where((a) => fold(a) == fold(name)).firstOrNull;
+    if (match == null) return null;
+    running.remove(match);
+    closed.add(match);
+    return match;
+  }
+
+  @override
+  Future<String?> hideApp(String name) async =>
+      running.where((a) => fold(a) == fold(name)).firstOrNull;
+
+  @override
+  Future<List<String>> runningApps() async => running.toList();
+
+  /// Reproductores abiertos y lo que se les pidió (para pruebas).
+  Set<String> players = {};
+  final List<String> mediaActions = [];
+  bool mediaDenied = false;
+
+  @override
+  Future<MediaResult> media(String action, {String? player}) async {
+    final open = player == null
+        ? players.toList()
+        : players.where((p) => p == player).toList();
+    if (open.isEmpty) return (player: null, track: null, error: 'none');
+    if (mediaDenied) return (player: open.first, track: null, error: 'denied');
+    mediaActions.add('$action ${open.first}');
+    return (
+      player: open.first,
+      track: action == 'now' ? 'Despacito — Luis Fonsi' : null,
+      error: null,
+    );
+  }
+
+  /// Volumen simulado; `fixedVolume` simula una salida que no se puede
+  /// cambiar.
+  int level = 50;
+  bool muted = false;
+  bool fixedVolume = false;
+
+  @override
+  Future<VolumeLevel?> volume(String action, [int value = 0]) async {
+    if (fixedVolume) return null;
+    switch (action) {
+      case 'up':
+        muted = false;
+        level = (level + value).clamp(0, 100);
+      case 'down':
+        level = (level - value).clamp(0, 100);
+      case 'set':
+        if (value > 0) muted = false;
+        level = value.clamp(0, 100);
+      case 'mute':
+        muted = true;
+      case 'unmute':
+        muted = false;
+    }
+    return (level: level, muted: muted);
   }
 
   /// Navegadores instalados (para pruebas).

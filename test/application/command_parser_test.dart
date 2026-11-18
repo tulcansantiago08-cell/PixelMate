@@ -58,6 +58,38 @@ void main() {
   group('órdenes', () {
     ParsedCommand? p(String s) => parseCommand(s, now);
 
+    test('modo discoteca y parar de bailar', () {
+      for (final s in [
+        'modo discoteca',
+        'ponte en modo discoteca',
+        'Pon el modo disco',
+        'activa el modo fiesta',
+        '¡Baila!',
+        'ponte a bailar',
+        'baila para mí',
+        'vamos a bailar',
+        'hazme un bailecito',
+        'fiesta',
+      ]) {
+        expect(p(s)?.intent, AssistantIntent.danceStart, reason: s);
+      }
+      for (final s in [
+        'para de bailar',
+        'Ya deja de bailar',
+        'quita el modo discoteca',
+        'apaga la fiesta',
+        'no bailes más',
+        'basta de baile',
+      ]) {
+        expect(p(s)?.intent, AssistantIntent.danceStop, reason: s);
+      }
+      // No confundir con otras cosas.
+      expect(p('pon Despacito en YouTube')?.intent, AssistantIntent.open);
+      expect(p('recuérdame ir a la fiesta a las 8')?.intent,
+          AssistantIntent.remind);
+      expect(p('¿te gusta bailar?')?.intent, isNot(AssistantIntent.danceStop));
+    });
+
     test('recordatorios', () {
       var c = p('Recuérdame en 20 minutos llamar a mamá')!;
       expect(c.intent, AssistantIntent.remind);

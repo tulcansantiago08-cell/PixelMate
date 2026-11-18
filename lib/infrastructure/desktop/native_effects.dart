@@ -6,19 +6,24 @@ import 'package:flutter/services.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/sounds.dart';
 
-/// Atajo global ⌃⌥P (ver `GlobalHotKey.swift`).
+/// Atajos globales ⌃⌥P y ⌃⌥V (ver `GlobalHotKey.swift`).
 class MacosGlobalShortcut implements GlobalShortcutPort {
   static const _channel = MethodChannel('com.pixelmate/hotkey');
   final _presses = StreamController<void>.broadcast();
+  final _voice = StreamController<void>.broadcast();
 
   MacosGlobalShortcut() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'pressed') _presses.add(null);
+      if (call.method == 'voice') _voice.add(null);
     });
   }
 
   @override
   Stream<void> get presses => _presses.stream;
+
+  @override
+  Stream<void> get voicePresses => _voice.stream;
 
   @override
   Future<bool> setEnabled(bool enabled) async {

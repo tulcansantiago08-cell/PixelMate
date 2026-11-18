@@ -141,6 +141,7 @@ void main() {
       'guard',
       'deepfocus',
       'wellness',
+      'voice',
       'night',
       'detection'
     ]) {
@@ -156,6 +157,7 @@ void main() {
     expect(env.guard.enabled, isFalse);
     expect(env.mascot.deepFocus, isTrue, reason: 'apagado por defecto');
     expect(env.mascot.wellnessTips, isFalse);
+    expect(env.mascot.voiceReplies, isFalse, reason: 'activado por defecto');
     expect(env.mascot.nightReminders, isFalse);
     expect(env.detection.enabled, isFalse);
 
@@ -338,20 +340,32 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Atajo ⌃⌥P para abrir el chat'), findsOneWidget);
+    expect(find.text('Atajos ⌃⌥P (chat) y ⌃⌥V (hablarle)'), findsOneWidget);
     expect(shortcut.enabled, isTrue, reason: 'activado por defecto');
     shortcut.reportWorking(false);
     await tester.pump();
     expect(find.text('⚠️ Otra app ya usa ⌃⌥P.'), findsOneWidget);
 
+    Future<void> tapKey(String key) async {
+      final f = find.byKey(ValueKey(key));
+      await tester.scrollUntilVisible(f, 80,
+          scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      await tester.tap(f);
+      await tester.pumpAndSettle();
+    }
+
     expect(sound.enabled, isFalse, reason: 'apagados por defecto');
     expect(find.byKey(const ValueKey('settings-sound-test')), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('settings-sound')));
-    await tester.pumpAndSettle();
+    await tapKey('settings-sound');
     expect(sound.enabled, isTrue);
-    await tester.tap(find.byKey(const ValueKey('settings-sound-test')));
+    await tapKey('settings-sound-test');
     expect(player.played, [PetSound.level]);
 
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settings-shortcut')), -80,
+        scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-shortcut')));
     await tester.pumpAndSettle();
     expect(shortcut.enabled, isFalse);

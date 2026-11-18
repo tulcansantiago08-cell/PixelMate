@@ -50,8 +50,12 @@ void main() {
     late AssistantExecutor run;
     late FakeVideoFinder videos;
     late FakeCodeWriter coder;
+    late List<FoundVideo> played;
+    late List<bool> dances;
 
     setUp(() {
+      played = [];
+      dances = [];
       store = PersonalStore();
       mac = FakeMacActions(apps: {'Spotify', 'Calculadora'});
       videos = FakeVideoFinder({
@@ -60,10 +64,20 @@ void main() {
       });
       coder = FakeCodeWriter('def sumar(a, b):\n    return a + b\n');
       run = AssistantExecutor(store, mac,
-          videos: videos, coder: coder, now: () => t0);
+          videos: videos,
+          coder: coder,
+          onPlaying: played.add,
+          onDance: dances.add,
+          now: () => t0);
     });
 
     Future<String> say(String s) => run.run(parseCommand(s, t0)!);
+
+    test('modo discoteca', () async {
+      expect(await say('modo discoteca'), contains('Modo discoteca'));
+      expect(await say('para de bailar'), contains('paro de bailar'));
+      expect(dances, [true, false]);
+    });
 
     test('recordatorios: se guardan con su hora; sin hora se pregunta',
         () async {
@@ -128,6 +142,8 @@ void main() {
     test('"reproduce" abre el primer video, ya sonando', () async {
       expect(await say('reproduce Tití me preguntó en Brave'),
           '▶️ Reproduciendo «Bad Bunny - Tití Me Preguntó (Video Oficial)» en Brave.');
+      expect(played.single.id, 'Cr8K88UcO0s',
+          reason: 'avisa para que la mascota baile');
       expect(mac.opened.last,
           'https://www.youtube.com/watch?v=Cr8K88UcO0s @Brave');
       // Si no encuentra el video, abre los resultados.

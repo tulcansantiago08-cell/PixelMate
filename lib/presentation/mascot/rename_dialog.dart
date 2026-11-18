@@ -4,20 +4,26 @@ import '../../application/mascot/mascot_settings.dart';
 
 /// Pide un nombre para la mascota. Devuelve el texto escrito o `null` si se
 /// cancela.
-Future<String?> showRenameDialog(BuildContext context, String current) =>
+Future<String?> showRenameDialog(BuildContext context, String current,
+        {String title = '¿Cómo me llamo? 🐾',
+        String hint = 'Michi, Luna, Nube…',
+        String fieldKey = 'pet-name'}) =>
     showDialog<String>(
       context: context,
       // La ventana es transparente: un fondo oscuro pintaría un rectángulo
       // gris sobre el escritorio.
       barrierColor: Colors.transparent,
-      builder: (_) => _RenameDialog(current),
+      builder: (_) => _RenameDialog(current, title, hint, fieldKey),
     );
 
 /// El diálogo es dueño de su campo de texto, así se libera cuando termina
 /// la animación de cierre (y no antes).
 class _RenameDialog extends StatefulWidget {
   final String current;
-  const _RenameDialog(this.current);
+  final String title;
+  final String hint;
+  final String fieldKey;
+  const _RenameDialog(this.current, this.title, this.hint, this.fieldKey);
 
   @override
   State<_RenameDialog> createState() => _RenameDialogState();
@@ -38,18 +44,18 @@ class _RenameDialogState extends State<_RenameDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: const Color(0xFF1E1B2E),
-      title: const Text('¿Cómo me llamo? 🐾',
-          style: TextStyle(color: Colors.white, fontSize: 15)),
+      title: Text(widget.title,
+          style: const TextStyle(color: Colors.white, fontSize: 15)),
       content: TextField(
-        key: const ValueKey('pet-name-field'),
+        key: ValueKey('${widget.fieldKey}-field'),
         controller: _controller,
         autofocus: true,
         maxLength: MascotSettings.maxNameLength,
         style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(
-          hintText: 'Michi, Luna, Nube…',
-          hintStyle: TextStyle(color: Colors.white38),
-          counterStyle: TextStyle(color: Colors.white38),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: const TextStyle(color: Colors.white38),
+          counterStyle: const TextStyle(color: Colors.white38),
         ),
         onSubmitted: (_) => _save(),
       ),
@@ -59,7 +65,7 @@ class _RenameDialogState extends State<_RenameDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          key: const ValueKey('pet-name-save'),
+          key: ValueKey('${widget.fieldKey}-save'),
           onPressed: _save,
           child: const Text('Guardar'),
         ),

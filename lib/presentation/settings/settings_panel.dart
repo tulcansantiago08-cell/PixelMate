@@ -103,6 +103,21 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       child: Text('${mascot.name} ✏️'),
                     ),
                   ),
+                  _Row(
+                    label: 'Cómo te llamo',
+                    trailing: TextButton(
+                      key: const ValueKey('settings-username'),
+                      onPressed: () async {
+                        final typed = await showRenameDialog(
+                            context, mascot.userName ?? '',
+                            title: '¿Cómo te llamo? 😊',
+                            hint: 'Tu nombre o apodo',
+                            fieldKey: 'user-name');
+                        if (typed != null) await mascot.setUserName(typed);
+                      },
+                      child: Text('${mascot.userName ?? 'Dímelo'} ✏️'),
+                    ),
+                  ),
                   const Padding(
                     padding: EdgeInsets.only(top: 2, bottom: 4),
                     child: Text('Especie',
@@ -198,6 +213,33 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onChanged: mascot.setWellnessTips,
                   ),
                   _Switch(
+                    keyName: 'music',
+                    label: 'Bailar con la música',
+                    help: 'Cuando suena Spotify o Música, baila y dice la '
+                        'canción (no durante el enfoque). Solo escucha el '
+                        'aviso de cambio de canción.',
+                    value: mascot.musicReactions,
+                    onChanged: mascot.setMusicReactions,
+                  ),
+                  _Switch(
+                    keyName: 'voice',
+                    label: 'Responder en voz alta',
+                    help: 'Cuando le hablas con 🎙️ o $voiceShortcutLabel, '
+                        'lee su respuesta con la voz del Mac.',
+                    value: mascot.voiceReplies,
+                    onChanged: mascot.setVoiceReplies,
+                  ),
+                  _Switch(
+                    keyName: 'wake',
+                    label: 'Despertarla con «Oye ${mascot.name}»',
+                    help: 'Di «oye ${mascot.name}» o «hola ${mascot.name}» y '
+                        'te escucha. Entiende la voz en tu Mac, sin internet; '
+                        'mientras está activo verás el punto naranja del '
+                        'micrófono.',
+                    value: mascot.wakeWord,
+                    onChanged: mascot.setWakeWord,
+                  ),
+                  _Switch(
                     keyName: 'night',
                     label: 'Recordarme descansar de noche',
                     help: 'Desde las 22:00, si sigue una jornada.',
@@ -215,10 +257,11 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   const _Section('Extras'),
                   _Switch(
                     keyName: 'shortcut',
-                    label: 'Atajo $shortcutLabel para abrir el chat',
+                    label: 'Atajos $shortcutLabel (chat) y '
+                        '$voiceShortcutLabel (hablarle)',
                     help: shortcut.enabled && !shortcut.working
                         ? '⚠️ Otra app ya usa $shortcutLabel.'
-                        : 'Funciona desde cualquier app.',
+                        : 'Funcionan desde cualquier app.',
                     value: shortcut.enabled,
                     onChanged: shortcut.setEnabled,
                   ),

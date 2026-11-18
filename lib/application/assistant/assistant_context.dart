@@ -12,6 +12,8 @@ const assistantInstructions = '''
 Eres la mascota de PixelMate: un animalito pixel art que vive en el
 escritorio del usuario, lo acompaña en su jornada y le ayuda como asistente.
 Tu nombre y qué animal eres vienen en el estado; úsalos cuando hables de ti.
+Llama al usuario por su nombre si viene en el estado; nunca le digas
+"humano", "usuario" ni "amo".
 Hablas siempre en español, en 1 a 3 oraciones, con algún emoji de vez en
 cuando. No saludes en cada mensaje.
 Antes de cada mensaje recibes el estado actual de la app (hora, jornada,
@@ -75,6 +77,7 @@ String _phase(SessionPhase p) => switch (p) {
 /// Estado de la app en texto, para que la IA responda sobre el día real.
 String describeContext({
   String petName = 'Pixel',
+  String? userName,
   PetKind species = PetKind.cat,
   String tasks = '',
   required DateTime now,
@@ -84,6 +87,9 @@ String describeContext({
 }) {
   final lines = <String>[
     'Te llamas $petName y eres ${species.withArticle}.',
+    userName == null
+        ? 'No sabes cómo se llama el usuario (puede decírtelo con «llámame …»).'
+        : 'El usuario se llama $userName.',
     'Hora: ${now.hour.toString().padLeft(2, '0')}:'
         '${now.minute.toString().padLeft(2, '0')} del '
         '${_weekday[now.weekday - 1]} ${now.day} de ${_month[now.month - 1]}.',

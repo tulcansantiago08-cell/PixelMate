@@ -273,9 +273,11 @@ void main() {
         ..next = const AssistantReply('¡Listo! 🎯',
             action: AssistantAction.setGoal, hours: 3);
       final c = makeContainer(ai);
-      await c.read(chatProvider.notifier).send('Pon mi meta en 3 horas');
+      await c
+          .read(chatProvider.notifier)
+          .send('Quisiera que mi meta fuera de 3 horas');
 
-      expect(ai.received.single.$1, 'Pon mi meta en 3 horas');
+      expect(ai.received.single.$1, 'Quisiera que mi meta fuera de 3 horas');
       expect(ai.received.single.$2, contains('No hay jornada en curso.'));
       final m = c.read(chatProvider);
       expect(m[m.length - 2].text, '¡Listo! 🎯');
@@ -283,6 +285,23 @@ void main() {
       expect(m.last.text, '🎯 Tu meta diaria ahora es de 3 h.');
       expect(c.read(dailyGoalSettingsProvider).goal, const Duration(hours: 3));
       expect(c.read(chatProvider.notifier).isLoading, isFalse);
+    });
+
+    test('las órdenes claras de la jornada no pasan por la IA', () async {
+      final ai = FakeAssistant();
+      final c = makeContainer(ai);
+      await c
+          .read(chatProvider.notifier)
+          .send('Pixel, pon mi meta en 3 horas.');
+      expect(ai.received, isEmpty);
+      expect(
+          c.read(chatProvider).last.text, '🎯 Tu meta diaria ahora es de 3 h.');
+      await c.read(chatProvider.notifier).send('Pausa.');
+      expect(c.read(chatProvider).last.text, contains('No hay una jornada'));
+      await c
+          .read(chatProvider.notifier)
+          .send('Empieza mi jornada de estudio.');
+      expect(c.read(workdayControllerProvider).isActive, isTrue);
     });
 
     test('"ver estadísticas" abre el panel', () async {

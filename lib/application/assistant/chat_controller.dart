@@ -55,13 +55,19 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   ChatController(this._ref)
       : super([
           ChatMessage(
-            text: '¡Hola! Soy ${_ref.read(petNameProvider)} 🐾\n'
+            text:
+                '¡Hola${_greetName(_ref)}! Soy ${_ref.read(petNameProvider)} 🐾\n'
                 '¿En qué te ayudo hoy?\n\n'
                 'Puedo decirte cuánto te falta, empezar o pausar tu jornada '
                 'y cambiar tu meta. Pídemelo con tus palabras.',
             isUser: false,
           ),
         ]);
+
+  static String _greetName(Ref ref) {
+    final name = ref.read(userNameProvider);
+    return name == null ? '' : ', $name';
+  }
 
   void _add(ChatMessage m) => state = [...state, m];
 
@@ -114,11 +120,26 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     // instante y sin IA, así funcionan siempre y nunca se inventan.
     final command = withScreenshot || text.isEmpty
         ? null
-        : parseCommand(text, DateTime.now());
+        : parseCommand(text, DateTime.now(),
+            petName: _ref.read(petNameProvider));
     if (command != null) {
       _add(ChatMessage(text: text, isUser: true));
       final note = await _ref.read(assistantExecutorProvider).run(command);
       _add(ChatMessage(text: note, isUser: false, isNote: true));
+      return;
+    }
+
+    // Órdenes de la jornada ("empieza mi jornada", "pausa"): también sin IA.
+    final workdayOrder = withScreenshot || text.isEmpty
+        ? null
+        : workdayCommand(text, petName: _ref.read(petNameProvider));
+    if (workdayOrder != null) {
+      _add(ChatMessage(text: text, isUser: true));
+      final note = _runWorkdayAction(workdayOrder);
+      _add(ChatMessage(
+          text: note ?? workdayCommandSkipped(workdayOrder.action),
+          isUser: false,
+          isNote: true));
       return;
     }
 
@@ -200,17 +221,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       }
       _add(ChatMessage(text: reply.text, isUser: false));
       if (assistant.supportsActions) {
-        final note = runAssistantAction(
-          reply,
-          workday: _ref.read(workdayControllerProvider.notifier),
-          view: _ref.read(workdayControllerProvider),
-          goal: _ref.read(dailyGoalSettingsProvider),
-          openStats: () => setMascotPanel(
-            window: _ref.read(mascotWindowProvider),
-            panel: _ref.read(mascotPanelProvider.notifier),
-            next: MascotPanel.stats,
-          ),
-        );
+        final note = _runWorkdayAction(reply);
         if (note != null) {
           _add(ChatMessage(text: note, isUser: false, isNote: true));
         }
@@ -226,6 +237,18 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     }
   }
 
+  String? _runWorkdayAction(AssistantReply reply) => runAssistantAction(
+        reply,
+        workday: _ref.read(workdayControllerProvider.notifier),
+        view: _ref.read(workdayControllerProvider),
+        goal: _ref.read(dailyGoalSettingsProvider),
+        openStats: () => setMascotPanel(
+          window: _ref.read(mascotWindowProvider),
+          panel: _ref.read(mascotPanelProvider.notifier),
+          next: MascotPanel.stats,
+        ),
+      );
+
   static AssistantIntent? _intentFor(AssistantAction a) => switch (a) {
         AssistantAction.remind => AssistantIntent.remind,
         AssistantAction.addTask => AssistantIntent.addTask,
@@ -240,6 +263,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   String _context() => describeContext(
         tasks: _ref.read(personalStoreProvider).describe(),
         petName: _ref.read(petNameProvider),
+        userName: _ref.read(userNameProvider),
         species: _ref.read(activeSpeciesProvider),
         now: DateTime.now(),
         workday: _ref.read(workdayControllerProvider),

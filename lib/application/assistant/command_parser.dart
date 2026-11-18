@@ -13,6 +13,38 @@ enum AssistantIntent {
   showAgenda,
   createEvent,
   createCode,
+
+  /// «Modo discoteca», «baila»: la mascota baila un rato.
+  danceStart,
+
+  /// «Para de bailar», «quita el modo discoteca».
+  danceStop,
+
+  /// «Sube el volumen», «bájale», «volumen al 50», «silencia».
+  /// [ParsedCommand.text]: up, down, set, mute, unmute o get;
+  /// [ParsedCommand.number]: el paso o el nivel (0–100).
+  volume,
+
+  /// «Cierra Spotify».
+  closeApp,
+
+  /// «Oculta Safari».
+  hideApp,
+
+  /// «¿Qué apps tengo abiertas?».
+  listApps,
+
+  /// «Pausa la música», «siguiente canción», «¿qué canción suena?».
+  /// [ParsedCommand.text]: play, pause, toggle, next, previous o now;
+  /// [ParsedCommand.app]: "Spotify", "Música" o `null` (la que suene).
+  media,
+
+  /// «Llámame Santiago», «me llamo Santiago».
+  setUserName,
+
+  /// «Activa el oye James», «escúchame siempre» (text "on") o «deja de
+  /// escucharme» ("off").
+  wakeWord,
 }
 
 class ParsedCommand {
@@ -45,6 +77,9 @@ class ParsedCommand {
   final String? language;
   final String? editor;
 
+  /// Música: el reproductor pedido.
+  final String? app;
+
   const ParsedCommand(this.intent,
       {this.text = '',
       this.when,
@@ -54,7 +89,8 @@ class ParsedCommand {
       this.searchIn,
       this.play = false,
       this.language,
-      this.editor});
+      this.editor,
+      this.app});
 
   @override
   String toString() => 'ParsedCommand($intent, "$text", $when, n=$number, '
@@ -436,6 +472,11 @@ const _verbs = [
   'programa',
   'marca',
   'tacha',
+  'cierra',
+  'cierrame',
+  'silencia',
+  'subele',
+  'bajale',
 ];
 
 /// Distancia de edición (letras cambiadas, de más o de menos).
@@ -476,11 +517,403 @@ String fixVerbTypo(String message) {
   return '${m.group(1)}$best${message.substring(m.end)}';
 }
 
+/// Órdenes compuestas de abrir y buscar, en una sola orden clara:
+/// "abre Safari y busca gatos" → "busca gatos en Google en Safari",
+/// "abre YouTube y pon Despacito" → "reproduce Despacito en YouTube",
+/// "busca en Google gatos" → "busca gatos en Google". Si no dice qué buscar
+/// ("abre Safari y busca"), solo abre.
+String _splitOpenAndSearch(String s) {
+  final f = fold(s);
+  final inSite = RegExp(
+          r'^(busca(?:me)?|buscar)\s+en\s+(google|youtube|spotify)\s+(?!y\b)(.+)$')
+      .firstMatch(f);
+  const sites = {
+    'youtube': 'YouTube',
+    'spotify': 'Spotify',
+    'google': 'Google'
+  };
+  if (inSite != null) {
+    final query = s.substring(s.length - inSite.group(3)!.length);
+    return 'busca $query en ${sites[inSite.group(2)]}';
+  }
+  final m = RegExp(
+          r'^((?:abre(?:me)?|abrir|abra)\s+(?:el\s+|la\s+)?)(.+?)\s*(?:,\s*|\s+y\s+(?:luego\s+|despues\s+|ahi\s+)?|\s+para\s+)(?:me\s+)?(busca(?:me)?|buscar|pon(?:me)?|poner|reproduce(?:me)?|reproducir|toca(?:me)?)\b\s*(.*)$')
+      .firstMatch(f);
+  if (m == null) return s;
+  final prefix = m.group(1)!.length;
+  final target = s.substring(prefix, prefix + m.group(2)!.length).trim();
+  final targetKey = fold(target);
+  final query = s.substring(s.length - m.group(4)!.length).trim();
+  final searching = m.group(3)!.startsWith('busca');
+  final browser = browserNames[targetKey];
+  final site = sites[targetKey];
+  if (browser == null && site == null) return s;
+  if (query.isEmpty) return 'abre $target';
+  if (browser != null) {
+    return searching
+        ? 'busca $query en Google en $browser'
+        : 'reproduce $query en $browser';
+  }
+  if (site == 'Google' || (searching && site != 'Spotify')) {
+    return 'busca $query en $site';
+  }
+  return site == 'Spotify'
+      ? '${searching ? 'busca' : 'pon'} $query en Spotify'
+      : 'reproduce $query en $site';
+}
+
+/// Infinitivo → orden ("¿puedes abrir…?" → "abre…").
+const _imperatives = {
+  'abrir': 'abre',
+  'abrirme': 'ábreme',
+  'reproducir': 'reproduce',
+  'reproducirme': 'reprodúceme',
+  'poner': 'pon',
+  'ponerme': 'ponme',
+  'tocar': 'toca',
+  'buscar': 'busca',
+  'buscarme': 'búscame',
+  'recordar': 'recuérdame',
+  'recordarme': 'recuérdame',
+  'avisar': 'avísame',
+  'avisarme': 'avísame',
+  'apuntar': 'apunta',
+  'anotar': 'anota',
+  'agregar': 'agrega',
+  'añadir': 'añade',
+  'crear': 'crea',
+  'crearme': 'créame',
+  'agendar': 'agenda',
+  'agendarme': 'agéndame',
+  'programar': 'programa',
+  'marcar': 'marca',
+  'tachar': 'tacha',
+  'bailar': 'baila',
+  'hacer': 'haz',
+  'hacerme': 'hazme',
+  'cerrar': 'cierra',
+  'subir': 'sube',
+  'subirle': 'súbele',
+  'bajar': 'baja',
+  'bajarle': 'bájale',
+  'silenciar': 'silencia',
+  'quitar': 'quita',
+  'apagar': 'apaga',
+  'activar': 'activa',
+  'llamar': 'llama',
+  'llamarme': 'llámame',
+  'ocultar': 'oculta',
+  'pausar': 'pausa',
+  'pasar': 'pasa',
+  'cambiar': 'cambia',
+};
+
+/// Deja una petición hablada o escrita con cortesía como una orden clara:
+/// quita el saludo y el nombre de la mascota ("Oye Pixel, abre Spotify"),
+/// "por favor" al final, el punto final que pone el dictado, y convierte
+/// "¿puedes abrir…?", "¿me puedes recordar…?" y "quiero escuchar X" en
+/// "abre…", "recuérdame…" y "reproduce X".
+String normalizeRequest(String message, {String? petName}) {
+  var s = message.trim();
+  // Puntuación final del dictado (las preguntas conservan su "?").
+  s = s.replaceFirst(RegExp(r'[\s.!…,;:]+$'), '');
+  s = s.replaceFirst(RegExp(r'^¡\s*'), '');
+
+  // Saludo y nombre al principio.
+  final names = {
+    'pixel',
+    if (petName != null && petName.trim().isNotEmpty) fold(petName.trim())
+  };
+  final namePattern = names.map(RegExp.escape).join('|');
+  final greeting =
+      RegExp(r'^(?:(?:oye|oiga|hey|ey|hola|mira|escucha|ok|okay|vale)\b[\s,]*)?'
+          '(?:(?:$namePattern)\\b[\\s,]*)?');
+  final g = greeting.firstMatch(fold(s));
+  if (g != null && g.end > 0 && g.end < s.length) {
+    final rest = s.substring(g.end).trim();
+    // "Hola, ¿cómo estás?" no es una orden: solo se quita si queda algo.
+    if (rest.isNotEmpty) s = rest;
+  }
+
+  // "…, por favor" al final.
+  s = s.replaceFirst(
+      RegExp(r'[\s,]*por\s+fa(?:vor|vorcito)?[\s.!?]*$', caseSensitive: false),
+      '');
+
+  // "¿(Me) puedes/podrías abrir…?" → "abre…".
+  final polite = RegExp(
+          r'^¿?\s*(me\s+)?(?:puedes|podrias|podrías|puede|podria|podría|podes|podés)\s+(?:por\s+favor\s+)?(me\s+)?(\S+)\s*',
+          caseSensitive: false)
+      .firstMatch(s);
+  if (polite != null) {
+    final verb = fold(polite.group(3)!);
+    final withMe = polite.group(1) != null || polite.group(2) != null;
+    final key =
+        withMe && _imperatives.containsKey('${verb}me') ? '${verb}me' : verb;
+    final imperative = _imperatives[key];
+    if (imperative != null) {
+      final rest = s.substring(polite.end).replaceFirst(RegExp(r'\s*\?$'), '');
+      s = rest.isEmpty ? imperative : '$imperative $rest';
+    }
+  }
+
+  s = _splitOpenAndSearch(s);
+
+  // "Quiero escuchar/oír/ver X" → "reproduce X".
+  final want = RegExp(r'^(?:quiero|quisiera)\s+(?:escuchar|oir|oír|ver)\s+',
+          caseSensitive: false)
+      .firstMatch(s);
+  if (want != null) s = 'reproduce ${s.substring(want.end)}';
+
+  return s.trim();
+}
+
+/// «Activa el oye James», «escúchame siempre», «que me escuches cuando te
+/// llame» / «desactiva el oye James», «deja de escucharme» ([m] sin tildes).
+ParsedCommand? _wakeCommand(String m) {
+  final t = m
+      .replaceAll(RegExp(r'[¡!¿?.,«»"]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  const what =
+      r'(?:(?:el\s+|la\s+|modo\s+)?(?:oye|hola|hey)\b|palabra de activacion|escucha(?:r)? (?:siempre|todo el tiempo)|que te (?:llame|hable)|cuando te (?:llame|hable)|llamarte por (?:tu )?nombre|despertarte)';
+  if (RegExp('^(?:desactiva|apaga|quita|deja de usar|no uses)\\b.*$what')
+          .hasMatch(t) ||
+      RegExp(r'^(?:deja de escucharme|ya no me escuches|no me escuches)\b')
+          .hasMatch(t)) {
+    return const ParsedCommand(AssistantIntent.wakeWord, text: 'off');
+  }
+  if (RegExp('^(?:activa|enciende|prende|pon|ponme|habilita|usa)\\b.*$what')
+          .hasMatch(t) ||
+      RegExp(r'^(?:escuchame|escuchame siempre|quiero que me escuches|escucha cuando te llame)\b.*(?:siempre|llame|hable|nombre)')
+          .hasMatch(t)) {
+    return const ParsedCommand(AssistantIntent.wakeWord, text: 'on');
+  }
+  return null;
+}
+
+/// «Pausa la música», «dale play», «siguiente canción», «la anterior»,
+/// «¿qué canción suena?», «pausa Spotify» ([m] ya sin tildes).
+ParsedCommand? _mediaCommand(String m) {
+  final t = m
+      .replaceAll(RegExp(r'[¡!¿?.,]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  const what =
+      r'(?:la\s+|el\s+|esta\s+)?(?:musica|cancion|canciones|tema|rola|pista|reproduccion|spotify|apple music|cancion de spotify)';
+  String? player;
+  if (RegExp(r'\bspotify\b').hasMatch(t)) player = 'Spotify';
+  if (RegExp(
+          r'\b(?:apple music|musica de apple|itunes|app de musica|en musica)\b')
+      .hasMatch(t)) {
+    player = 'Música';
+  }
+  ParsedCommand c(String action) =>
+      ParsedCommand(AssistantIntent.media, text: action, app: player);
+
+  if (RegExp('^(?:pausa|pausar|pausala|para|deten|detener|pon en pausa|pon pausa a|quita)\\s+$what\\b')
+          .hasMatch(t) ||
+      RegExp(r'^(?:pon pausa|pausa la musica)$').hasMatch(t)) {
+    return c('pause');
+  }
+  if (RegExp(r'^(?:dale play|play|pon play|dale a play|dale reproducir)$')
+          .hasMatch(t) ||
+      RegExp('^(?:reanuda|continua|sigue con|vuelve a poner|quita la pausa a|quitale la pausa a|reproduce|pon|ponme|dale play a)\\s+$what\$')
+          .hasMatch(t)) {
+    return c('play');
+  }
+  if (RegExp('^(?:(?:pon|ponme|pasa a|cambia a|salta a)\\s+)?(?:la\\s+)?siguiente(?:\\s+(?:cancion|tema|rola|pista))?(?:\\s+(?:en|de)\\s+\\S+.*)?\$')
+          .hasMatch(t) ||
+      RegExp('^(?:pasa|salta|cambia|adelanta|skip|next)(?:\\s+(?:de\\s+)?$what)?(?:\\s+(?:en|de)\\s+\\S+.*)?\$')
+          .hasMatch(t) ||
+      t == 'next') {
+    return c('next');
+  }
+  if (RegExp('^(?:(?:pon|ponme|vuelve a|regresa a|devuelvete a)\\s+)?(?:la\\s+|el\\s+)?(?:(?:cancion|tema|pista)\\s+)?anterior(?:\\s+(?:cancion|tema|pista))?(?:\\s+(?:en|de)\\s+\\S+.*)?\$')
+          .hasMatch(t) ||
+      RegExp(r'^(?:regresa|devuelve|retrocede)\s+(?:la\s+)?(?:cancion|tema|pista)$')
+          .hasMatch(t)) {
+    return c('previous');
+  }
+  if (RegExp(r'\b(?:que|cual)\s+(?:cancion|tema|rola)\s+(?:es\s+esta|es|suena|esta\s+sonando|estoy\s+escuchando|se\s+esta\s+escuchando)\b')
+          .hasMatch(t) ||
+      RegExp(r'\bcomo\s+se\s+llama\s+(?:esta|la)\s+(?:cancion|tema)\b')
+          .hasMatch(t)) {
+    return c('now');
+  }
+  return null;
+}
+
+/// «Sube el volumen», «súbele un poco», «bájalo», «más alto», «volumen al
+/// 50», «ponlo a tope», «silencia», «activa el sonido», «¿a cuánto está el
+/// volumen?» ([m] ya sin tildes).
+ParsedCommand? _volumeCommand(String m) {
+  final t = m
+      .replaceAll(RegExp(r'[¡!¿?.,%]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  ParsedCommand v(String action, [int? n]) =>
+      ParsedCommand(AssistantIntent.volume, text: action, number: n);
+  const what = r'(?:volumen|sonido|audio|musica)';
+  final hasWhat = RegExp('\\b$what\\b').hasMatch(t);
+
+  if (RegExp(
+          r'^(?:silencia(?:lo|la)?|silencio|mutea(?:lo)?|mute|pon(?:lo|la)? en silencio|sin sonido|(?:quita|quitale|apaga)\s+(?:el\s+|la\s+)?(?:sonido|audio|volumen))\b')
+      .hasMatch(t)) {
+    return v('mute');
+  }
+  if (RegExp(
+          r'^(?:desmutea(?:lo)?|unmute|quita(?:le)?\s+(?:el\s+)?silencio|(?:activa|pon|devuelve|vuelve a poner)\s+(?:el\s+)?(?:sonido|audio))\b')
+      .hasMatch(t)) {
+    return v('unmute');
+  }
+
+  int? level() {
+    if (RegExp(r'\b(?:a tope|al maximo|al 100|maximo)\b').hasMatch(t)) {
+      return 100;
+    }
+    if (RegExp(r'\b(?:al minimo|minimo)\b').hasMatch(t)) return 0;
+    final n = RegExp(r'\b(?:a|al|en)\s+(\d{1,3})\b').firstMatch(t);
+    return n == null ? null : int.parse(n.group(1)!).clamp(0, 100);
+  }
+
+  int step() {
+    final n = RegExp(r'\b(\d{1,3})\b').firstMatch(t);
+    if (n != null) return int.parse(n.group(1)!).clamp(1, 100);
+    if (RegExp(r'\b(?:un poco|poquito|poquitico|un poquito)\b').hasMatch(t)) {
+      return 8;
+    }
+    if (RegExp(r'\b(?:mucho|bastante|harto)\b').hasMatch(t)) return 30;
+    return 15;
+  }
+
+  final up = RegExp(
+          r'^(?:sube|subir|subele|subelo|subela|aumenta|aumentale|incrementa|dale mas|pon(?:le)? mas)\b')
+      .firstMatch(t);
+  final down = RegExp(
+          r'^(?:baja|bajar|bajale|bajalo|bajala|disminuye|reduce|reducele|pon(?:le)? menos)\b')
+      .firstMatch(t);
+  final pronoun = RegExp(r'^\S+(?:le|lo|la)\b').hasMatch(t);
+  final amount =
+      RegExp(r'\b(?:poco|poquito|mucho|bastante|tope|maximo|minimo|\d+)\b')
+          .hasMatch(t);
+  if (up != null && (hasWhat || pronoun || amount || t == up.group(0))) {
+    final l = level();
+    return l != null ? v('set', l) : v('up', step());
+  }
+  if (down != null && (hasWhat || pronoun || amount || t == down.group(0))) {
+    final l = level();
+    return l != null ? v('set', l) : v('down', step());
+  }
+  if (RegExp(r'^(?:mas|un poco mas)\s+(?:volumen|alto|fuerte|duro)$')
+          .hasMatch(t) ||
+      RegExp(r'^(?:volumen|sonido)\s+(?:mas alto|arriba)$').hasMatch(t)) {
+    return v('up', step());
+  }
+  if (RegExp(
+          r'^(?:menos volumen|mas bajo|mas suave|mas despacio|volumen mas bajo|volumen abajo)$')
+      .hasMatch(t)) {
+    return v('down', step());
+  }
+  // "Volumen al 50", "pon el volumen en 30", "ponlo a tope".
+  if (RegExp(r'^(?:(?:pon|ponme|ponlo|deja|dejalo|ajusta|cambia|fija)\s+)?(?:(?:el|la)\s+)?(?:volumen|sonido|musica)?\s*(?:a|al|en)\s+(?:\d{1,3}|tope|maximo|minimo)\b')
+          .hasMatch(t) &&
+      (hasWhat || RegExp(r'^ponlo|^dejalo').hasMatch(t))) {
+    final l = level();
+    if (l != null) return v('set', l);
+  }
+  if (RegExp(r'^volumen\s+(\d{1,3})$').hasMatch(t)) {
+    return v('set', int.parse(t.split(' ').last).clamp(0, 100));
+  }
+  if (RegExp(r'\b(?:a cuanto|cuanto|que nivel|como)\b.*\bvolumen\b')
+      .hasMatch(t)) {
+    return v('get');
+  }
+  return null;
+}
+
 /// Órdenes claras. `null` si no es una de ellas (lo decide la IA).
-ParsedCommand? parseCommand(String message, DateTime now) {
-  final original = fixVerbTypo(message.trim());
+/// «Modo discoteca», «baila», «a bailar», «haz un baile», «fiesta» o
+/// «para de bailar», «quita la discoteca» ([m] ya sin tildes).
+ParsedCommand? _danceCommand(String m) {
+  final text = m.replaceAll(RegExp(r'[¡!¿?.,]'), ' ').trim();
+  const party =
+      r'(?:bailar|baile|bailes|bailando|discoteca|disco|fiesta|rumba)';
+  if (RegExp(r'^(?:por favor\s+)?(?:ya\s+)?(?:para|parale|deja|dejate|detente|quita|apaga|termina|desactiva|stop|basta)\b.*\b' +
+              party +
+              r'\b')
+          .hasMatch(text) ||
+      RegExp(r'^(?:ya\s+)?no\s+(?:bailes|mas\s+baile|mas\s+fiesta)\b')
+          .hasMatch(text)) {
+    return const ParsedCommand(AssistantIntent.danceStop);
+  }
+  final start = RegExp(
+      r'^(?:por favor\s+)?(?:(?:ponte|ponme|pon|activa|activar|entra)\s+(?:en\s+|el\s+|la\s+)?(?:modo\s+)?(?:discoteca|disco|fiesta|rumba)|modo\s+(?:discoteca|disco|fiesta|rumba)|(?:ponte a |ponme a |vamos a |a |quiero que )?(?:baila|bailes|bailar|bailemos|bailate)\b|(?:haz|hazme|echate)(?: un)? baile(?:cito)?|(?:una\s+)?(?:fiesta|discoteca|rumba)$)');
+  if (start.hasMatch(text)) {
+    return const ParsedCommand(AssistantIntent.danceStart);
+  }
+  return null;
+}
+
+ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
+  final original = fixVerbTypo(normalizeRequest(message, petName: petName));
   final m = fold(original);
   String tail(Match match) => original.substring(match.end).trim();
+
+  // Baile: "modo discoteca", "ponte a bailar", "para de bailar".
+  final dance = _danceCommand(m);
+  if (dance != null) return dance;
+
+  // Volumen: "sube el volumen", "bájale un poco", "volumen al 50".
+  final volume = _volumeCommand(m);
+  if (volume != null) return volume;
+
+  // Despertarla por voz: "activa el oye James", "deja de escucharme".
+  final wake = _wakeCommand(m);
+  if (wake != null) return wake;
+
+  // Música: "pausa la música", "siguiente canción".
+  final media = _mediaCommand(m);
+  if (media != null) return media;
+
+  // Cómo llamar al usuario: "llámame Santi", "me llamo Santiago".
+  final name = RegExp(
+          r'^(?:llamame|me llamo|mi nombre es|puedes llamarme|quiero que me llames|me puedes llamar)\s+(?!la\b|el\b|un\b|una\b|que\b|cuando\b|si\b|como\b|en\b|a\b)')
+      .firstMatch(m);
+  if (name != null) {
+    final raw = tail(name).replaceAll(RegExp(r'[.!?¿¡,]+'), '').trim();
+    if (raw.isNotEmpty && raw.split(RegExp(r'\s+')).length <= 3) {
+      return ParsedCommand(AssistantIntent.setUserName, text: raw);
+    }
+  }
+
+  // Ver las apps abiertas.
+  if (RegExp(
+          r'\b(?:que|cuales)\s+(?:apps?|aplicaciones|programas)\s+(?:tengo|hay|estan)\s+abiert|^(?:apps?|aplicaciones)\s+abiertas$')
+      .hasMatch(m)) {
+    return const ParsedCommand(AssistantIntent.listApps);
+  }
+
+  // Ocultar una app: "oculta Safari".
+  final hide = RegExp(
+          r'^(?:oculta(?:me)?|esconde(?:me)?|minimiza(?:me)?)\s+(?:la\s+app(?:licacion)?\s+(?:de\s+)?|el\s+|la\s+)?')
+      .firstMatch(m);
+  if (hide != null) {
+    final app = tail(hide).replaceAll(RegExp(r'[.!?¿¡]+$'), '').trim();
+    if (app.isNotEmpty)
+      return ParsedCommand(AssistantIntent.hideApp, text: app);
+  }
+
+  // Cerrar una app: "cierra Spotify".
+  final close = RegExp(
+          r'^(?:cierra(?:me)?|cerrar|cierre|sal de)\s+(?:la\s+app(?:licacion)?\s+(?:de\s+)?|el\s+|la\s+)?(?!(?:mi\s+|la\s+)?(?:jornada|sesion|chat|ventana)\b)')
+      .firstMatch(m);
+  if (close != null) {
+    final name = tail(close).replaceAll(RegExp(r'[.!?¿¡]+$'), '').trim();
+    if (name.isNotEmpty) {
+      return ParsedCommand(AssistantIntent.closeApp, text: name);
+    }
+  }
 
   // Crear código: "haz un script de Python para sumar (en VS Code)",
   // también dentro de "abre VS Code y haz…".
@@ -504,6 +937,14 @@ ParsedCommand? parseCommand(String message, DateTime now) {
     final c =
         _openCommand(tail(play), play: playing, defaultYoutube: defaultYoutube);
     if (c != null && c.searchIn != null) return c;
+    // "Busca cómo hacer pan" (en Safari): en Google.
+    if (!playing &&
+        c != null &&
+        c.text.isNotEmpty &&
+        (c.browser != null || !browserNames.values.contains(c.text))) {
+      return ParsedCommand(AssistantIntent.open,
+          text: c.text, browser: c.browser, searchIn: 'google');
+    }
   }
 
   // Abrir: "abre Spotify", "ábreme una canción de X en YouTube en Brave".

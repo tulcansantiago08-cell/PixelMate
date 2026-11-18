@@ -29,6 +29,7 @@ import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/idle_behavior.dart';
 import '../../application/mascot/late_night.dart';
 import '../../application/mascot/mascot_settings.dart';
+import '../../application/assistant/voice.dart';
 import '../../application/mascot/mascot_walker.dart';
 import '../../application/progress/progress_providers.dart';
 import '../../application/progress/celebrations.dart';
@@ -43,6 +44,9 @@ import '../../application/assistant/reminders.dart';
 import '../../application/desktop/updates.dart';
 import '../../application/game/star_catch.dart';
 import '../game/star_catch_panel.dart';
+import '../../application/mascot/music.dart';
+import 'music_dance.dart';
+import '../collection/collection_panel.dart';
 import '../stats/weekly_report_panel.dart';
 import '../../application/stats/weekly_report.dart';
 import 'sprite_mascot.dart';
@@ -203,6 +207,11 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
 
   void _onIdleTick() {
     if (!mounted || _oneShot != null || _walker.walking) return;
+    // Con música no se duerme ni se va a pasear: está bailando.
+    if (ref.read(musicPlayingProvider)) {
+      _idle.activity(DateTime.now());
+      return;
+    }
     final decision = _idle.tick(
       DateTime.now(),
       idle: _isIdle,
@@ -397,6 +406,34 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
             duration: const Duration(seconds: 15));
       }
     });
+    // Música: al empezar una canción, la dice (no durante el enfoque).
+    ref.listen(musicProvider, (before, now) {
+      final song = now.now;
+      if (song == null ||
+          (song.source != 'disco' &&
+              !ref.read(mascotSettingsProvider).musicReactions)) {
+        return;
+      }
+      if (song.playing && !(before?.playing ?? false)) {
+        _walker.stop();
+        _wake(animate: false);
+      }
+      if (now.announce > (before?.announce ?? 0) &&
+          !isFocusing(ref.read(workdayControllerProvider)) &&
+          ref.read(mascotPanelProvider) == MascotPanel.none) {
+        _react(
+            MascotReaction(
+                songMessage(song, now.announce), MascotState.celebrating),
+            duration: const Duration(seconds: 6));
+      }
+    });
+    // Al hablarle (🎙️, ⌃⌥V u «oye <nombre>») se queda quieta y atenta.
+    ref.listen(voiceProvider, (before, now) {
+      if (now.listening && !(before?.listening ?? false)) {
+        _walker.stop();
+        _wake(animate: false);
+      }
+    });
     // Recordatorios a su hora: se avisan aunque haya jornada.
     ref.listen(reminderProvider, (before, alert) {
       if (alert == null || identical(before, alert)) return;
@@ -439,6 +476,17 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       }
     });
     final walking = _walker.walking;
+    // Baila con la música si no está ocupada en otra cosa (ni en el
+    // enfoque). El chat abierto no la para: se ve bailar debajo. El modo
+    // discoteca pedido en el chat baila aunque haya enfoque.
+    final dancing = ref.watch(musicPlayingProvider) &&
+        !walking &&
+        !_greeting &&
+        _reactionMood == null &&
+        _oneShot == null &&
+        (panel == MascotPanel.none || panel == MascotPanel.chat) &&
+        suggestion == null &&
+        (ref.watch(discoModeProvider) || !isFocusing(view));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -472,10 +520,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                           onClose: () => _openPanel(MascotPanel.none)),
                       MascotPanel.weekly => WeeklyReportPanel(
                           onClose: () => _openPanel(MascotPanel.none)),
+                      MascotPanel.album => CollectionPanel(
+                          onClose: () => _openPanel(MascotPanel.none)),
                       _ => StatsPanel(
                           onClose: () => _openPanel(MascotPanel.none),
                           onShowWeekly: () =>
                               _showWeekly(weekStartOf(DateTime.now())),
+                          onShowAlbum: () => _openPanel(MascotPanel.album),
                         ),
                     },
                   ),
@@ -547,28 +598,39 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                     },
                     child: pet == null
                         ? const SizedBox.square(dimension: 160)
-                        : Stack(alignment: Alignment.center, children: [
-                            SpriteMascot(
-                              pet: pet,
-                              animation: walking
-                                  ? PetAnimation.walk
-                                  : animationFor(_mascotState(view, panel)),
-                              // El gato mira a la izquierda (cola a la derecha):
-                              // se voltea al caminar hacia la derecha.
-                              flipped: walking && !_walker.facingLeft,
-                              oneShot: walking ? null : _oneShot,
-                              paused:
-                                  !ref.read(mascotWindowProvider).visible.value,
-                              accessory: pet.accessories[
-                                  ref.watch(equippedAccessoryProvider)],
-                              onOneShotDone: () {
-                                if (mounted) setState(() => _oneShot = null);
-                              },
-                            ),
-                            // Nivel 20: chispitas alrededor.
-                            if (ref.watch(auraActiveProvider))
-                              const AuraSparkles(),
-                          ]),
+                        : MusicDance(
+                            dancing: dancing,
+                            builder: (context, armsUp) =>
+                                Stack(alignment: Alignment.center, children: [
+                                  SpriteMascot(
+                                    pet: pet,
+                                    animation: walking
+                                        ? PetAnimation.walk
+                                        : dancing
+                                            ? (armsUp
+                                                ? PetAnimation.celebrate
+                                                : PetAnimation.happy)
+                                            : animationFor(
+                                                _mascotState(view, panel)),
+                                    // El gato mira a la izquierda (cola a la derecha):
+                                    // se voltea al caminar hacia la derecha.
+                                    flipped: walking && !_walker.facingLeft,
+                                    oneShot: walking ? null : _oneShot,
+                                    paused: !ref
+                                        .read(mascotWindowProvider)
+                                        .visible
+                                        .value,
+                                    accessory: pet.accessories[
+                                        ref.watch(equippedAccessoryProvider)],
+                                    onOneShotDone: () {
+                                      if (mounted)
+                                        setState(() => _oneShot = null);
+                                    },
+                                  ),
+                                  // Nivel 20: chispitas alrededor.
+                                  if (ref.watch(auraActiveProvider))
+                                    const AuraSparkles(),
+                                ])),
                   ),
                 ],
               ),
