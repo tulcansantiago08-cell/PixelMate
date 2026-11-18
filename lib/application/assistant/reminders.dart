@@ -6,6 +6,7 @@ import '../mascot/mascot_settings.dart';
 import '../mascot/music.dart';
 
 import 'alarm.dart';
+import 'alarm_settings.dart';
 import 'calendar_notes.dart';
 import 'assistant_executor.dart';
 import 'daily_tasks.dart';
@@ -22,8 +23,13 @@ class ReminderController extends StateNotifier<ReminderAlert?> {
   final DateTime Function() _now;
   Timer? _timer;
 
+  /// Lo que ya avisó (para que quede en el calendario).
+  final Future<void> Function(List<ReminderItem> items)? onFired;
+
   ReminderController(this._store,
-      {DateTime Function()? now, Duration every = const Duration(seconds: 5)})
+      {DateTime Function()? now,
+      Duration every = const Duration(seconds: 5),
+      this.onFired})
       : _now = now ?? DateTime.now,
         super(null) {
     _timer = Timer.periodic(every, (_) => check());
@@ -35,6 +41,7 @@ class ReminderController extends StateNotifier<ReminderAlert?> {
     final due = await _store.takeDue(now);
     if (due.isEmpty || !mounted) return;
     state = ReminderAlert(due, now);
+    await onFired?.call(due);
   }
 
   @override
@@ -64,7 +71,18 @@ class ReminderAlert {
 
 final reminderProvider =
     StateNotifierProvider<ReminderController, ReminderAlert?>(
-        (ref) => ReminderController(ref.watch(personalStoreProvider)));
+        (ref) => ReminderController(
+              ref.watch(personalStoreProvider),
+              // Los recordatorios no desaparecen: quedan en el calendario
+              // (en gris), el día y la hora en que avisaron.
+              onFired: (items) async {
+                final calendar = ref.read(calendarStoreProvider);
+                for (final r in items) {
+                  if (r.repeat != AlarmRepeat.none) continue;
+                  await calendar.addRecord('rem-${r.id}', r.text, r.due);
+                }
+              },
+            ));
 
 final assistantExecutorProvider = Provider<AssistantExecutor>((ref) =>
     AssistantExecutor(
@@ -73,6 +91,7 @@ final assistantExecutorProvider = Provider<AssistantExecutor>((ref) =>
         coder: ref.watch(codeWriterProvider),
         daily: ref.read(dailyTaskStoreProvider),
         calendar: ref.read(calendarStoreProvider),
+        snoozeMinutes: () => ref.read(alarmSettingsProvider).snoozeMinutes,
         onPlaying: (video) =>
             ref.read(musicProvider.notifier).playedByAssistant(video),
         onDance: (on) => on

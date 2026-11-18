@@ -34,6 +34,8 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
 
   /// Nombre que despierta a la mascota (modo «oye <nombre>»), o nil.
   private var wakeName: String?
+  /// Solo «oye <nombre>» al empezar a hablar.
+  private var wakeStrict = false
   /// Ya oyó el nombre en esta sesión.
   private var woke = false
   private var wakeTimer: Timer?
@@ -51,7 +53,10 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
         bridge.wakeName = nil
         bridge.start(result)
       case "startWake":
-        let name = (call.arguments as? String) ?? ""
+        // "nombre" o {name, strict}.
+        let args = call.arguments as? [String: Any]
+        let name = (call.arguments as? String) ?? (args?["name"] as? String) ?? ""
+        bridge.wakeStrict = (args?["strict"] as? Bool) ?? false
         bridge.wakeName = name.isEmpty ? nil : name
         if bridge.paused {
           result(nil)
@@ -215,7 +220,6 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
   private func pause() {
     guard wakeName != nil, !woke, !paused else { return }
     paused = true
-    SoundPlayer.log("wake: pausa (pantalla)")
     let name = wakeName
     cancel()
     wakeName = name
@@ -225,7 +229,6 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     guard paused else { return }
     paused = false
     guard wakeName != nil, task == nil else { return }
-    SoundPlayer.log("wake: sigue")
     restartWake()
   }
 
@@ -241,8 +244,10 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     let words = fold(name).split(separator: " ").map(String.init)
     guard !words.isEmpty else { return nil }
     let folded = fold(text)
+    // Estricto: solo «oye», al principio o después de una pausa (punto).
+    let start = wakeStrict ? "(?:^|[.!?]\\s*)\\W*(?:oye)" : "\\b(?:oye|hola|hey)"
     let pattern =
-      "\\b(?:oye|hola|hey)\\W+(?:"
+      start + "\\W+(?:"
       + words.map { NSRegularExpression.escapedPattern(for: $0) }.joined(separator: "\\W+")
       + ")\\b"
     guard let regex = try? NSRegularExpression(pattern: pattern),
@@ -328,7 +333,6 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
   // MARK: - Hablar
 
   private func speak(_ text: String) {
-    SoundPlayer.log("speak: \(text.prefix(60))")
     guard !text.isEmpty else { return }
     synth.stopSpeaking(at: .immediate)
     let utterance = AVSpeechUtterance(string: text)

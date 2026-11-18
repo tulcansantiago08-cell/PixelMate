@@ -176,7 +176,7 @@ void main() {
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-login')), 100,
         scrollable: find.byType(Scrollable).first);
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+    await tester.ensureVisible(find.byKey(const ValueKey('settings-login')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-login')));
     await tester.pumpAndSettle();
@@ -324,7 +324,7 @@ void main() {
     final shortcut = ShortcutSettings();
     final sound = SoundSettings();
     final player = NoopSoundPlayer();
-    tester.view.physicalSize = const Size(320, 1400);
+    tester.view.physicalSize = const Size(320, 1900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(ProviderScope(

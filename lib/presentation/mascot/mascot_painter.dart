@@ -75,8 +75,15 @@ class MascotPainter extends CustomPainter {
   }
 
   List<List<Color>> _buildGrid(
-    Color B, Color S, Color C, Color W, Color T,
-    Color P, Color E, Color H, MascotState state,
+    Color B,
+    Color S,
+    Color C,
+    Color W,
+    Color T,
+    Color P,
+    Color E,
+    Color H,
+    MascotState state,
   ) {
     // Ojos según estado
     final eyeL = _eyeLeft(state, C, W, E, B);
@@ -87,49 +94,49 @@ class MascotPainter extends CustomPainter {
 
     return [
       // fila 0 — orejas
-      [T,T,T,C,C,T,T,T,T,T,T,T,T,C,C,T,T,T],
+      [T, T, T, C, C, T, T, T, T, T, T, T, T, C, C, T, T, T],
       // fila 1 — orejas interior
-      [T,T,C,B,B,C,T,T,T,T,T,T,C,B,B,C,T,T],
+      [T, T, C, B, B, C, T, T, T, T, T, T, C, B, B, C, T, T],
       // fila 2 — orejas interior
-      [T,T,C,S,B,C,T,T,T,T,T,T,C,B,S,C,T,T],
+      [T, T, C, S, B, C, T, T, T, T, T, T, C, B, S, C, T, T],
       // fila 3 — tope cabeza
-      [T,T,C,C,C,C,C,C,C,C,C,C,C,C,C,C,T,T],
+      [T, T, C, C, C, C, C, C, C, C, C, C, C, C, C, C, T, T],
       // fila 4 — cabeza
-      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      [T, C, B, B, B, B, B, B, B, B, B, B, B, B, B, B, C, T],
       // fila 5 — cabeza con audífonos
-      [C,H,B,B,B,B,B,B,B,B,B,B,B,B,B,B,H,C],
+      [C, H, B, B, B, B, B, B, B, B, B, B, B, B, B, B, H, C],
       // fila 6 — ojos
       eyeL,
       // fila 7 — ojos brillo
       eyeR,
       // fila 8 — nariz
-      [C,H,B,B,B,B,B,B,P,B,B,B,B,B,B,B,H,C],
+      [C, H, B, B, B, B, B, B, P, B, B, B, B, B, B, B, H, C],
       // fila 9 — mejillas + boca
       mouthRow,
       // fila 10 — mejillas
-      [C,H,B,P,B,B,B,B,B,B,B,B,B,B,P,B,H,C],
+      [C, H, B, P, B, B, B, B, B, B, B, B, B, B, P, B, H, C],
       // fila 11 — barbilla
-      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      [T, C, B, B, B, B, B, B, B, B, B, B, B, B, B, B, C, T],
       // fila 12 — cuello / inicio cuerpo
-      [T,T,C,C,B,B,B,B,B,B,B,B,B,B,C,C,T,T],
+      [T, T, C, C, B, B, B, B, B, B, B, B, B, B, C, C, T, T],
       // fila 13 — cuerpo
-      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      [T, C, B, B, B, B, B, B, B, B, B, B, B, B, B, B, C, T],
       // fila 14 — cuerpo
-      [C,B,B,B,S,B,B,B,B,B,B,B,B,S,B,B,B,C],
+      [C, B, B, B, S, B, B, B, B, B, B, B, B, S, B, B, B, C],
       // fila 15 — cuerpo
-      [C,B,B,S,S,B,B,B,B,B,B,B,B,S,S,B,B,C],
+      [C, B, B, S, S, B, B, B, B, B, B, B, B, S, S, B, B, C],
       // fila 16 — cuerpo
-      [C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C],
+      [C, B, B, B, B, B, B, B, B, B, B, B, B, B, B, B, B, C],
       // fila 17 — inicio pies
-      [T,C,B,B,B,B,B,B,B,B,B,B,B,B,B,B,C,T],
+      [T, C, B, B, B, B, B, B, B, B, B, B, B, B, B, B, C, T],
       // fila 18 — pies
-      [T,T,C,B,B,C,T,T,T,T,T,T,T,C,B,B,C,T],
+      [T, T, C, B, B, C, T, T, T, T, T, T, T, C, B, B, C, T],
       // fila 19 — pies
-      [T,T,C,B,S,C,T,T,T,T,T,T,T,C,S,B,C,T],
+      [T, T, C, B, S, C, T, T, T, T, T, T, T, C, S, B, C, T],
       // fila 20 — suela
-      [T,T,C,C,C,C,T,T,T,T,T,T,T,C,C,C,C,T],
+      [T, T, C, C, C, C, T, T, T, T, T, T, T, C, C, C, C, T],
       // fila 21 — sombra
-      [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],
+      [T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T],
     ];
   }
 
@@ -138,33 +145,32 @@ class MascotPainter extends CustomPainter {
     switch (state) {
       case MascotState.sleeping:
       case MascotState.tired:
-        return [C,H,B,B,B,B,B,B,B,B,B,B,B,B,B,B,H,C];
+        return [C, H, B, B, B, B, B, B, B, B, B, B, B, B, B, B, H, C];
       case MascotState.celebrating:
-        return [C,H,B,W,C,B,B,B,B,B,B,B,B,C,W,B,H,C];
+        return [C, H, B, W, C, B, B, B, B, B, B, B, B, C, W, B, H, C];
       case MascotState.alert:
-        return [C,H,B,W,W,C,B,B,B,B,B,C,W,W,B,B,H,C];
+        return [C, H, B, W, W, C, B, B, B, B, B, C, W, W, B, B, H, C];
       default:
-        return [C,H,B,W,W,C,B,B,B,B,B,C,W,W,B,B,H,C];
+        return [C, H, B, W, W, C, B, B, B, B, B, C, W, W, B, B, H, C];
     }
   }
 
   List<Color> _eyeRight(MascotState state, Color C, Color W, Color E, Color B) {
     const H = Color(0xFF1a1a1a);
-    final T = const Color(0x00000000);
     switch (state) {
       case MascotState.sleeping:
       case MascotState.tired:
         // línea de ojos cerrados
-        return [C,H,B,C,C,B,B,B,B,B,B,B,B,C,C,B,H,C];
+        return [C, H, B, C, C, B, B, B, B, B, B, B, B, C, C, B, H, C];
       case MascotState.celebrating:
         // ojos estrella (★)
-        return [C,H,B,C,E,C,B,B,B,B,B,C,E,C,B,B,H,C];
+        return [C, H, B, C, E, C, B, B, B, B, B, C, E, C, B, B, H, C];
       case MascotState.alert:
         // ojos muy abiertos
-        return [C,H,B,W,E,W,B,B,B,B,B,W,E,W,B,B,H,C];
+        return [C, H, B, W, E, W, B, B, B, B, B, W, E, W, B, B, H, C];
       default:
         // ojos normales con brillo
-        return [C,H,B,E,E,W,B,B,B,B,B,W,E,E,B,B,H,C];
+        return [C, H, B, E, E, W, B, B, B, B, B, W, E, E, B, B, H, C];
     }
   }
 
@@ -173,13 +179,13 @@ class MascotPainter extends CustomPainter {
     const D = Color(0xFF5a3010); // marrón oscuro boca
     switch (state) {
       case MascotState.sleeping:
-        return [C,H,B,B,B,B,B,D,B,B,D,B,B,B,B,B,H,C];
+        return [C, H, B, B, B, B, B, D, B, B, D, B, B, B, B, B, H, C];
       case MascotState.celebrating:
-        return [C,H,B,B,B,D,D,D,D,D,D,D,D,B,B,B,H,C];
+        return [C, H, B, B, B, D, D, D, D, D, D, D, D, B, B, B, H, C];
       case MascotState.alert:
-        return [C,H,B,B,B,B,B,P,P,P,B,B,B,B,B,B,H,C];
+        return [C, H, B, B, B, B, B, P, P, P, B, B, B, B, B, B, H, C];
       default:
-        return [C,H,B,B,B,B,D,B,B,B,B,D,B,B,B,B,H,C];
+        return [C, H, B, B, B, B, D, B, B, B, B, D, B, B, B, B, H, C];
     }
   }
 
@@ -193,7 +199,7 @@ class MascotPainter extends CustomPainter {
       final cols = grid[row];
       for (int col = 0; col < cols.length; col++) {
         final color = cols[col];
-        if (color.alpha == 0) continue;
+        if (color.a == 0) continue;
         paint.color = color;
         canvas.drawRect(
           Rect.fromLTWH(

@@ -1,0 +1,30 @@
+name: Pruebas
+
+# En cada push y pull request a main: análisis y todas las pruebas.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Análisis
+        run: flutter analyze
+
+      - name: Pruebas
+        run: flutter test

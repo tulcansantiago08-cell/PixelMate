@@ -178,7 +178,7 @@ void main() {
 
     test('calendario: agenda, crear y sin permiso', () async {
       expect(await say('¿qué tengo hoy en el calendario?'),
-          '📅 Hoy no tienes eventos en el calendario.');
+          '📅 Hoy no tienes nada anotado.');
       final created = await say('crea una reunión con Ana mañana a las 10');
       expect(created, '📅 Creé «Reunión con Ana» mañana de 10:00 a 11:00.');
       expect(mac.calendar.single.start, DateTime(2026, 11, 11, 10));

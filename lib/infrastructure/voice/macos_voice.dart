@@ -28,9 +28,10 @@ class MacosVoice implements VoicePort {
   }
 
   @override
-  Future<String?> startWake(String name) async {
+  Future<String?> startWake(String name, {bool strict = false}) async {
     try {
-      return await _channel.invokeMethod<String>('startWake', name);
+      return await _channel
+          .invokeMethod<String>('startWake', {'name': name, 'strict': strict});
     } catch (e) {
       debugPrint('Voz: $e');
       return 'unavailable';

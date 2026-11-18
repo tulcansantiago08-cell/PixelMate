@@ -60,7 +60,9 @@ abstract class VoicePort {
 
   /// Espera a oír «oye/hola [name]» (solo reconociendo en el Mac). `null`
   /// si va bien; si no, un código de error.
-  Future<String?> startWake(String name);
+  ///
+  /// [strict]: solo «oye [name]» al empezar a hablar.
+  Future<String?> startWake(String name, {bool strict = false});
   Future<void> stopWake();
 
   Future<void> speak(String text);
@@ -79,7 +81,8 @@ class NoVoice implements VoicePort {
   @override
   Stream<VoiceEvent> get events => const Stream.empty();
   @override
-  Future<String?> startWake(String name) async => 'unavailable';
+  Future<String?> startWake(String name, {bool strict = false}) async =>
+      'unavailable';
   @override
   Future<void> stopWake() async {}
   @override
@@ -167,6 +170,7 @@ class VoiceController extends StateNotifier<VoiceState> {
   /// Despertarla con «oye <nombre>».
   bool _wakeEnabled = false;
   String _wakeName = '';
+  bool _wakeStrict = false;
   bool _wakeArmed = false;
 
   StreamSubscription<VoiceEvent>? _sub;
@@ -194,16 +198,23 @@ class VoiceController extends StateNotifier<VoiceState> {
 
   /// Activa o apaga el modo «oye <nombre>».
   Future<void> configureWake(
-      {required bool enabled, required String name}) async {
-    final changed = enabled != _wakeEnabled || name != _wakeName;
+      {required bool enabled,
+      required String name,
+      bool strict = false}) async {
+    final changed =
+        enabled != _wakeEnabled || name != _wakeName || strict != _wakeStrict;
+    final wasArmed = _wakeArmed;
     _wakeEnabled = enabled;
     _wakeName = name;
+    _wakeStrict = strict;
     if (!changed) return;
     if (!enabled) {
       _wakeArmed = false;
       await _port.stopWake();
       return;
     }
+    // Si ya escuchaba, se para para volver a empezar con lo nuevo.
+    if (wasArmed) await _port.stopWake();
     _wakeArmed = false;
     await _armWake();
   }
@@ -214,7 +225,7 @@ class VoiceController extends StateNotifier<VoiceState> {
     if (!_wakeEnabled || !mounted || state.status != VoiceStatus.idle) return;
     if (_wakeArmed) return;
     _wakeArmed = true;
-    final problem = await _port.startWake(_wakeName);
+    final problem = await _port.startWake(_wakeName, strict: _wakeStrict);
     if (problem != null && mounted) {
       _wakeArmed = false;
       _wakeEnabled = false;

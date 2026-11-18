@@ -259,10 +259,11 @@ void main() {
       expect(await run.run(p('¿Qué tengo pendiente?')!),
           contains('🔔 mañana a las 7:00 (todos los días): tomar la pastilla'));
       expect(await run.run(p('Quita la alarma de las 8')!),
-          contains('Quité la alarma'));
+          contains('¿Quito la alarma'));
+      expect(await run.confirm(true), contains('Quité la alarma'));
       expect(store.alarms.single.text, 'tomar la pastilla');
-      expect(await run.run(p('Borra la alarma de la pastilla')!),
-          contains('Quité'));
+      await run.run(p('Borra la alarma de la pastilla')!);
+      expect(await run.confirm(true), contains('Quité'));
       expect(store.alarms, isEmpty);
     });
 
@@ -476,9 +477,14 @@ void main() {
     await tester.enterText(
         find.byKey(const ValueKey('cal-text')), 'Entrega profe Mideros');
     await tester.tap(find.byKey(const ValueKey('cal-color-2'))); // verde
+    await tester.ensureVisible(find.byKey(const ValueKey('cal-allday')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('cal-allday')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('cal-minute')));
     await tester.enterText(find.byKey(const ValueKey('cal-minute')), '50');
+    await tester.ensureVisible(find.byKey(const ValueKey('cal-alarm')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('cal-alarm')));
     await tester.pump();
     await tester.ensureVisible(find.byKey(const ValueKey('cal-save')));
@@ -511,6 +517,22 @@ void main() {
     final quick = notes.onDay(DateTime(2026, 11, 25)).single;
     expect((quick.text, quick.allDay, quick.color), ('Pagar la luz', true, 4));
     expect(find.text('Pagar la luz'), findsOneWidget);
+
+    // Tocar una nota la abre para cambiarla.
+    await tester.tap(find.text('Pagar la luz'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cambiar la nota'), findsOneWidget);
+    await tester.enterText(
+        find.byKey(const ValueKey('cal-text')), 'Pagar la luz y el agua');
+    await tester.ensureVisible(find.byKey(const ValueKey('cal-repeat-yearly')));
+    await tester.tap(find.byKey(const ValueKey('cal-repeat-yearly')));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const ValueKey('cal-save')));
+    await tester.tap(find.byKey(const ValueKey('cal-save')));
+    await tester.pumpAndSettle();
+    final edited = notes.byId(quick.id)!;
+    expect((edited.text, edited.repeat),
+        ('Pagar la luz y el agua', NoteRepeat.yearly));
 
     // Un día que ya pasó no deja anotar.
     await tester.tap(find.byKey(const ValueKey('cal-day-10')));

@@ -6,7 +6,6 @@ import 'package:pixelmate/application/activity/suggestion.dart';
 import 'package:pixelmate/application/mascot/idle_behavior.dart';
 import 'package:pixelmate/application/mascot/late_night.dart';
 import 'package:pixelmate/application/mascot/mascot_settings.dart';
-import 'package:pixelmate/application/workday/workday_controller.dart';
 import 'package:pixelmate/application/workday/workday_providers.dart';
 import 'package:pixelmate/domain/mascot/pet_species.dart';
 import 'package:pixelmate/domain/session/workday_config.dart';

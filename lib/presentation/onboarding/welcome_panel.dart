@@ -22,11 +22,11 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
   static const _steps = 4;
 
   /// Botones pequeños: el panel mide unos 300 px de ancho.
-  static final _compact = ButtonStyle(
-    padding: const WidgetStatePropertyAll(
+  static const _compact = ButtonStyle(
+    padding: WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
-    minimumSize: const WidgetStatePropertyAll(Size(0, 32)),
-    textStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 12)),
+    minimumSize: WidgetStatePropertyAll(Size(0, 32)),
+    textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12)),
     visualDensity: VisualDensity.compact,
   );
   int _step = 0;
@@ -156,7 +156,8 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
               for (final o in DailyGoalSettings.options)
                 ChoiceChip(
                   key: ValueKey('welcome-goal-${o.inHours}'),
-                  label: Text(o == Duration.zero ? 'Sin meta' : '${o.inHours} h'),
+                  label:
+                      Text(o == Duration.zero ? 'Sin meta' : '${o.inHours} h'),
                   selected: goal.goal == o,
                   selectedColor: StatsStyle.accent,
                   labelStyle: TextStyle(
@@ -187,8 +188,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
           _title('Siempre a tu lado'),
           if (launch.supported) ...[
             Row(children: [
-              Expanded(
-                  child: _body('Abrir PixelMate al encender tu Mac')),
+              Expanded(child: _body('Abrir PixelMate al encender tu Mac')),
               Switch(
                 key: const ValueKey('welcome-login'),
                 value: launch.enabled,

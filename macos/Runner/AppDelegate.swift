@@ -49,6 +49,15 @@ class AppDelegate: FlutterAppDelegate {
           }
         }
         result(nil)
+      case "relaunch":
+        // Para cargar una copia restaurada: abre otra PixelMate y se cierra.
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) {
+          _, _ in
+          DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
+        result(nil)
       case "openRepository":
         // Solo esta dirección fija: nunca una que venga de fuera.
         if let url = URL(string: "https://github.com/tulcansantiago08-cell/PixelMate") {

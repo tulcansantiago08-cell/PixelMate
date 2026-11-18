@@ -100,6 +100,16 @@ enum AssistantBridge {
             allDay
             ? event.startDate.addingTimeInterval(24 * 3600)
             : event.startDate.addingTimeInterval(Double(minutes) * 60)
+          switch args["repeat"] as? String {
+          case "weekly":
+            event.addRecurrenceRule(
+              EKRecurrenceRule(recurrenceWith: .weekly, interval: 1, end: nil))
+          case "yearly":
+            event.addRecurrenceRule(
+              EKRecurrenceRule(recurrenceWith: .yearly, interval: 1, end: nil))
+          default:
+            break
+          }
           if let alert = alert {
             event.addAlarm(EKAlarm(relativeOffset: Double(allDay ? alert : -alert) * 60))
           }
@@ -119,7 +129,7 @@ enum AssistantBridge {
             return
           }
           do {
-            try store.remove(event, span: .thisEvent)
+            try store.remove(event, span: .futureEvents)
             result(true)
           } catch {
             result(FlutterError(code: "save", message: error.localizedDescription, details: nil))

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/activity/activity_providers.dart';
 import '../../application/activity/focus_guard_controller.dart';
+import '../../application/assistant/alarm_settings.dart';
 import '../../application/assistant/chat_controller.dart';
 import '../../application/assistant/mac_actions.dart';
 import '../../application/desktop/app_info.dart';
@@ -14,6 +15,7 @@ import '../../application/goals/daily_goal.dart';
 import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/progress/progress_providers.dart';
+import '../../application/settings/backup.dart';
 import '../../domain/mascot/pet_accessory.dart';
 import '../../domain/mascot/pet_kind.dart';
 import '../mascot/rename_dialog.dart';
@@ -240,6 +242,24 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onChanged: mascot.setWakeWord,
                   ),
                   _Switch(
+                    keyName: 'wakestrict',
+                    label: 'Modo estricto',
+                    help: 'Solo despierta con «Oye ${mascot.name}» al empezar '
+                        'a hablar (no con «hola» ni en medio de una frase): '
+                        'menos falsas alarmas.',
+                    value: mascot.wakeStrict,
+                    onChanged: mascot.wakeWord ? mascot.setWakeStrict : null,
+                  ),
+                  _Switch(
+                    keyName: 'briefing',
+                    label: 'Resumen del día',
+                    help: 'Por la mañana te cuenta lo que tienes hoy: '
+                        'calendario, tareas diarias y recordatorios.',
+                    value: mascot.morningBriefing,
+                    onChanged: mascot.setMorningBriefing,
+                  ),
+                  const _AlarmOptions(),
+                  _Switch(
                     keyName: 'night',
                     label: 'Recordarme descansar de noche',
                     help: 'Desde las 22:00, si sigue una jornada.',
@@ -319,6 +339,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onPressed: widget.onShowWelcome,
                     child: const Text('Ver la bienvenida otra vez'),
                   ),
+                  const _Section('Copia de seguridad'),
+                  const _BackupButtons(),
                   const _Section('Acerca de'),
                   Text(
                     'PixelMate '
@@ -568,4 +590,165 @@ class _UpdateRow extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Cómo suenan las alarmas: sonido (se oye al elegirlo), lo que se pospone
+/// y el aviso previo de las tareas con hora.
+class _AlarmOptions extends ConsumerWidget {
+  const _AlarmOptions();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alarms = ref.watch(alarmSettingsProvider);
+    Widget row(String label, Widget field) => Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(children: [
+            Expanded(
+                child: Text(label,
+                    style: const TextStyle(
+                        color: StatsStyle.textPrimary, fontSize: 12))),
+            field,
+          ]),
+        );
+    DropdownButton<T> pick<T>(String key, T value, Map<T, String> options,
+            ValueChanged<T> onChanged) =>
+        DropdownButton<T>(
+          key: ValueKey(key),
+          value: value,
+          isDense: true,
+          dropdownColor: StatsStyle.surfaceRaised,
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+          items: [
+            for (final MapEntry(:key, :value) in options.entries)
+              DropdownMenuItem(value: key, child: Text(value)),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        );
+    return Column(children: [
+      row(
+          'Sonido de alarma',
+          pick('settings-alarm-sound', alarms.sound, alarmSounds, (s) {
+            alarms.setSound(s);
+            ref.read(soundPlayerProvider).play(s);
+          })),
+      row(
+          'Posponer',
+          pick(
+              'settings-alarm-snooze',
+              alarms.snoozeMinutes,
+              {for (final m in snoozeChoices) m: '$m min'},
+              alarms.setSnoozeMinutes)),
+      row(
+          'Avisarme antes',
+          pick(
+              'settings-alarm-lead',
+              alarms.leadMinutes,
+              {for (final m in leadChoices) m: m == 0 ? 'No' : '$m min antes'},
+              alarms.setLeadMinutes)),
+    ]);
+  }
+}
+
+/// Guardar tus datos en un archivo y restaurarlos (por ejemplo, en otro Mac).
+class _BackupButtons extends ConsumerStatefulWidget {
+  const _BackupButtons();
+
+  @override
+  ConsumerState<_BackupButtons> createState() => _BackupButtonsState();
+}
+
+class _BackupButtonsState extends ConsumerState<_BackupButtons> {
+  String? _message;
+
+  Future<void> _export() async {
+    final prefs = ref.read(backupPrefsProvider);
+    if (prefs == null) return;
+    final now = DateTime.now();
+    try {
+      final path = await ref
+          .read(backupFilesProvider)
+          .save(backupFileName(now), makeBackup(prefs, now));
+      if (path != null) setState(() => _message = '✅ Copia guardada.');
+    } catch (_) {
+      setState(() => _message = '⚠️ No pude guardar la copia.');
+    }
+  }
+
+  Future<void> _import() async {
+    final prefs = ref.read(backupPrefsProvider);
+    if (prefs == null) return;
+    final files = ref.read(backupFilesProvider);
+    final String? json;
+    try {
+      json = await files.open();
+    } catch (_) {
+      setState(() => _message = '⚠️ No pude abrir el archivo.');
+      return;
+    }
+    if (json == null || !mounted) return;
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Restaurar la copia?'),
+        content: const Text('Tus tareas, calendario, alarmas y ajustes se '
+            'cambian por los de la copia, y PixelMate se vuelve a abrir.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              key: const ValueKey('backup-confirm'),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Restaurar')),
+        ],
+      ),
+    );
+    if (sure != true) return;
+    try {
+      final count = await restoreBackup(prefs, json);
+      setState(() => _message = '✅ Restaurados $count datos. Reiniciando…');
+      await files.relaunch();
+    } on FormatException catch (e) {
+      setState(() => _message = '⚠️ ${e.message}');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+              'Guarda tus tareas, calendario, alarmas y ajustes en un archivo '
+              'para no perderlos (por ejemplo, al cambiar de Mac).',
+              style: TextStyle(color: StatsStyle.textMuted, fontSize: 10)),
+          const SizedBox(height: 6),
+          Row(children: [
+            Expanded(
+              child: OutlinedButton(
+                key: const ValueKey('backup-export'),
+                onPressed: _export,
+                child: const Text('Guardar…', style: TextStyle(fontSize: 12)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                key: const ValueKey('backup-import'),
+                onPressed: _import,
+                child: const Text('Restaurar…', style: TextStyle(fontSize: 12)),
+              ),
+            ),
+          ]),
+          if (_message != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(_message!,
+                  key: const ValueKey('backup-message'),
+                  style: const TextStyle(
+                      color: StatsStyle.textSecondary, fontSize: 11)),
+            ),
+        ],
+      );
 }

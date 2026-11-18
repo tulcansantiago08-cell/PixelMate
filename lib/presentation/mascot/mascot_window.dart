@@ -33,6 +33,7 @@ import '../../application/mascot/late_night.dart';
 import '../../application/mascot/mascot_settings.dart';
 import '../../application/assistant/alarm.dart';
 import '../../application/assistant/calendar_notes.dart';
+import '../../application/assistant/daily_briefing.dart';
 import '../../infrastructure/desktop/native_effects.dart';
 import '../../application/assistant/voice.dart';
 import '../../application/mascot/mascot_walker.dart';
@@ -472,6 +473,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       _react(MascotReaction(c.message, MascotState.celebrating),
           duration: const Duration(seconds: 10));
     });
+    // Por la mañana: lo que tienes hoy.
+    ref.listen<String?>(briefingProvider, (before, message) {
+      if (message == null || message == before) return;
+      _walker.stop();
+      _wake(animate: false);
+      _react(MascotReaction(message, MascotState.greeting),
+          replace: true, duration: const Duration(seconds: 45));
+    });
     // De noche, si sigue la jornada: recordar descansar.
     ref.listen(lateNightProvider, (before, message) {
       if (message != null && before == null) {
@@ -665,8 +674,9 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                                     accessory: pet.accessories[
                                         ref.watch(equippedAccessoryProvider)],
                                     onOneShotDone: () {
-                                      if (mounted)
+                                      if (mounted) {
                                         setState(() => _oneShot = null);
+                                      }
                                     },
                                   ),
                                   // Nivel 20: chispitas alrededor.
