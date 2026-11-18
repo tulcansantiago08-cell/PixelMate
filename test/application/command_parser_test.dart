@@ -181,7 +181,8 @@ void main() {
       expect(p('abre una canción de Bad Bunny en YouTube en Brave')!.play,
           isFalse);
       expect(p('reproduce Shakira en spotify')!.searchIn, 'spotify');
-      expect(p('pon una alarma'), isNull);
+      expect(p('pon una alarma')!.intent, AssistantIntent.alarm,
+          reason: 'no es poner música');
     });
 
     test('agenda y eventos', () {

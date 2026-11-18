@@ -41,6 +41,7 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
   static func register(with messenger: FlutterBinaryMessenger) {
     let bridge = VoiceBridge()
     shared = bridge
+    bridge.watchScreen()
     FlutterEventChannel(name: "com.pixelmate/voice/events", binaryMessenger: messenger)
       .setStreamHandler(bridge)
     let channel = FlutterMethodChannel(name: "com.pixelmate/voice", binaryMessenger: messenger)
@@ -52,10 +53,15 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
       case "startWake":
         let name = (call.arguments as? String) ?? ""
         bridge.wakeName = name.isEmpty ? nil : name
+        if bridge.paused {
+          result(nil)
+          return
+        }
         bridge.start(result)
       case "stopWake":
         if bridge.wakeName != nil && !bridge.woke { bridge.cancel() }
         bridge.wakeName = nil
+        bridge.paused = false
         result(nil)
       case "stop":
         bridge.stop()
@@ -176,12 +182,51 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
       // Cada cierto tiempo se empieza de nuevo (el reconocimiento no está
       // pensado para sesiones eternas).
       wakeTimer?.invalidate()
-      wakeTimer = Timer.scheduledTimer(withTimeInterval: 50, repeats: false) { [weak self] _ in
+      wakeTimer = Timer.scheduledTimer(withTimeInterval: 180, repeats: false) { [weak self] _ in
         guard let self = self, self.session == current, !self.woke else { return }
         self.restartWake()
       }
     }
     return nil
+  }
+
+  // MARK: - Pausa con la pantalla bloqueada o apagada
+
+  /// Con la pantalla bloqueada o dormida no escucha (nadie la va a llamar).
+  private var paused = false
+
+  private func watchScreen() {
+    let ws = NSWorkspace.shared.notificationCenter
+    let dc = DistributedNotificationCenter.default()
+    for name in [NSWorkspace.screensDidSleepNotification, NSWorkspace.willSleepNotification] {
+      ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in self?.pause() }
+    }
+    for name in [NSWorkspace.screensDidWakeNotification, NSWorkspace.didWakeNotification] {
+      ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in self?.resume() }
+    }
+    dc.addObserver(
+      forName: NSNotification.Name("com.apple.screenIsLocked"), object: nil, queue: .main
+    ) { [weak self] _ in self?.pause() }
+    dc.addObserver(
+      forName: NSNotification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main
+    ) { [weak self] _ in self?.resume() }
+  }
+
+  private func pause() {
+    guard wakeName != nil, !woke, !paused else { return }
+    paused = true
+    SoundPlayer.log("wake: pausa (pantalla)")
+    let name = wakeName
+    cancel()
+    wakeName = name
+  }
+
+  private func resume() {
+    guard paused else { return }
+    paused = false
+    guard wakeName != nil, task == nil else { return }
+    SoundPlayer.log("wake: sigue")
+    restartWake()
   }
 
   // MARK: - «Oye <nombre>»
@@ -197,7 +242,7 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     guard !words.isEmpty else { return nil }
     let folded = fold(text)
     let pattern =
-      "\\b(?:oye|hola|hey|ey|ok|okay|ola)\\W+(?:"
+      "\\b(?:oye|hola|hey)\\W+(?:"
       + words.map { NSRegularExpression.escapedPattern(for: $0) }.joined(separator: "\\W+")
       + ")\\b"
     guard let regex = try? NSRegularExpression(pattern: pattern),
@@ -227,6 +272,7 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     {
       woke = true
       wakeTimer?.invalidate()
+      SoundPlayer.log("wake: \(res.bestTranscription.formattedString.suffix(80))")
       NSSound(named: "Tink")?.play()
       send("wake", afterName(res.bestTranscription.formattedString))
       return
@@ -240,7 +286,7 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     cancel()
     wakeName = name
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-      guard let self = self, self.wakeName != nil, self.task == nil else { return }
+      guard let self = self, self.wakeName != nil, self.task == nil, !self.paused else { return }
       if let problem = self.begin(wake: self.wakeName) {
         self.wakeName = nil
         self.send("wakeError", problem)
@@ -282,6 +328,7 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
   // MARK: - Hablar
 
   private func speak(_ text: String) {
+    SoundPlayer.log("speak: \(text.prefix(60))")
     guard !text.isEmpty else { return }
     synth.stopSpeaking(at: .immediate)
     let utterance = AVSpeechUtterance(string: text)

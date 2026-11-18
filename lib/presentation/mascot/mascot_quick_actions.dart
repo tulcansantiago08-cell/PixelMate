@@ -12,6 +12,10 @@ class MascotQuickActions extends StatelessWidget {
   final VoidCallback? onGame;
   final bool gameOpen;
 
+  /// Tareas diarias (o `null` para no mostrar el botón).
+  final VoidCallback? onDaily;
+  final bool dailyOpen;
+
   const MascotQuickActions({
     super.key,
     required this.statsOpen,
@@ -19,6 +23,8 @@ class MascotQuickActions extends StatelessWidget {
     required this.onMenu,
     this.onGame,
     this.gameOpen = false,
+    this.onDaily,
+    this.dailyOpen = false,
   });
 
   @override
@@ -41,6 +47,15 @@ class MascotQuickActions extends StatelessWidget {
               icon: Icons.star_rounded,
               active: gameOpen,
               onPressed: (_) => onGame!(),
+            ),
+          ],
+          if (onDaily != null) ...[
+            const SizedBox(height: 6),
+            _RoundButton(
+              tooltip: dailyOpen ? 'Cerrar tareas diarias' : 'Tareas diarias',
+              icon: Icons.alarm_rounded,
+              active: dailyOpen,
+              onPressed: (_) => onDaily!(),
             ),
           ],
           const SizedBox(height: 6),

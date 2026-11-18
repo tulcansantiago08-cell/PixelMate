@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/activity/detection_settings.dart';
 import '../../application/activity/focus_guard.dart';
 import '../../application/activity/focus_guard_controller.dart';
+import '../../application/assistant/alarm.dart';
+import '../../application/assistant/daily_tasks.dart';
 import '../../application/assistant/reminders.dart';
+import '../../application/assistant/calendar_notes.dart';
 import '../../application/assistant/voice.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/updates.dart';
@@ -147,13 +150,43 @@ class DesktopShell {
     _cleanup.add(updates.close);
 
     // Recordatorios del usuario: siempre con notificación (y sonido).
-    final reminders =
-        container.listen<ReminderAlert?>(reminderProvider, (before, alert) {
+    void onReminder(ReminderAlert? before, ReminderAlert? alert) {
       if (alert == null || identical(before, alert)) return;
+      // Alarmas: suenan hasta apagarlas, con la mascota a la vista.
+      final alarms = [
+        for (final r in alert.items)
+          if (r.alarm) r
+      ];
+      if (alarms.isNotEmpty) {
+        container.read(alarmProvider.notifier).ring(alarms);
+      }
+      final others = [
+        for (final r in alert.items)
+          if (!r.alarm) r
+      ];
+      if (others.isEmpty) return;
       _play(PetSound.focus);
-      unawaited(notifier.show(WorkdayNotice('Recordatorio', alert.message)));
-    });
+      unawaited(notifier.show(WorkdayNotice(
+          'Recordatorio', ReminderAlert(others, alert.at).message)));
+    }
+
+    final reminders =
+        container.listen<ReminderAlert?>(reminderProvider, onReminder);
     _cleanup.add(reminders.close);
+    // Lo anotado en el calendario: mismo aviso (y sus alarmas suenan).
+    final notes =
+        container.listen<ReminderAlert?>(calendarAlertProvider, onReminder);
+    _cleanup.add(notes.close);
+
+    // Alarmas (también las de las tareas diarias): la mascota a la vista y
+    // una notificación.
+    container.read(dailyTaskSchedulerProvider);
+    final ringing = container.listen<AlarmState>(alarmProvider, (before, now) {
+      if (!now.active || (before?.active ?? false)) return;
+      if (!window.visible.value) unawaited(window.show());
+      unawaited(notifier.show(WorkdayNotice('⏰ Alarma', now.text)));
+    });
+    _cleanup.add(ringing.close);
 
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {
@@ -179,11 +212,30 @@ class DesktopShell {
     applyWake();
     mascot.addListener(applyWake);
     _cleanup.add(() => mascot.removeListener(applyWake));
+    // Si se abrió el chat al oír su nombre y luego no dijiste nada (una
+    // falsa alarma), se vuelve a cerrar para no tapar la pantalla.
+    MascotPanel? beforeVoice;
     final heard = container.listen<VoiceState>(voiceProvider, (before, now) {
-      if (now.listening &&
-          !(before?.listening ?? false) &&
-          container.read(mascotPanelProvider) != MascotPanel.chat) {
-        unawaited(_showPanel(MascotPanel.chat));
+      final started = now.listening && !(before?.listening ?? false);
+      if (started) {
+        final panel = container.read(mascotPanelProvider);
+        if (panel != MascotPanel.chat) {
+          beforeVoice = panel;
+          unawaited(_showPanel(MascotPanel.chat));
+        } else {
+          beforeVoice = null;
+        }
+        return;
+      }
+      final ended = (before?.listening ?? false) && !now.listening;
+      if (!ended) return;
+      final back = beforeVoice;
+      beforeVoice = null;
+      if (back != null &&
+          now.status == VoiceStatus.idle &&
+          now.problem == nothingHeard &&
+          container.read(mascotPanelProvider) == MascotPanel.chat) {
+        unawaited(_showPanel(back));
       }
     });
     _cleanup.add(heard.close);
@@ -198,6 +250,8 @@ class DesktopShell {
         detectionEnabled: detection.enabled,
         walkEnabled: mascot.walkEnabled,
         focusGuardEnabled: focusGuard.enabled,
+        petName: mascot.name,
+        wakeEnabled: mascot.wakeWord,
         launchAtLogin: launchAtLogin.supported ? launchAtLogin.enabled : null,
       ),
     ));
@@ -229,6 +283,8 @@ class DesktopShell {
         await detection.setEnabled(!detection.enabled);
       case TrayAction.toggleWalk:
         await mascot.setWalkEnabled(!mascot.walkEnabled);
+      case TrayAction.toggleWake:
+        await mascot.setWakeWord(!mascot.wakeWord);
       case TrayAction.toggleFocusGuard:
         await focusGuard.setEnabled(!focusGuard.enabled);
       case TrayAction.toggleLaunchAtLogin:

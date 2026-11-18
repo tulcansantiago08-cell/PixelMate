@@ -15,6 +15,8 @@ import '../../domain/mascot/mascot_state.dart';
 import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_timer.dart';
 import '../activity/suggestion_bubble.dart';
+import '../assistant/alarm_card.dart';
+import '../assistant/daily_tasks_panel.dart';
 import '../chat/chat_bubble.dart';
 import '../stats/stats_panel.dart';
 import 'mascot_quick_actions.dart';
@@ -29,6 +31,9 @@ import '../../application/mascot/accessory_providers.dart';
 import '../../application/mascot/idle_behavior.dart';
 import '../../application/mascot/late_night.dart';
 import '../../application/mascot/mascot_settings.dart';
+import '../../application/assistant/alarm.dart';
+import '../../application/assistant/calendar_notes.dart';
+import '../../infrastructure/desktop/native_effects.dart';
 import '../../application/assistant/voice.dart';
 import '../../application/mascot/mascot_walker.dart';
 import '../../application/progress/progress_providers.dart';
@@ -247,11 +252,15 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     _togglePanel();
   }
 
-  Future<void> _openPanel(MascotPanel next) => setMascotPanel(
-        window: ref.read(mascotWindowProvider),
-        panel: ref.read(mascotPanelProvider.notifier),
-        next: next,
-      );
+  Future<void> _openPanel(MascotPanel next) async {
+    await setMascotPanel(
+      window: ref.read(mascotWindowProvider),
+      panel: ref.read(mascotPanelProvider.notifier),
+      next: next,
+    );
+    // Lo abriste tú: que el teclado escriba en el panel.
+    if (next != MascotPanel.none) focusApp();
+  }
 
   /// Abre el resumen de [week].
   void _showWeekly(DateTime week) {
@@ -372,6 +381,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
           : MascotPanel.none);
 
   MascotState _mascotState(WorkdayView view, MascotPanel panel) {
+    if (ref.read(alarmProvider).active) return MascotState.alert;
     if (panel == MascotPanel.chat) return MascotState.chatting;
     if (panel == MascotPanel.welcome) return MascotState.greeting;
     if (panel == MascotPanel.game) return MascotState.gaming;
@@ -393,6 +403,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     final view = ref.watch(workdayControllerProvider);
     final suggestion = ref.watch(activityDetectionProvider);
     final panel = ref.watch(mascotPanelProvider);
+    final ringing = ref.watch(alarmProvider).active;
     final pet = ref.watch(loadedPetProvider).valueOrNull;
     // Si la mascota pregunta algo, deja de pasear.
     ref.listen(activityDetectionProvider, (_, s) {
@@ -435,13 +446,25 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
       }
     });
     // Recordatorios a su hora: se avisan aunque haya jornada.
-    ref.listen(reminderProvider, (before, alert) {
+    void onReminder(ReminderAlert? before, ReminderAlert? alert) {
       if (alert == null || identical(before, alert)) return;
       _walker.stop();
       _wake(animate: false);
-      _react(MascotReaction(alert.message, MascotState.alert),
-          replace: true, duration: const Duration(seconds: 30));
-    });
+      // Las alarmas se ven en su tarjeta (con Apagar y Posponer).
+      final others = [
+        for (final r in alert.items)
+          if (!r.alarm) r
+      ];
+      if (others.isEmpty) return;
+      _react(
+          MascotReaction(
+              ReminderAlert(others, alert.at).message, MascotState.alert),
+          replace: true,
+          duration: const Duration(seconds: 30));
+    }
+
+    ref.listen<ReminderAlert?>(reminderProvider, onReminder);
+    ref.listen<ReminderAlert?>(calendarAlertProvider, onReminder);
     // Nivel, logros y racha (con enfoque profundo, esperan al descanso).
     ref.listen(celebrationProvider, (before, c) {
       if (c == null || identical(before, c)) return;
@@ -486,6 +509,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         _oneShot == null &&
         (panel == MascotPanel.none || panel == MascotPanel.chat) &&
         suggestion == null &&
+        !ringing &&
         (ref.watch(discoModeProvider) || !isFocusing(view));
 
     return Scaffold(
@@ -522,6 +546,8 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                           onClose: () => _openPanel(MascotPanel.none)),
                       MascotPanel.album => CollectionPanel(
                           onClose: () => _openPanel(MascotPanel.none)),
+                      MascotPanel.daily => DailyTasksPanel(
+                          onClose: () => _openPanel(MascotPanel.none)),
                       _ => StatsPanel(
                           onClose: () => _openPanel(MascotPanel.none),
                           onShowWeekly: () =>
@@ -532,32 +558,41 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                   ),
                 ),
 
+              // Una alarma sonando, con un panel abierto: encima de la
+              // mascota.
+              if (ringing && panel != MascotPanel.none)
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: AlarmCard(),
+                ),
               if (panel == MascotPanel.none)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: suggestion != null
-                      ? SuggestionBubble(
-                          suggestion: suggestion,
-                          onChoose: (action) => ref
-                              .read(activityDetectionProvider.notifier)
-                              .choose(action),
-                        )
-                      // Capa propia: el contador cambia cada segundo sin
-                      // redibujar a la mascota.
-                      : RepaintBoundary(
-                          child: WorkdayBadge(
-                          view: view,
-                          speech: _speech,
-                          // En un descanso con XP por ganar, invita a jugar.
-                          onPlay: ref
-                                  .watch(gameStoreProvider)
-                                  .canEarnIn(currentBreakKey(view))
-                              ? () {
-                                  _wake(animate: false);
-                                  _openPanel(MascotPanel.game);
-                                }
-                              : null,
-                        )),
+                  child: ringing
+                      ? const AlarmCard()
+                      : suggestion != null
+                          ? SuggestionBubble(
+                              suggestion: suggestion,
+                              onChoose: (action) => ref
+                                  .read(activityDetectionProvider.notifier)
+                                  .choose(action),
+                            )
+                          // Capa propia: el contador cambia cada segundo sin
+                          // redibujar a la mascota.
+                          : RepaintBoundary(
+                              child: WorkdayBadge(
+                              view: view,
+                              speech: _speech,
+                              // En un descanso con XP por ganar, invita a jugar.
+                              onPlay: ref
+                                      .watch(gameStoreProvider)
+                                      .canEarnIn(currentBreakKey(view))
+                                  ? () {
+                                      _wake(animate: false);
+                                      _openPanel(MascotPanel.game);
+                                    }
+                                  : null,
+                            )),
                 ),
 
               // Mascota fija abajo, con accesos rápidos a su izquierda.
@@ -573,6 +608,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                           : MascotPanel.stats);
                     },
                     gameOpen: panel == MascotPanel.game,
+                    dailyOpen: panel == MascotPanel.daily,
+                    onDaily: () {
+                      _wake();
+                      _openPanel(panel == MascotPanel.daily
+                          ? MascotPanel.none
+                          : MascotPanel.daily);
+                    },
                     onGame: () {
                       _wake();
                       _openPanel(panel == MascotPanel.game

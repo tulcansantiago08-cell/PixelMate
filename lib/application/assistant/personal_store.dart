@@ -31,20 +31,65 @@ class TaskItem {
       );
 }
 
+/// Cada cuánto se repite una alarma.
+enum AlarmRepeat {
+  none,
+  daily,
+  weekdays;
+
+  static AlarmRepeat byName(Object? name) =>
+      values.where((r) => r.name == name).firstOrNull ?? none;
+
+  /// "todos los días", "de lunes a viernes" o "".
+  String get label => switch (this) {
+        none => '',
+        daily => 'todos los días',
+        weekdays => 'de lunes a viernes',
+      };
+}
+
 class ReminderItem {
   final String id;
   final String text;
   final DateTime due;
 
-  const ReminderItem(this.id, this.text, this.due);
+  /// Suena como alarma (sonido que se repite hasta apagarla).
+  final bool alarm;
+  final AlarmRepeat repeat;
 
-  Map<String, dynamic> toJson() =>
-      {'id': id, 'text': text, 'due': due.toIso8601String()};
+  const ReminderItem(this.id, this.text, this.due,
+      {this.alarm = false, this.repeat = AlarmRepeat.none});
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'text': text,
+        'due': due.toIso8601String(),
+        if (alarm) 'alarm': true,
+        if (repeat != AlarmRepeat.none) 'repeat': repeat.name,
+      };
 
   factory ReminderItem.fromJson(Map<String, dynamic> j) => ReminderItem(
-      j['id'] as String,
-      j['text'] as String,
-      DateTime.parse(j['due'] as String));
+        j['id'] as String,
+        j['text'] as String,
+        DateTime.parse(j['due'] as String),
+        alarm: j['alarm'] == true,
+        repeat: AlarmRepeat.byName(j['repeat']),
+      );
+
+  /// La siguiente vez que toca después de [now] (si se repite).
+  DateTime? nextAfter(DateTime now) {
+    if (repeat == AlarmRepeat.none) return null;
+    var next = due;
+    while (!next.isAfter(now) ||
+        (repeat == AlarmRepeat.weekdays && next.weekday > DateTime.friday)) {
+      next =
+          DateTime(next.year, next.month, next.day + 1, next.hour, next.minute);
+    }
+    return next;
+  }
+
+  ReminderItem withDue(DateTime when) =>
+      ReminderItem(id, text, when, alarm: alarm, repeat: repeat);
 }
 
 /// Tareas y recordatorios del usuario, guardados solo en este Mac.
@@ -129,8 +174,10 @@ class PersonalStore extends ChangeNotifier {
     await _save();
   }
 
-  Future<ReminderItem> addReminder(String text, DateTime due) async {
-    final r = ReminderItem(_id(), text.trim(), due);
+  Future<ReminderItem> addReminder(String text, DateTime due,
+      {bool alarm = false, AlarmRepeat repeat = AlarmRepeat.none}) async {
+    final r =
+        ReminderItem(_id(), text.trim(), due, alarm: alarm, repeat: repeat);
     _reminders.add(r);
     await _save();
     return r;
@@ -141,7 +188,14 @@ class PersonalStore extends ChangeNotifier {
     await _save();
   }
 
-  /// Saca y devuelve los recordatorios que ya tocan.
+  /// Alarmas guardadas (por hora).
+  List<ReminderItem> get alarms => [
+        for (final r in reminders)
+          if (r.alarm) r
+      ];
+
+  /// Saca y devuelve los recordatorios que ya tocan. Las alarmas que se
+  /// repiten se quedan, con su próxima hora.
   Future<List<ReminderItem>> takeDue(DateTime now) async {
     final due = [
       for (final r in _reminders)
@@ -149,9 +203,24 @@ class PersonalStore extends ChangeNotifier {
     ];
     if (due.isEmpty) return const [];
     _reminders.removeWhere((r) => !r.due.isAfter(now));
+    for (final r in due) {
+      final next = r.nextAfter(now);
+      if (next != null) _reminders.add(r.withDue(next));
+    }
     await _save();
-    return due..sort((a, b) => a.due.compareTo(b.due));
+    // Una alarma de hace más de [lateAlarm] (el Mac estaba dormido) ya no
+    // suena: llega como recordatorio normal.
+    return [
+      for (final r in due)
+        if (r.alarm && now.difference(r.due) > lateAlarm)
+          ReminderItem(r.id, r.text, r.due)
+        else
+          r
+    ]..sort((a, b) => a.due.compareTo(b.due));
   }
+
+  /// Lo más tarde que suena una alarma.
+  static const lateAlarm = Duration(minutes: 30);
 
   /// Texto breve para la IA (las pendientes numeradas).
   String describe() {

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -19,6 +21,9 @@ import 'application/desktop/global_shortcut.dart';
 import 'application/desktop/updates.dart';
 import 'application/game/star_catch.dart';
 import 'application/mascot/music.dart';
+import 'application/assistant/alarm.dart';
+import 'application/assistant/calendar_notes.dart';
+import 'application/assistant/daily_tasks.dart';
 import 'application/assistant/voice.dart';
 import 'infrastructure/music/macos_music.dart';
 import 'infrastructure/voice/macos_voice.dart';
@@ -57,6 +62,17 @@ void main() async {
   await dataDir.create(recursive: true);
   final store = SqliteWorkdayStore.open(p.join(dataDir.path, 'pixelmate.db'));
   final prefs = await SharedPreferences.getInstance();
+
+  // Errores al registro de la app (Library/Logs/pixelmate.log), para poder
+  // diagnosticar lo que no se ve.
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    appLog('Error: ${details.exceptionAsString()}\n${details.stack}');
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    appLog('Error: $error\n$stack');
+    return true;
+  };
 
   await windowManager.ensureInitialized();
   final window = NativeMascotWindow(prefs);
@@ -113,6 +129,9 @@ void main() async {
     gameStoreProvider.overrideWith((_) => GameStore(prefs)),
     musicEventsProvider.overrideWithValue(MacosMusic().events),
     voicePortProvider.overrideWithValue(MacosVoice()),
+    dailyTaskStoreProvider.overrideWith((_) => DailyTaskStore(prefs)),
+    calendarStoreProvider.overrideWith((_) => CalendarStore(prefs)),
+    appLogProvider.overrideWithValue(appLog),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),

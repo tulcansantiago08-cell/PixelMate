@@ -17,6 +17,7 @@ enum TrayAction {
   toggleDetection,
   toggleWalk,
   toggleFocusGuard,
+  toggleWake,
   toggleLaunchAtLogin,
   quit,
 }
@@ -71,6 +72,10 @@ List<TrayEntry> trayEntries(
   bool walkEnabled = true,
   bool focusGuardEnabled = true,
 
+  /// Si se muestra, «Escuchar “Oye <nombre>”» (con el nombre de la mascota).
+  String? petName,
+  bool wakeEnabled = false,
+
   /// `null` si el sistema no permite abrir la app al iniciar sesión.
   bool? launchAtLogin,
 }) {
@@ -113,6 +118,10 @@ List<TrayEntry> trayEntries(
         action: TrayAction.toggleWalk, checked: walkEnabled))
     ..add(TrayEntry('Guardián del enfoque',
         action: TrayAction.toggleFocusGuard, checked: focusGuardEnabled));
+  if (petName != null) {
+    entries.add(TrayEntry('Escuchar «Oye $petName» (micrófono)',
+        action: TrayAction.toggleWake, checked: wakeEnabled));
+  }
   if (launchAtLogin != null) {
     entries.add(TrayEntry('Abrir al iniciar sesión',
         action: TrayAction.toggleLaunchAtLogin, checked: launchAtLogin));

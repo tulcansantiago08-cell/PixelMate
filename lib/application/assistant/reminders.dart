@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../mascot/mascot_settings.dart';
 import '../mascot/music.dart';
 
+import 'alarm.dart';
+import 'calendar_notes.dart';
 import 'assistant_executor.dart';
+import 'daily_tasks.dart';
 import 'code_writer.dart';
 import 'mac_actions.dart';
 import 'personal_store.dart';
@@ -20,7 +23,7 @@ class ReminderController extends StateNotifier<ReminderAlert?> {
   Timer? _timer;
 
   ReminderController(this._store,
-      {DateTime Function()? now, Duration every = const Duration(seconds: 15)})
+      {DateTime Function()? now, Duration every = const Duration(seconds: 5)})
       : _now = now ?? DateTime.now,
         super(null) {
     _timer = Timer.periodic(every, (_) => check());
@@ -68,6 +71,8 @@ final assistantExecutorProvider = Provider<AssistantExecutor>((ref) =>
         ref.watch(personalStoreProvider), ref.watch(macActionsProvider),
         videos: ref.watch(videoFinderProvider),
         coder: ref.watch(codeWriterProvider),
+        daily: ref.read(dailyTaskStoreProvider),
+        calendar: ref.read(calendarStoreProvider),
         onPlaying: (video) =>
             ref.read(musicProvider.notifier).playedByAssistant(video),
         onDance: (on) => on
@@ -82,4 +87,8 @@ final assistantExecutorProvider = Provider<AssistantExecutor>((ref) =>
           final settings = ref.read(mascotSettingsProvider);
           await settings.setWakeWord(on);
           return settings.name;
+        },
+        onAlarm: (minutes) {
+          final alarms = ref.read(alarmProvider.notifier);
+          return minutes == null ? alarms.stop() : alarms.snooze(minutes);
         }));

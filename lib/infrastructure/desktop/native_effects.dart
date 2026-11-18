@@ -62,3 +62,18 @@ class MacosSoundPlayer implements SoundPlayer {
     }
   }
 }
+
+/// Escribe una línea en el registro de la app (ver `SoundPlayer.log`).
+void appLog(String line) {
+  const MethodChannel('com.pixelmate/sound')
+      .invokeMethod<void>('log', line)
+      .catchError((_) {});
+}
+
+/// Activa PixelMate y su ventana para que lo que escribes llegue a sus
+/// campos de texto (sin ícono en el Dock, un clic no siempre la activa).
+void focusApp() {
+  const MethodChannel('com.pixelmate/app')
+      .invokeMethod<void>('focus')
+      .catchError((_) {});
+}

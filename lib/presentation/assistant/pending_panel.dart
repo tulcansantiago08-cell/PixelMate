@@ -88,12 +88,14 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         onDelete: () => store.removeTask(pending[i].id),
                       ),
                     if (reminders.isNotEmpty) ...[
-                      const _Header('⏰ Recordatorios'),
+                      const _Header('⏰ Recordatorios y alarmas'),
                       for (final r in reminders)
                         _Row(
                           key: ValueKey('reminder-${r.id}'),
-                          leading: const Text('⏰'),
-                          text: '${describeWhen(r.due, now)}: ${r.text}',
+                          leading: Text(r.alarm ? '🔔' : '⏰'),
+                          text: '${describeWhen(r.due, now)}'
+                              '${r.repeat == AlarmRepeat.none ? '' : ' (${r.repeat.label})'}'
+                              ': ${r.text}',
                           onDelete: () => store.removeReminder(r.id),
                         ),
                     ],

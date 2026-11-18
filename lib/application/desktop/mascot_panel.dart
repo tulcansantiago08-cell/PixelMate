@@ -12,7 +12,8 @@ enum MascotPanel {
   weekly,
   pending,
   game,
-  album
+  album,
+  daily
 }
 
 final mascotPanelProvider = StateProvider<MascotPanel>((_) => MascotPanel.none);
