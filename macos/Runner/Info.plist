@@ -4,6 +4,12 @@
 <dict>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>PixelMate muestra tu agenda y crea eventos cuando se lo pides en el chat.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>PixelMate te escucha solo cuando pulsas el micrófono o ⌃⌥V, para entender lo que le dices.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>PixelMate convierte en texto lo que le dices para responderte y hacer lo que le pides.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>PixelMate pausa, reanuda y cambia la canción de Spotify o Música cuando se lo pides.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>PixelMate muestra tu agenda y crea eventos cuando se lo pides en el chat.</string>
 	<key>CFBundleDevelopmentRegion</key>

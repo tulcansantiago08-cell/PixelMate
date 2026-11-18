@@ -5,7 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class FoundVideo {
   final String id;
   final String title;
-  const FoundVideo(this.id, this.title);
+
+  /// Duración del video, si YouTube la dio.
+  final Duration? length;
+
+  const FoundVideo(this.id, this.title, {this.length});
 
   /// Página del video (empieza a sonar sola al abrirla).
   Uri get watchUrl => Uri.parse('https://www.youtube.com/watch?v=$id');
@@ -33,7 +37,22 @@ FoundVideo? parseFirstVideo(String html) {
       title = t.group(1)!;
     }
   }
-  return FoundVideo(m.group(1)!, title);
+  final len =
+      RegExp(r'"lengthText":\{.{0,300}?"simpleText":"(\d+(?::\d+){1,2})"')
+          .firstMatch(rest);
+  return FoundVideo(m.group(1)!, title,
+      length: len == null ? null : parseVideoLength(len.group(1)!));
+}
+
+/// "4:21" → 4 min 21 s; "1:02:03" → 1 h 2 min 3 s.
+Duration? parseVideoLength(String text) {
+  final parts = text.split(':').map(int.tryParse).toList();
+  if (parts.isEmpty || parts.length > 3 || parts.contains(null)) return null;
+  var seconds = 0;
+  for (final p in parts) {
+    seconds = seconds * 60 + p!;
+  }
+  return Duration(seconds: seconds);
 }
 
 /// Para pruebas.

@@ -7,6 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Combinación del atajo global (⌥⌘P lo usa el Finder).
 const shortcutLabel = '⌃⌥P';
 
+/// Atajo global para hablarle a la mascota.
+const voiceShortcutLabel = '⌃⌥V';
+
 /// Atajo de teclado del sistema.
 abstract class GlobalShortcutPort {
   /// Devuelve `false` si no se pudo registrar (otra app lo usa).
@@ -14,10 +17,14 @@ abstract class GlobalShortcutPort {
 
   /// Cada vez que se pulsa.
   Stream<void> get presses;
+
+  /// Cada vez que se pulsa el atajo de voz ([voiceShortcutLabel]).
+  Stream<void> get voicePresses;
 }
 
 class NoopGlobalShortcut implements GlobalShortcutPort {
   final _presses = StreamController<void>.broadcast();
+  final _voice = StreamController<void>.broadcast();
   bool registered = false;
   bool available;
 
@@ -26,8 +33,14 @@ class NoopGlobalShortcut implements GlobalShortcutPort {
   /// Simula que el usuario lo pulsó.
   void press() => _presses.add(null);
 
+  /// Simula que el usuario pulsó el atajo de voz.
+  void pressVoice() => _voice.add(null);
+
   @override
   Stream<void> get presses => _presses.stream;
+
+  @override
+  Stream<void> get voicePresses => _voice.stream;
 
   @override
   Future<bool> setEnabled(bool enabled) async {

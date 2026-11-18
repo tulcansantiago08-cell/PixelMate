@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../mascot/mascot_settings.dart';
+import '../mascot/music.dart';
+
 import 'assistant_executor.dart';
 import 'code_writer.dart';
 import 'mac_actions.dart';
@@ -64,4 +67,19 @@ final assistantExecutorProvider = Provider<AssistantExecutor>((ref) =>
     AssistantExecutor(
         ref.watch(personalStoreProvider), ref.watch(macActionsProvider),
         videos: ref.watch(videoFinderProvider),
-        coder: ref.watch(codeWriterProvider)));
+        coder: ref.watch(codeWriterProvider),
+        onPlaying: (video) =>
+            ref.read(musicProvider.notifier).playedByAssistant(video),
+        onDance: (on) => on
+            ? ref
+                .read(musicProvider.notifier)
+                .startDisco(AssistantExecutor.discoLength)
+            : ref.read(musicProvider.notifier).stopDancing(),
+        onUserName: (name) async {
+          await ref.read(mascotSettingsProvider).setUserName(name);
+        },
+        onWakeWord: (on) async {
+          final settings = ref.read(mascotSettingsProvider);
+          await settings.setWakeWord(on);
+          return settings.name;
+        }));

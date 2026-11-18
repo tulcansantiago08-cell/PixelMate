@@ -16,6 +16,10 @@ class MascotSettings extends ChangeNotifier {
   static const _wellnessKey = 'mascot.wellnessTips';
   static const _deepFocusKey = 'mascot.deepFocus';
   static const _auraKey = 'mascot.aura';
+  static const _musicKey = 'mascot.music';
+  static const _voiceKey = 'mascot.voiceReplies';
+  static const _userKey = 'user.name';
+  static const _wakeKey = 'mascot.wakeWord';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -68,6 +72,30 @@ class MascotSettings extends ChangeNotifier {
     return name;
   }
 
+  /// Cómo quiere el usuario que lo llamen, o `null` si no lo ha dicho.
+  String? get userName => cleanName(_prefs?.getString(_userKey)) ?? _userName;
+  String? _userName;
+
+  Future<String?> setUserName(String raw) async {
+    final name = cleanName(raw);
+    if (name == null) return null;
+    _userName = name;
+    await _prefs?.setString(_userKey, name);
+    notifyListeners();
+    return name;
+  }
+
+  /// Despertarla diciendo «Oye <nombre>» (escucha en el Mac). Apagado por
+  /// defecto.
+  bool get wakeWord => _prefs?.getBool(_wakeKey) ?? _wake;
+  bool _wake = false;
+
+  Future<void> setWakeWord(bool value) async {
+    _wake = value;
+    await _prefs?.setBool(_wakeKey, value);
+    notifyListeners();
+  }
+
   /// Si ya vio la bienvenida de la primera vez. Sin preferencias guardadas
   /// (pruebas) se da por vista.
   bool get onboardingDone => _prefs?.getBool(_onboardingKey) ?? _prefs == null;
@@ -118,6 +146,26 @@ class MascotSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Bailar y decir la canción cuando suena Spotify o Música.
+  bool get musicReactions => _prefs?.getBool(_musicKey) ?? _music;
+  bool _music = true;
+
+  Future<void> setMusicReactions(bool value) async {
+    _music = value;
+    await _prefs?.setBool(_musicKey, value);
+    notifyListeners();
+  }
+
+  /// Leer en voz alta la respuesta cuando le hablas por voz.
+  bool get voiceReplies => _prefs?.getBool(_voiceKey) ?? _voice;
+  bool _voice = true;
+
+  Future<void> setVoiceReplies(bool value) async {
+    _voice = value;
+    await _prefs?.setBool(_voiceKey, value);
+    notifyListeners();
+  }
+
   /// Especie elegida. Solo se usa si ya está desbloqueada.
   PetKind get species => _species;
 
@@ -152,4 +200,13 @@ final petNameProvider = Provider<String>((ref) {
   settings.addListener(changed);
   ref.onDispose(() => settings.removeListener(changed));
   return settings.name;
+});
+
+/// Cómo llamar al usuario (`null` si no lo ha dicho).
+final userNameProvider = Provider<String?>((ref) {
+  final settings = ref.watch(mascotSettingsProvider);
+  void changed() => ref.invalidateSelf();
+  settings.addListener(changed);
+  ref.onDispose(() => settings.removeListener(changed));
+  return settings.userName;
 });

@@ -18,19 +18,25 @@
   barra de menú.
 - **Una mascota viva** — gato, perro o zorro en pixel art, con 15
   animaciones: teclea en su laptop, lee, juega, se estira, duerme, pasea por
-  el escritorio y reacciona según la hora del día.
+  el escritorio, reacciona según la hora del día y baila cuando suena
+  Spotify o Música (y te dice qué canción es).
 - **Chat con IA gratis y privada** — usa la IA de Apple en tu Mac (Apple
   Intelligence): sin internet ni costo. Sabe cómo va tu jornada y puede
   empezarla, pausarla o cambiar tu meta cuando se lo pides. Claude queda
   como opción con API key.
+- **Háblale** — toca 🎙️ en el chat o pulsa ⌃⌥V desde cualquier app y dile
+  lo que necesites: entiende español con el reconocimiento de voz de Apple,
+  deja de escuchar sola cuando te callas y te responde en voz alta (se puede
+  apagar en Ajustes).
 - **Asistente** — «recuérdame en 20 minutos llamar a mamá», «apunta comprar
   leche», «¿qué tengo pendiente?», «reproduce Despacito en Brave», «abre
-  Spotify», «¿qué tengo hoy?», «crea una reunión mañana a las 10», «abre VS
-  Code y haz un script de Python para sumar» (lo escribe la IA de Apple, te
-  pregunta dónde guardarlo y lo abre en tu editor). Las
-  órdenes claras se entienden al instante (aunque tengan faltas) y usan tu
-  Calendario de macOS; las tareas y recordatorios se ven en el panel
-  «Pendientes».
+  Notas», «cierra Spotify», «sube el volumen», «bájale un poco», «volumen
+  al 50», «silencia», «empieza mi jornada», «¿qué tengo hoy?», «crea una
+  reunión mañana a las 10», «abre VS Code y haz un script de Python para
+  sumar» (lo escribe la IA de Apple, te pregunta dónde guardarlo y lo abre
+  en tu editor). Las órdenes claras se entienden al instante (aunque tengan
+  faltas o se las digas con «¿puedes…?») y usan tu Calendario de macOS;
+  las tareas y recordatorios se ven en el panel «Pendientes».
 - **Te cuida** — guardián del enfoque (avisa si WhatsApp, Mensajes o un
   juego siguen al frente durante el enfoque), consejos de bienestar en los
   descansos y recordatorio para descansar si trabajas hasta muy tarde.
@@ -40,16 +46,20 @@
   va más rápido, achica la cesta y trae trampas nuevas (💣 bombas, 🧊 hielo
   que congela, 🌀 remolinos que invierten los controles, 🍄 hongos que
   encogen, 💀 estrellas falsas) y ayudas (💖 vida, 🧲 imán, 🛡️ escudo).
-  Atrapar seguidas multiplica los puntos (combo 🔥) y 6 medallas desbloquean
-  cestas con truco (🪣 🎩 🍯 🛸 🌈 👑). En cada descanso, una partida da hasta
-  15 XP; fuera de ellos se juega por el récord.
+  Atrapar seguidas multiplica los puntos (combo 🔥) y 7 medallas desbloquean
+  cestas con truco (🪣 🎩 🍯 🛸 🌈 👑 🐉). Cada día hay un 🎯 reto nuevo que
+  da XP extra y lleva racha. En cada descanso, una partida da hasta 15 XP;
+  fuera de ellos se juega por el récord.
 - **Progreso** — XP, niveles, títulos, 12 logros, accesorios y mascotas que
   se desbloquean, meta diaria y una racha amable que no castiga descansar.
 - **Estadísticas** — hoy, semana y mes por modo, resumen semanal con un
   comentario de la mascota y exportación a CSV.
-- **Detalles** — detecta tu editor o tus juegos y propone un modo, atajo
-  global ⌃⌥P para abrir el chat, sonidos 8-bit opcionales, modo enfoque
-  profundo y se abre al iniciar sesión.
+- **Álbum** — todo lo que se puede conseguir en un solo lugar (mascotas,
+  accesorios, aura, logros, medallas y cestas del juego), con lo que falta
+  para cada pieza; lo desbloqueado se pone desde ahí.
+- **Detalles** — detecta tu editor o tus juegos y propone un modo, atajos
+  globales ⌃⌥P para abrir el chat y ⌃⌥V para hablarle, sonidos 8-bit
+  opcionales, modo enfoque profundo y se abre al iniciar sesión.
 
 ## Instalar
 
@@ -68,9 +78,13 @@ Todo se guarda solo en tu Mac (SQLite y preferencias locales). La IA de
 Apple funciona en el propio equipo. La detección de apps solo mira qué app
 está al frente, nunca lo que ves o escribes. Cuando pides reproducir algo
 («reproduce Despacito»), la app busca esa canción en YouTube para abrir el
-video. Una vez al día pregunta a GitHub cuál es la última versión (sin
-enviar datos tuyos; se puede apagar en Ajustes). Las capturas de pantalla solo se envían si usas Claude y pulsas el
-botón de la cámara.
+video. Para bailar con la música solo escucha el aviso de cambio de canción
+que publican Spotify y Música (título y artista). Una vez al día pregunta a
+GitHub cuál es la última versión (sin enviar datos tuyos; se puede apagar en
+Ajustes). El micrófono solo se usa mientras le hablas (🎙️ o ⌃⌥V); lo
+transcribe el reconocimiento de voz de Apple, en el propio Mac cuando el
+idioma lo permite. Las capturas de pantalla solo se envían si usas Claude y
+pulsas el botón de la cámara.
 
 ## Compilar desde el código
 

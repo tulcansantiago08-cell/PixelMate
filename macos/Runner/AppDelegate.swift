@@ -4,14 +4,17 @@ import FlutterMacOS
 @main
 class AppDelegate: FlutterAppDelegate {
   private var activityMonitor: AppActivityMonitor?
+  private var musicMonitor: MusicMonitor?
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
     if let controller = mainFlutterWindow?.contentViewController as? FlutterViewController {
       activityMonitor = AppActivityMonitor.register(with: controller.engine.binaryMessenger)
+      musicMonitor = MusicMonitor.register(with: controller.engine.binaryMessenger)
       LoginItem.register(with: controller.engine.binaryMessenger)
       AppleAssistant.register(with: controller.engine.binaryMessenger)
       GlobalHotKey.register(with: controller.engine.binaryMessenger)
       SoundPlayer.register(with: controller.engine.binaryMessenger)
+      VoiceBridge.register(with: controller.engine.binaryMessenger)
       FileExport.register(with: controller.engine.binaryMessenger)
       AssistantBridge.register(with: controller.engine.binaryMessenger)
       registerAppInfo(with: controller.engine.binaryMessenger)

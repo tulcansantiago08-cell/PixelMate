@@ -52,8 +52,29 @@ class AssistantExecutor {
   final CodeWriter? coder;
   final DateTime Function() now;
 
+  /// Avisa cuando pone a sonar un video (la mascota baila mientras dure).
+  final void Function(FoundVideo video)? onPlaying;
+
+  /// Empieza (`true`) o termina (`false`) el modo discoteca.
+  final void Function(bool on)? onDance;
+
+  /// Guarda cómo quiere el usuario que lo llamen.
+  final Future<void> Function(String name)? onUserName;
+
+  /// Activa o apaga el «oye <nombre>»; devuelve el nombre de la mascota.
+  final Future<String> Function(bool on)? onWakeWord;
+
+  /// Lo que dura el modo discoteca cuando se pide.
+  static const discoLength = Duration(minutes: 1);
+
   AssistantExecutor(this.store, this.mac,
-      {this.videos, this.coder, DateTime Function()? now})
+      {this.videos,
+      this.coder,
+      this.onPlaying,
+      this.onDance,
+      this.onUserName,
+      this.onWakeWord,
+      DateTime Function()? now})
       : now = now ?? DateTime.now;
 
   static const _askWhen =
@@ -99,6 +120,62 @@ class AssistantExecutor {
       case AssistantIntent.createCode:
         return _code(c);
 
+      case AssistantIntent.danceStart:
+        if (onDance == null)
+          return '💃 ¡Me encantaría bailar, pero ahora no puedo!';
+        onDance!(true);
+        return '🪩 ¡Modo discoteca! Bailo un minuto 💃🕺 '
+            '(dime «para de bailar» si quieres que pare).';
+
+      case AssistantIntent.volume:
+        final r = await mac.volume(c.text, c.number ?? 0);
+        if (r == null) {
+          return '🔈 Esta salida de sonido no deja cambiar el volumen desde '
+              'aquí. Prueba con las teclas de volumen del teclado.';
+        }
+        return describeVolume(c.text, r);
+
+      case AssistantIntent.hideApp:
+        final hidden = await mac.hideApp(c.text);
+        return hidden == null
+            ? '🤔 No veo «${c.text}» abierta.'
+            : '🙈 Oculté $hidden.';
+
+      case AssistantIntent.listApps:
+        final apps = await mac.runningApps();
+        if (apps.isEmpty) return '🖥️ No hay otras apps abiertas.';
+        return '🖥️ Tienes abiertas: ${apps.join(', ')}. Dime «cierra …» u '
+            '«oculta …» si quieres.';
+
+      case AssistantIntent.media:
+        return _media(c);
+
+      case AssistantIntent.setUserName:
+        final name = cleanUserName(c.text);
+        if (name == null) return '🤔 ¿Cómo quieres que te llame?';
+        await onUserName?.call(name);
+        return '😊 ¡Encantado, $name! Desde ahora te llamo así.';
+
+      case AssistantIntent.wakeWord:
+        final on = c.text == 'on';
+        final pet = await onWakeWord?.call(on);
+        if (pet == null) return '🎙️ Eso no lo puedo hacer aquí.';
+        return on
+            ? '👂 ¡Listo! Di «Oye $pet» o «Hola $pet» y te escucho, aunque '
+                'esté cerrado el chat (verás el punto naranja del micrófono).'
+            : '🔕 Ya no espero a que me llames. Para hablarme, toca 🎙️ o '
+                'pulsa ⌃⌥V.';
+
+      case AssistantIntent.closeApp:
+        final closed = await mac.closeApp(c.text);
+        return closed == null
+            ? '🤔 No veo «${c.text}» abierta.'
+            : '👋 Cerré $closed.';
+
+      case AssistantIntent.danceStop:
+        onDance?.call(false);
+        return '🛑 Listo, paro de bailar.';
+
       case AssistantIntent.showAgenda:
         try {
           final events = await mac.events(c.dayOffset);
@@ -142,6 +219,33 @@ class AssistantExecutor {
         'ejecutarlo!';
   }
 
+  Future<String> _media(ParsedCommand c) async {
+    final r = await mac.media(c.text, player: c.app);
+    final player = r.player ?? c.app ?? 'la música';
+    switch (r.error) {
+      case 'none':
+        return c.app == null
+            ? '🎵 No veo Spotify ni Música abiertos. Dime «abre Spotify» o '
+                '«reproduce …».'
+            : '🎵 ${c.app} no está abierto.';
+      case 'denied':
+        return '🔒 No tengo permiso para controlar $player: Ajustes del '
+            'Sistema › Privacidad y seguridad › Automatización › PixelMate.';
+      case 'failed':
+        return '😵 No pude controlar $player.';
+    }
+    return switch (c.text) {
+      'pause' => '⏸️ Pausé $player.',
+      'play' => '▶️ Sigue sonando $player.',
+      'next' => '⏭️ Siguiente canción en $player.',
+      'previous' => '⏮️ Canción anterior en $player.',
+      'now' => r.track == null || r.track!.trim() == '—'
+          ? '🎵 No suena nada en $player ahora.'
+          : '🎵 Suena «${r.track}» en $player.',
+      _ => '⏯️ Listo ($player).',
+    };
+  }
+
   Future<String> _open(ParsedCommand c) async {
     final browser = c.browser;
     final inBrowser = browser == null ? '' : ' en $browser';
@@ -163,9 +267,11 @@ class AssistantExecutor {
         if (video != null) {
           final name = video.title.isEmpty ? c.text : video.title;
           if (await mac.openUrl(video.watchUrl, browser: browser)) {
+            onPlaying?.call(video);
             return '▶️ Reproduciendo «$name»$inBrowser.';
           }
           if (browser != null && await mac.openUrl(video.watchUrl)) {
+            onPlaying?.call(video);
             return '${notInstalled()}: ▶️ «$name».';
           }
         }
@@ -254,4 +360,39 @@ class AssistantExecutor {
     }
     return index;
   }
+}
+
+/// Lo que dice la mascota tras cambiar el volumen.
+String describeVolume(String action, VolumeLevel v) {
+  final icon = v.muted || v.level == 0
+      ? '🔇'
+      : v.level < 34
+          ? '🔈'
+          : v.level < 67
+              ? '🔉'
+              : '🔊';
+  return switch (action) {
+    'mute' => '🔇 Silencié el sonido.',
+    'unmute' => '$icon Sonido activado (${v.level} %).',
+    'get' => v.muted
+        ? '🔇 Está silenciado (el volumen quedó en ${v.level} %).'
+        : '$icon El volumen está al ${v.level} %.',
+    'up' when v.level >= 100 => '🔊 Ya está al máximo (100 %).',
+    'down' when v.level <= 0 => '🔇 Ya está al mínimo.',
+    _ => '$icon Volumen al ${v.level} %.',
+  };
+}
+
+/// El nombre del usuario, con mayúscula y sin palabras de más; `null` si no
+/// parece un nombre.
+String? cleanUserName(String raw) {
+  final words = raw
+      .replaceAll(RegExp(r'[^\p{L}\s\-]', unicode: true), ' ')
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .take(3)
+      .toList();
+  if (words.isEmpty) return null;
+  final name = words.map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
+  return name.length > 24 ? null : name;
 }

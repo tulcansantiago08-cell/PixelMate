@@ -6,6 +6,7 @@ import '../../application/activity/detection_settings.dart';
 import '../../application/activity/focus_guard.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/assistant/reminders.dart';
+import '../../application/assistant/voice.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/updates.dart';
 import '../../application/desktop/login_item.dart';
@@ -168,6 +169,24 @@ class DesktopShell {
     _cleanup.add(() => shortcutSettings.removeListener(_applyShortcut));
     final presses = shortcut.presses.listen((_) => _toggleChat());
     _cleanup.add(presses.cancel);
+    final talks = shortcut.voicePresses.listen((_) => _talk());
+    _cleanup.add(talks.cancel);
+
+    // «Oye <nombre>»: al oír su nombre sale y abre el chat escuchando.
+    void applyWake() => unawaited(container
+        .read(voiceProvider.notifier)
+        .configureWake(enabled: mascot.wakeWord, name: mascot.name));
+    applyWake();
+    mascot.addListener(applyWake);
+    _cleanup.add(() => mascot.removeListener(applyWake));
+    final heard = container.listen<VoiceState>(voiceProvider, (before, now) {
+      if (now.listening &&
+          !(before?.listening ?? false) &&
+          container.read(mascotPanelProvider) != MascotPanel.chat) {
+        unawaited(_showPanel(MascotPanel.chat));
+      }
+    });
+    _cleanup.add(heard.close);
   }
 
   void _refreshTray(WorkdayView view) {
@@ -243,6 +262,11 @@ class DesktopShell {
       panel: container.read(mascotPanelProvider.notifier),
       next: panel == MascotPanel.chat ? MascotPanel.none : MascotPanel.chat,
     );
+  }
+
+  /// ⌃⌥V: abre el chat escuchando (o termina la frase si ya escucha).
+  Future<void> _talk() async {
+    await container.read(voiceProvider.notifier).toggle();
   }
 
   Future<void> _showPanel(MascotPanel next) async {

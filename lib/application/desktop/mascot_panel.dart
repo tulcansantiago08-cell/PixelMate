@@ -3,7 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'mascot_window_port.dart';
 
 /// Panel abierto sobre la mascota.
-enum MascotPanel { none, chat, stats, settings, welcome, weekly, pending, game }
+enum MascotPanel {
+  none,
+  chat,
+  stats,
+  settings,
+  welcome,
+  weekly,
+  pending,
+  game,
+  album
+}
 
 final mascotPanelProvider = StateProvider<MascotPanel>((_) => MascotPanel.none);
 

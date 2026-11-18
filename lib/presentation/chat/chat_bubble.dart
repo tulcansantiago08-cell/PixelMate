@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/assistant/chat_controller.dart';
+import '../../application/assistant/voice.dart';
 import '../../application/mascot/mascot_settings.dart';
 
 class ChatBubble extends ConsumerStatefulWidget {
@@ -18,10 +19,14 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
   void initState() {
     super.initState();
     ref.read(chatProvider.notifier).prewarm();
+    _voice = ref.read(voiceProvider.notifier);
   }
 
   @override
   void dispose() {
+    // Al cerrar el chat: deja de escuchar (la respuesta hablada sigue).
+    final voice = _voice;
+    Future.microtask(voice.cancel);
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
@@ -39,6 +44,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
     });
   }
 
+  late final VoiceController _voice;
+
   void _send({bool withScreenshot = false}) {
     final text = _controller.text.trim();
     if (text.isEmpty && !withScreenshot) return;
@@ -52,6 +59,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
     final messages = ref.watch(chatProvider);
     final notifier = ref.read(chatProvider.notifier);
     final assistant = ref.watch(assistantChoiceProvider).valueOrNull?.assistant;
+    final voice = ref.watch(voiceProvider);
 
     // Auto-scroll al llegar nuevo mensaje
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
@@ -157,6 +165,15 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
             ),
           ),
 
+          // Por qué no se pudo escuchar.
+          if (voice.problem != null && voice.status == VoiceStatus.idle)
+            Padding(
+              key: const ValueKey('voice-problem'),
+              padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
+              child: Text(voice.problem!,
+                  style: const TextStyle(color: Colors.amber, fontSize: 10)),
+            ),
+
           // Loading
           if (notifier.isLoading)
             const Padding(
@@ -195,7 +212,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                         color: const Color(0xFF2d2d44),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color: const Color(0xFF7C3AED).withOpacity(0.5)),
+                            color:
+                                const Color(0xFF7C3AED).withValues(alpha: 0.5)),
                       ),
                       child: const Icon(Icons.screenshot,
                           color: Colors.white70, size: 16),
@@ -204,26 +222,44 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                   const SizedBox(width: 6),
                 ],
 
-                // Input texto
+                // Input texto (o lo que va entendiendo mientras hablas)
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    autofocus: true, // listo para escribir (también con ⌃⌥P)
-                    onSubmitted: (_) => _send(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: 'Pregúntame algo...',
-                      hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.35), fontSize: 12),
-                      filled: true,
-                      fillColor: const Color(0xFF2d2d44),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
+                  child: voice.listening
+                      ? _Listening(heard: voice.heard)
+                      : TextField(
+                          controller: _controller,
+                          autofocus:
+                              true, // listo para escribir (también con ⌃⌥P)
+                          onSubmitted: (_) => _send(),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 12),
+                          decoration: InputDecoration(
+                            hintText: 'Pregúntame algo...',
+                            hintStyle: TextStyle(
+                                color: Colors.white.withOpacity(0.35),
+                                fontSize: 12),
+                            filled: true,
+                            fillColor: const Color(0xFF2d2d44),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 6),
+
+                // Micrófono: hablarle (otra vez para terminar la frase).
+                Tooltip(
+                  message: voice.listening
+                      ? 'Terminar'
+                      : 'Hablarle (también con ⌃⌥V)',
+                  child: GestureDetector(
+                    key: const ValueKey('voice-button'),
+                    onTap: _voice.toggle,
+                    child: _MicButton(listening: voice.listening),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -246,6 +282,104 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Lo que va entendiendo mientras hablas.
+class _Listening extends StatelessWidget {
+  final String heard;
+  const _Listening({required this.heard});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('voice-listening'),
+      constraints: const BoxConstraints(minHeight: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2d2d44),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFF4F7B), width: 1),
+      ),
+      child: Text(
+        heard.isEmpty ? 'Te escucho… habla 🎙️' : heard,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: heard.isEmpty ? Colors.white54 : Colors.white,
+          fontSize: 12,
+          fontStyle: heard.isEmpty ? FontStyle.italic : FontStyle.normal,
+        ),
+      ),
+    );
+  }
+}
+
+/// Botón del micrófono: late en rojo mientras escucha.
+class _MicButton extends StatefulWidget {
+  final bool listening;
+  const _MicButton({required this.listening});
+
+  @override
+  State<_MicButton> createState() => _MicButtonState();
+}
+
+class _MicButtonState extends State<_MicButton>
+    with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 700));
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_MicButton old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  void _sync() {
+    if (widget.listening && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (!widget.listening && _pulse.isAnimating) {
+      _pulse
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, __) => Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: widget.listening
+              ? Color.lerp(const Color(0xFFE0245E), const Color(0xFFFF6B8F),
+                  _pulse.value)
+              : const Color(0xFF2d2d44),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+              color: widget.listening
+                  ? Colors.white70
+                  : const Color(0xFF7C3AED).withValues(alpha: 0.5)),
+        ),
+        child: Icon(widget.listening ? Icons.stop_rounded : Icons.mic,
+            color: Colors.white, size: 16),
       ),
     );
   }
