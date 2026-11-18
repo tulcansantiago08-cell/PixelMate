@@ -63,7 +63,7 @@
 
 ## Instalar
 
-1. Descarga `PixelMate-1.1.0-macOS.zip` desde
+1. Descarga `PixelMate-1.2.0-macOS.zip` desde
    [Releases](https://github.com/tulcansantiago08-cell/PixelMate/releases).
 2. Descomprímelo y arrastra **PixelMate.app** a **Aplicaciones**.
 3. La primera vez, haz **clic derecho → Abrir** (la app no está firmada por
