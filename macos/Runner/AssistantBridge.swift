@@ -87,14 +87,39 @@ enum AssistantBridge {
           return
         }
         let minutes = (args["minutes"] as? Int) ?? 60
+        let allDay = (args["allDay"] as? Bool) ?? false
+        // Aviso del Calendario: minutos antes (o, todo el día, a esa hora
+        // contada desde la medianoche).
+        let alert = args["alert"] as? Int
         withCalendarAccess(result) {
           let event = EKEvent(eventStore: store)
           event.title = title
           event.startDate = Date(timeIntervalSince1970: startMs / 1000)
-          event.endDate = event.startDate.addingTimeInterval(Double(minutes) * 60)
+          event.isAllDay = allDay
+          event.endDate =
+            allDay
+            ? event.startDate.addingTimeInterval(24 * 3600)
+            : event.startDate.addingTimeInterval(Double(minutes) * 60)
+          if let alert = alert {
+            event.addAlarm(EKAlarm(relativeOffset: Double(allDay ? alert : -alert) * 60))
+          }
           event.calendar = store.defaultCalendarForNewEvents
           do {
             try store.save(event, span: .thisEvent)
+            result(event.eventIdentifier ?? "")
+          } catch {
+            result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
+          }
+        }
+      case "deleteEvent":
+        let id = (call.arguments as? String) ?? ""
+        withCalendarAccess(result) {
+          guard let event = store.event(withIdentifier: id) else {
+            result(false)
+            return
+          }
+          do {
+            try store.remove(event, span: .thisEvent)
             result(true)
           } catch {
             result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
@@ -381,6 +406,7 @@ enum AssistantBridge {
       .sorted { $0.startDate < $1.startDate }
       .map {
         [
+          "id": $0.eventIdentifier ?? "",
           "title": $0.title ?? "",
           "start": $0.startDate.timeIntervalSince1970 * 1000,
           "end": $0.endDate.timeIntervalSince1970 * 1000,

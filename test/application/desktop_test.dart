@@ -88,6 +88,16 @@ void main() {
       expect(label(false), 'Mostrar mascota');
     });
 
+    test('se puede apagar «Oye <nombre>» desde la barra de menú', () {
+      TrayEntry? wake(List<TrayEntry> entries) =>
+          entries.where((e) => e.action == TrayAction.toggleWake).firstOrNull;
+      expect(wake(trayEntries(WorkdayView.none, mascotVisible: true)), isNull);
+      final on = wake(trayEntries(WorkdayView.none,
+          mascotVisible: true, petName: 'James', wakeEnabled: true))!;
+      expect(on.label, 'Escuchar «Oye James» (micrófono)');
+      expect(on.checked, isTrue);
+    });
+
     test('el menú no cambia con el tiempo, solo en transiciones', () {
       String signature(DateTime now) =>
           trayEntries(viewAt(timer, now), mascotVisible: true)

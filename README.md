@@ -37,6 +37,17 @@
   en tu editor). Las órdenes claras se entienden al instante (aunque tengan
   faltas o se las digas con «¿puedes…?») y usan tu Calendario de macOS;
   las tareas y recordatorios se ven en el panel «Pendientes».
+- **Alarmas** — «pon una alarma a las 8 am reunión virtual», «despiértame a
+  las 6», «alarma de lunes a viernes a las 7 gimnasio». Suenan con un bip que
+  se repite, la mascota aparece con la hora y el texto y te lo dice en voz
+  alta; «😴 5 min» o «pospón 10 minutos» la vuelven a sonar y «apaga la
+  alarma» la para. En el botón ⏰ están tus **tareas diarias** (suenan los
+  días que elijas y se tachan cada día).
+- **Calendario** — en la pestaña 📅 del botón ⏰ anotas cosas en cualquier
+  día, todo el día o a una hora (con alarma si quieres), con un color; el
+  día queda marcado de ese color y ese día te avisa. También por chat o voz:
+  «anota en mi calendario el viernes cumpleaños de mamá». Si lo activas, se
+  copian al Calendario del Mac.
 - **Te cuida** — guardián del enfoque (avisa si WhatsApp, Mensajes o un
   juego siguen al frente durante el enfoque), consejos de bienestar en los
   descansos y recordatorio para descansar si trabajas hasta muy tarde.

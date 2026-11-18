@@ -24,7 +24,7 @@ def freq(note):
     return 440.0 * 2 ** ((n + (octave - 4) * 12) / 12)
 
 
-def tone(note, seconds, duty=0.5, shape="square"):
+def tone(note, seconds, duty=0.5, shape="square", gain=1.0):
     """Una nota con un ataque y una caída cortos para que no haga clic."""
     f = freq(note)
     n = int(RATE * seconds)
@@ -37,7 +37,7 @@ def tone(note, seconds, duty=0.5, shape="square"):
             v = 1.0 if phase < duty else -1.0
         attack = min(1.0, i / (RATE * 0.005))
         release = min(1.0, (n - i) / (RATE * 0.03))
-        out.append(v * attack * release * VOLUME)
+        out.append(v * attack * release * VOLUME * gain)
     return out
 
 
@@ -60,6 +60,10 @@ SOUNDS = {
               ("G6", .05, "square", .25), ("C7", .3, "square", .25)],
     # Fin de la jornada: cierre tranquilo.
     "finish": [("G5", .14), ("C6", .14), ("E6", .14), ("C6", .34)],
+    # Alarma: bip-bip-bip-bip agudo (la app lo repite hasta apagarla).
+    "alarm": [("A6", .09, "square", .5, 2.2), None, ("A6", .09, "square", .5, 2.2),
+              None, ("A6", .09, "square", .5, 2.2), None,
+              ("A6", .09, "square", .5, 2.2), None, None, None, None],
 }
 
 
@@ -72,7 +76,8 @@ def render(notes):
         note, secs = n[0], n[1]
         shape = n[2] if len(n) > 2 else "square"
         duty = n[3] if len(n) > 3 else 0.5
-        samples += tone(note, secs, duty, shape)
+        gain = n[4] if len(n) > 4 else 1.0
+        samples += tone(note, secs, duty, shape, gain)
         samples += silence(.012)
     return samples
 

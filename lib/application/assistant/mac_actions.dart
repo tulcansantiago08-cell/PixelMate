@@ -7,7 +7,11 @@ class CalendarEvent {
   final DateTime start;
   final DateTime end;
   final bool allDay;
-  const CalendarEvent(this.title, this.start, this.end, {this.allDay = false});
+
+  /// Id del evento en el Calendario del Mac.
+  final String id;
+  const CalendarEvent(this.title, this.start, this.end,
+      {this.allDay = false, this.id = ''});
 }
 
 /// No hay permiso para el calendario.
@@ -50,7 +54,15 @@ abstract class MacActions {
 
   /// Lanza [CalendarDenied] sin permiso.
   Future<List<CalendarEvent>> events(int dayOffset);
-  Future<void> createEvent(String title, DateTime start, {int minutes = 60});
+
+  /// Crea el evento y devuelve su id. [allDay]: todo el día de [start].
+  /// [alert]: aviso del Calendario, en minutos antes (o, si es de todo el
+  /// día, a esa hora del día contada desde la medianoche).
+  Future<String?> createEvent(String title, DateTime start,
+      {int minutes = 60, bool allDay = false, int? alert});
+
+  /// Borra el evento. `false` si ya no estaba.
+  Future<bool> deleteEvent(String id);
 }
 
 /// Lo que pasó al controlar la música: el reproductor, la canción (para
@@ -196,11 +208,27 @@ class FakeMacActions implements MacActions {
   }
 
   @override
-  Future<void> createEvent(String title, DateTime start,
-      {int minutes = 60}) async {
+  Future<String?> createEvent(String title, DateTime start,
+      {int minutes = 60, bool allDay = false, int? alert}) async {
     if (!calendarAllowed) throw const CalendarDenied();
-    calendar.add(
-        CalendarEvent(title, start, start.add(Duration(minutes: minutes))));
+    final id = 'ev${calendar.length + 1}';
+    calendar.add(CalendarEvent(
+        title,
+        start,
+        allDay
+            ? start.add(const Duration(days: 1))
+            : start.add(Duration(minutes: minutes)),
+        allDay: allDay,
+        id: id));
+    return id;
+  }
+
+  @override
+  Future<bool> deleteEvent(String id) async {
+    if (!calendarAllowed) throw const CalendarDenied();
+    final before = calendar.length;
+    calendar.removeWhere((e) => e.id == id);
+    return calendar.length < before;
   }
 }
 

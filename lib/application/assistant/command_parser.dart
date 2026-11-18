@@ -45,6 +45,23 @@ enum AssistantIntent {
   /// «Activa el oye James», «escúchame siempre» (text "on") o «deja de
   /// escucharme» ("off").
   wakeWord,
+
+  /// «Pon una alarma a las 8 am reunión virtual», «despiértame a las 6»,
+  /// «alarma todos los días a las 7 tomar la pastilla».
+  alarm,
+
+  /// «Apaga la alarma» (mientras suena).
+  alarmStop,
+
+  /// «Pospón 10 minutos», «5 minutos más» ([ParsedCommand.number]).
+  alarmSnooze,
+
+  /// «Quita la alarma de las 8», «borra la alarma de la reunión».
+  alarmDelete,
+
+  /// «Anota en mi calendario el viernes cumpleaños de mamá» ([ParsedCommand.when]
+  /// es el día, con hora si la dijo; [ParsedCommand.allDay] si no).
+  calendarNote,
 }
 
 class ParsedCommand {
@@ -80,6 +97,12 @@ class ParsedCommand {
   /// Música: el reproductor pedido.
   final String? app;
 
+  /// Alarma: "daily", "weekdays" o `null` (una vez).
+  final String? repeat;
+
+  /// Nota del calendario: sin hora (todo el día). Con alarma: [play].
+  final bool allDay;
+
   const ParsedCommand(this.intent,
       {this.text = '',
       this.when,
@@ -90,7 +113,9 @@ class ParsedCommand {
       this.play = false,
       this.language,
       this.editor,
-      this.app});
+      this.app,
+      this.repeat,
+      this.allDay = false});
 
   @override
   String toString() => 'ParsedCommand($intent, "$text", $when, n=$number, '
@@ -231,7 +256,7 @@ const _weekdays = {
 /// Lo que se quita del texto al sacar la hora o el día.
 final _timePhrase = RegExp(
     r'\b(dentro de|en)\s+(media hora|un cuarto de hora|(\d+|[a-z]+( y [a-z]+)?)\s*(minutos?|mins?|horas?|h))\b'
-    r'|\b(a las|a la)\s+\d{1,2}([:.]\d{2})?(\s*y\s*(media|cuarto))?(\s*(de la (manana|tarde|noche)|am|pm|hrs?|h))?'
+    r'|\b(a las|a la)\s+\d{1,2}([:.]\d{2})?(\s*y\s*(media|cuarto|\d{1,2}(\s*minutos?)?))?(\s*(de la (manana|tarde|noche)|am|pm|hrs?|h))?'
     r'|\b(al mediodia|a medianoche|esta (tarde|noche|manana))'
     r'|\b(pasado manana|manana|hoy)\b'
     r'|\b(el\s+)?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b');
@@ -291,17 +316,20 @@ DateTime? parseWhen(String message, DateTime now) {
     if (dayOffset < 1) dayOffset = 1;
   } else {
     final t = RegExp(
-            r'\ba las?\s+(\d{1,2})(?:[:.](\d{2}))?(?:\s*y\s*(media|cuarto))?(?:\s*(de la manana|de la tarde|de la noche|am|pm))?')
+            r'\ba las?\s+(\d{1,2})(?:[:.](\d{2}))?(?:\s*y\s*(media|cuarto|\d{1,2})(?:\s*minutos?)?)?(?:\s*(de la manana|de la tarde|de la noche|am|pm))?')
         .firstMatch(m);
     if (t != null) {
       hour = int.parse(t.group(1)!);
+      final extra = t.group(3);
       minute = t.group(2) != null
           ? int.parse(t.group(2)!)
-          : t.group(3) == 'media'
+          : extra == 'media'
               ? 30
-              : t.group(3) == 'cuarto'
+              : extra == 'cuarto'
                   ? 15
-                  : 0;
+                  : extra != null
+                      ? int.parse(extra)
+                      : 0;
       final part = t.group(4);
       if ((part == 'de la tarde' || part == 'de la noche' || part == 'pm') &&
           hour < 12) {
@@ -668,6 +696,162 @@ String normalizeRequest(String message, {String? petName}) {
   return s.trim();
 }
 
+/// Alarmas ([m] es [original] sin tildes). Ver [AssistantIntent.alarm].
+ParsedCommand? _alarmCommand(String original, String m, DateTime now) {
+  final t = m
+      .replaceAll(RegExp(r'[¡!¿?.,]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  const theAlarm = r'(?:la\s+|esa\s+|esta\s+|las\s+)?alarmas?';
+
+  // Mientras suena.
+  if (RegExp('^(?:apaga|apagala|para|parala|deten|detenla|quita|quitala|silencia|silenciala|calla)(?:\\s+$theAlarm)?(?:\\s+ya)?\$')
+          .hasMatch(t) &&
+      (t.contains('alarma') ||
+          RegExp(r'^(?:apagala|parala|detenla|quitala|silenciala)(?:\s+ya)?$')
+              .hasMatch(t))) {
+    return const ParsedCommand(AssistantIntent.alarmStop);
+  }
+  final snooze = RegExp(
+          r'^(?:pospon(?:la|lo)?|posponer|aplaza(?:la)?|(?:dame|deja(?:me)?)\s+(?:dormir\s+)?|(?:otros?|unos?)\s+)?(?:(\d{1,2}|[a-z]+)\s+)?(?:minutos?|min)\s*(?:mas)?$|^(?:pospon(?:la|lo)?|posponer|aplaza(?:la)?|snooze)(?:\s+(?:la\s+)?alarma)?(?:\s+(\d{1,2}|[a-z]+)\s*(?:minutos?|min))?$')
+      .firstMatch(t);
+  if (snooze != null &&
+      (t.startsWith('pospon') ||
+          t.startsWith('aplaza') ||
+          t.startsWith('snooze') ||
+          t.endsWith('mas') ||
+          t.startsWith('dame') ||
+          t.startsWith('deja'))) {
+    final n = snooze.group(1) ?? snooze.group(2);
+    return ParsedCommand(AssistantIntent.alarmSnooze,
+        number: n == null ? null : _num(n));
+  }
+
+  // Borrar una alarma guardada.
+  if (RegExp(
+          '^(?:quita|borra|elimina|cancela|desactiva|apaga)\\s+$theAlarm\\b.+')
+      .hasMatch(t)) {
+    final rest = t.replaceFirst(
+        RegExp(
+            '^(?:quita|borra|elimina|cancela|desactiva|apaga)\\s+$theAlarm\\s*(?:de\\s+|para\\s+)?'),
+        '');
+    final hour =
+        RegExp(r'(?:las?\s+)?(\d{1,2})(?:[:.](\d{2}))?').firstMatch(rest);
+    return ParsedCommand(AssistantIntent.alarmDelete,
+        text: hour != null && rest.startsWith(RegExp(r'(?:las?\s+)?\d'))
+            ? ''
+            : rest,
+        number: hour == null
+            ? null
+            : int.parse(hour.group(1)!) * 100 +
+                int.parse(hour.group(2) ?? '0'));
+  }
+
+  // Poner una alarma.
+  // "Pon una alarma…", "dame una alarma…", y también con la hora antes
+  // ("a las 9 dame una alarma para…").
+  const alarmVerbs =
+      r'(?:pon(?:me|le)?|programa(?:me)?|crea(?:me)?|activa(?:me)?|agrega(?:me)?|anade(?:me)?|configura(?:me)?|dame|hazme|haz|quiero|necesito|coloca(?:me)?|establece|fija(?:me)?|ajusta(?:me)?)';
+  final set =
+      RegExp('^(?:$alarmVerbs\\s+)?(?:una?\\s+|la\\s+)?(?:nueva\\s+)?alarma\\b'
+              '|^(?:despiertame|levantame)\\b'
+              '|\\btareas? diarias?\\b'
+              '|\\b$alarmVerbs\\s+(?:una?\\s+)?(?:nueva\\s+)?alarma\\b')
+          .firstMatch(t);
+  final remindWithAlarm =
+      RegExp(r'^(?:recuerdame|avisame)\b.*\bcon (?:alarma|sonido)\b')
+          .hasMatch(t);
+  if (set == null && !remindWithAlarm) return null;
+  final wakeUp = RegExp(r'^(?:despiertame|levantame)').hasMatch(t);
+
+  String? repeat;
+  if (RegExp(
+          r'\b(?:todos los dias|cada dia|diaria|diarias|diariamente|siempre)\b')
+      .hasMatch(t)) {
+    repeat = 'daily';
+  }
+  if (RegExp(
+          r'\b(?:de lunes a viernes|entre semana|dias de semana|dias laborables|dias habiles)\b')
+      .hasMatch(t)) {
+    repeat = 'weekdays';
+  }
+
+  const repeatPhrase =
+      r'\b(?:(?:una?\s+|la\s+|mi\s+)?(?:nueva\s+)?tareas? diarias?|todos los d[ií]as|cada d[ií]a|diariamente|diaria|siempre|de lunes a viernes|entre semana|d[ií]as de semana|d[ií]as laborables|d[ií]as h[aá]biles|con (?:alarma|sonido))\b';
+  final withoutRepeat =
+      original.replaceAll(RegExp(repeatPhrase, caseSensitive: false), ' ');
+  final when = alarmTime(withoutRepeat, now, morning: wakeUp);
+
+  // El texto: sin la orden, la hora ni la repetición.
+  var text = withoutRepeat;
+  final verb = RegExp(
+          r'(?:(?:pon(?:me|le)?|programa(?:me)?|crea(?:me)?|activa(?:me)?|agrega(?:me)?|añade(?:me)?|anade(?:me)?|configura(?:me)?|dame|hazme|haz|quiero|necesito|coloca(?:me)?|establece|fija(?:me)?|ajusta(?:me)?)\s+)?(?:una?\s+|la\s+)?(?:nueva\s+)?alarma\b|^(?:despiértame|despiertame|levántame|levantame|recuérdame|recuerdame|avísame|avisame)\b',
+          caseSensitive: false)
+      .firstMatch(text);
+  if (verb != null) {
+    text = '${text.substring(0, verb.start)} ${text.substring(verb.end)}';
+  }
+  // "…de hoy", "…para hoy".
+  text = text.replaceAll(
+      RegExp(r'\b(?:de hoy|para hoy)\b', caseSensitive: false), ' ');
+  text = text.replaceAll(
+      RegExp(r'\b(?:am|a\.m\.|pm|p\.m\.)(?=\s|$)', caseSensitive: false), ' ');
+  text = cleanText(text)
+      .replaceFirst(
+          RegExp(
+              r'^(?:(?:agrega(?:me)?|añade(?:me)?|anade(?:me)?|apunta(?:me)?|anota(?:me)?|crea(?:me)?|pon(?:me)?|programa(?:me)?|para|de|que diga|que se llame|se llame|que se llama|se llama|llamada|con el nombre(?: de)?|con el texto|y|:)\s+)+(?:(?:la|el)\s+)?',
+              caseSensitive: false),
+          '')
+      .trim();
+  text = cleanText(text);
+  if (text.isEmpty) text = wakeUp ? '¡Hora de levantarse! ☀️' : 'Alarma';
+  return ParsedCommand(AssistantIntent.alarm,
+      text: text, when: when, repeat: repeat);
+}
+
+/// La hora de una alarma. Si no dice mañana o tarde ("a las 7"), la más
+/// próxima de las dos (las 7 de la mañana o de la tarde); con
+/// [morning] ("despiértame a las 6"), de la mañana.
+DateTime? alarmTime(String message, DateTime now, {bool morning = false}) {
+  final when = parseWhen(message, now);
+  if (when == null) return null;
+  final m = fold(message);
+  final time = RegExp(r'\ba las?\s+(\d{1,2})').firstMatch(m);
+  final explicitPart = RegExp(
+          r'\b(?:de la manana|de la tarde|de la noche|am|a\.m|pm|p\.m|mediodia|medianoche|esta tarde|esta noche)\b')
+      .hasMatch(m);
+  if (time == null || explicitPart) return when;
+  final said = int.parse(time.group(1)!);
+  if (said < 1 || said > 12) return when;
+  final morningHour = said == 12 ? 0 : said;
+  final candidates = [morningHour, said == 12 ? 12 : said + 12];
+  final explicitDay = RegExp(
+          r'\b(?:hoy|manana|pasado manana|lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b')
+      .hasMatch(m.replaceAll('de la manana', ''));
+  DateTime at(int hour, int dayShift) =>
+      DateTime(when.year, when.month, when.day + dayShift, hour, when.minute);
+  if (morning) {
+    var d = at(morningHour, 0);
+    if (!explicitDay && !d.isAfter(now)) {
+      d = DateTime(now.year, now.month, now.day + 1, morningHour, when.minute);
+      if (DateTime(now.year, now.month, now.day, morningHour, when.minute)
+          .isAfter(now)) {
+        d = DateTime(now.year, now.month, now.day, morningHour, when.minute);
+      }
+    }
+    return d;
+  }
+  if (explicitDay) return when;
+  // Sin día: la próxima de las dos horas posibles.
+  final options = <DateTime>[
+    for (final h in candidates)
+      for (final day in [0, 1])
+        DateTime(now.year, now.month, now.day + day, h, when.minute),
+  ].where((d) => d.isAfter(now)).toList()
+    ..sort();
+  return options.first;
+}
+
 /// «Activa el oye James», «escúchame siempre», «que me escuches cuando te
 /// llame» / «desactiva el oye James», «deja de escucharme» ([m] sin tildes).
 ParsedCommand? _wakeCommand(String m) {
@@ -863,6 +1047,15 @@ ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
   // Baile: "modo discoteca", "ponte a bailar", "para de bailar".
   final dance = _danceCommand(m);
   if (dance != null) return dance;
+
+  // Anotar en el calendario (antes que tareas y alarmas): "anota en mi
+  // calendario el viernes cumpleaños de mamá".
+  final note = _calendarNote(original, m, now);
+  if (note != null) return note;
+
+  // Alarmas: "pon una alarma a las 8 am reunión", "apaga la alarma".
+  final alarm = _alarmCommand(original, m, now);
+  if (alarm != null) return alarm;
 
   // Volumen: "sube el volumen", "bájale un poco", "volumen al 50".
   final volume = _volumeCommand(m);
@@ -1092,4 +1285,146 @@ ParsedCommand commandFromAi({
     number: number > 0 ? number : null,
     dayOffset: tomorrow ? 1 : 0,
   );
+}
+
+const _monthNumbers = {
+  'enero': 1,
+  'febrero': 2,
+  'marzo': 3,
+  'abril': 4,
+  'mayo': 5,
+  'junio': 6,
+  'julio': 7,
+  'agosto': 8,
+  'septiembre': 9,
+  'setiembre': 9,
+  'octubre': 10,
+  'noviembre': 11,
+  'diciembre': 12,
+};
+
+final _noteVerb = RegExp(
+    r'^(?:anota|apunta|escribe|pon|agrega|anade|guarda|marca)(?:me|lo|la)?\b');
+final _noteWhere = RegExp(r'\b(?:en|a|al)\s+(?:el\s+|mi\s+)?calendario\b');
+final _noteTime = RegExp(
+    r'\ba las?\s+\d{1,2}(?:[:.]\d{2})?(?:\s*y\s*(?:media|cuarto|\d{1,2})(?:\s*minutos?)?)?'
+    r'(?:\s*(?:de la (?:manana|tarde|noche)|am|pm|a\.\s?m\.|p\.\s?m\.))?');
+final _noteDate = RegExp(r'\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b'
+    r'|\b(?:para\s+)?(?:el\s+)?(?:dia\s+)?(\d{1,2})(?:\s+de\s+([a-z]+))?(?:\s+de\s+(\d{4}))?\b');
+final _noteRelative = RegExp(r'\b(?:para\s+)?(pasado manana|manana|hoy)\b');
+final _noteWeekday = RegExp(
+    r'\b(?:para\s+)?(?:el\s+)?(?:proximo\s+)?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)(?:\s+que viene)?\b');
+
+/// El día de una nota: "hoy", "mañana", "el viernes", "el 20 (de
+/// noviembre)", "20/11". `null` si no dice día.
+({DateTime day, Match match})? _noteDay(String m, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  final rel = _noteRelative.firstMatch(m);
+  if (rel != null) {
+    final d = switch (rel.group(1)) {
+      'pasado manana' => 2,
+      'manana' => 1,
+      _ => 0,
+    };
+    return (day: DateTime(today.year, today.month, today.day + d), match: rel);
+  }
+  final wd = _noteWeekday.firstMatch(m);
+  if (wd != null) {
+    var d = (_weekdays[wd.group(1)]! - now.weekday) % 7;
+    if (d == 0) d = 7;
+    return (day: DateTime(today.year, today.month, today.day + d), match: wd);
+  }
+  for (final date in _noteDate.allMatches(m)) {
+    final slash = date.group(1) != null;
+    final n = int.parse(slash ? date.group(1)! : date.group(4)!);
+    final monthWord = slash ? null : date.group(5);
+    int? month = slash ? int.parse(date.group(2)!) : null;
+    if (monthWord != null) {
+      month = _monthNumbers[monthWord];
+      if (month == null) continue; // "el 3 de la tarde"…
+    }
+    // Un número suelto solo cuenta con "el" delante ("el 20").
+    if (!slash &&
+        monthWord == null &&
+        !RegExp(r'^(?:para\s+)?(?:el|dia)\s').hasMatch(date.group(0)!)) {
+      continue;
+    }
+    if (n < 1 || n > 31 || (month != null && (month < 1 || month > 12))) {
+      continue;
+    }
+    final yearText = slash ? date.group(3) : date.group(6);
+    var year = yearText == null
+        ? today.year
+        : (yearText.length == 2
+            ? 2000 + int.parse(yearText)
+            : int.parse(yearText));
+    var mo = month ?? today.month;
+    var day = DateTime(year, mo, n);
+    if (day.month != mo) continue; // 31 de febrero
+    if (yearText == null && day.isBefore(today)) {
+      // Ya pasó: el mes que viene (sin mes) o el año que viene.
+      if (month == null) {
+        mo += 1;
+      } else {
+        year += 1;
+      }
+      day = DateTime(year, mo, n);
+    }
+    return (day: day, match: date);
+  }
+  return null;
+}
+
+ParsedCommand? _calendarNote(String original, String m, DateTime now) {
+  final verb = _noteVerb.firstMatch(m);
+  final where = _noteWhere.firstMatch(m);
+  if (verb == null || where == null) return null;
+  final keep = List<bool>.filled(m.length, true);
+  void drop(Match? x) {
+    if (x == null) return;
+    for (var i = x.start; i < x.end && i < keep.length; i++) {
+      keep[i] = false;
+    }
+  }
+
+  drop(verb);
+  drop(where);
+  final time = _noteTime.firstMatch(m);
+  // La hora primero: "de la mañana" no es "mañana".
+  final withoutTime = time == null
+      ? m
+      : m.replaceRange(time.start, time.end, ' ' * (time.end - time.start));
+  final day = _noteDay(withoutTime, now);
+  drop(time);
+  drop(day?.match);
+  final alarm = RegExp(r'\bcon alarma\b').firstMatch(m);
+  drop(alarm);
+
+  final b = StringBuffer();
+  for (var i = 0; i < original.length && i < keep.length; i++) {
+    b.write(keep[i] ? original[i] : ' ');
+  }
+  var text = b
+      .toString()
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim()
+      .replaceFirst(
+          RegExp(r'^(?:que\s+(?:tengo\s+|hay\s+)?|de\s+|para\s+|:\s*)',
+              caseSensitive: false),
+          '')
+      .replaceAll(RegExp(r'^[\s,.:;-]+|[\s,.:;-]+$'), '');
+  if (text.isEmpty) return null;
+  text = text[0].toUpperCase() + text.substring(1);
+
+  DateTime? when = day?.day;
+  var allDay = true;
+  if (when != null && time != null) {
+    final t = parseWhen(time.group(0)!, now);
+    if (t != null) {
+      when = DateTime(when.year, when.month, when.day, t.hour, t.minute);
+      allDay = false;
+    }
+  }
+  return ParsedCommand(AssistantIntent.calendarNote,
+      text: text, when: when, allDay: allDay, play: alarm != null);
 }

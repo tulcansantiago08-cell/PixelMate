@@ -126,6 +126,9 @@ String speechText(String text, {int maxLength = 400}) {
 
 enum VoiceStatus { idle, listening, thinking }
 
+/// Lo que se dice si se escuchó pero no dijiste nada.
+const nothingHeard = '🙉 No te escuché. Toca 🎙️ y habla cuando quieras.';
+
 class VoiceState {
   final VoiceStatus status;
 
@@ -298,8 +301,7 @@ class VoiceController extends StateNotifier<VoiceState> {
     _clearTimers();
     final said = text.trim();
     if (said.isEmpty) {
-      state = const VoiceState(
-          problem: '🙉 No te escuché. Toca 🎙️ y habla cuando quieras.');
+      state = const VoiceState(problem: nothingHeard);
       unawaited(_armWake());
       return;
     }

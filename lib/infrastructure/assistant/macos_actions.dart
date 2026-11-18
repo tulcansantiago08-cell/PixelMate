@@ -104,6 +104,7 @@ class MacosActions implements MacActions {
                   (raw['start'] as num).toInt()),
               DateTime.fromMillisecondsSinceEpoch((raw['end'] as num).toInt()),
               allDay: raw['allDay'] as bool? ?? false,
+              id: raw['id'] as String? ?? '',
             )
       ];
     } on PlatformException catch (e) {
@@ -113,14 +114,27 @@ class MacosActions implements MacActions {
   }
 
   @override
-  Future<void> createEvent(String title, DateTime start,
-      {int minutes = 60}) async {
+  Future<String?> createEvent(String title, DateTime start,
+      {int minutes = 60, bool allDay = false, int? alert}) async {
     try {
-      await _channel.invokeMethod<bool>('createEvent', {
+      final id = await _channel.invokeMethod<Object?>('createEvent', {
         'title': title,
         'start': start.millisecondsSinceEpoch,
         'minutes': minutes,
+        'allDay': allDay,
+        if (alert != null) 'alert': alert,
       });
+      return id is String && id.isNotEmpty ? id : null;
+    } on PlatformException catch (e) {
+      if (e.code == 'denied') throw const CalendarDenied();
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> deleteEvent(String id) async {
+    try {
+      return await _channel.invokeMethod<bool>('deleteEvent', id) ?? false;
     } on PlatformException catch (e) {
       if (e.code == 'denied') throw const CalendarDenied();
       rethrow;

@@ -5,8 +5,14 @@ import FlutterMacOS
 class AppDelegate: FlutterAppDelegate {
   private var activityMonitor: AppActivityMonitor?
   private var musicMonitor: MusicMonitor?
+  /// Sin App Nap: macOS frena los temporizadores de las apps en segundo
+  /// plano y las alarmas sonarían minutos tarde. No impide que el Mac duerma.
+  private var punctual: NSObjectProtocol?
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
+    punctual = ProcessInfo.processInfo.beginActivity(
+      options: .userInitiatedAllowingIdleSystemSleep,
+      reason: "Alarmas y recordatorios a su hora")
     if let controller = mainFlutterWindow?.contentViewController as? FlutterViewController {
       activityMonitor = AppActivityMonitor.register(with: controller.engine.binaryMessenger)
       musicMonitor = MusicMonitor.register(with: controller.engine.binaryMessenger)
@@ -32,6 +38,17 @@ class AppDelegate: FlutterAppDelegate {
         let version = info["CFBundleShortVersionString"] as? String ?? "?"
         let build = info["CFBundleVersion"] as? String ?? "?"
         result("\(version) (\(build))")
+      case "focus":
+        // Toma el teclado: sin ícono en el Dock, un clic no siempre activa
+        // la app y los campos de texto no recibirían lo que escribes.
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = NSApp.windows.first(where: { $0.isVisible }) {
+          window.makeKeyAndOrderFront(nil)
+          if let view = window.contentViewController?.view {
+            window.makeFirstResponder(view)
+          }
+        }
+        result(nil)
       case "openRepository":
         // Solo esta dirección fija: nunca una que venga de fuera.
         if let url = URL(string: "https://github.com/tulcansantiago08-cell/PixelMate") {

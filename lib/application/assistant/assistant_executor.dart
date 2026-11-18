@@ -1,5 +1,7 @@
+import 'calendar_notes.dart';
 import 'code_writer.dart';
 import 'command_parser.dart';
+import 'daily_tasks.dart';
 import 'mac_actions.dart';
 import 'personal_store.dart';
 import 'video_finder.dart';
@@ -64,6 +66,16 @@ class AssistantExecutor {
   /// Activa o apaga el «oye <nombre>»; devuelve el nombre de la mascota.
   final Future<String> Function(bool on)? onWakeWord;
 
+  /// Apaga (`null`) o pospone (minutos) la alarma que suena; `false` si no
+  /// sonaba ninguna.
+  final Future<bool> Function(int? snoozeMinutes)? onAlarm;
+
+  /// Tareas diarias: las alarmas que se repiten van aquí.
+  final DailyTaskStore? daily;
+
+  /// Las notas del calendario de PixelMate.
+  final CalendarStore? calendar;
+
   /// Lo que dura el modo discoteca cuando se pide.
   static const discoLength = Duration(minutes: 1);
 
@@ -74,6 +86,9 @@ class AssistantExecutor {
       this.onDance,
       this.onUserName,
       this.onWakeWord,
+      this.onAlarm,
+      this.daily,
+      this.calendar,
       DateTime Function()? now})
       : now = now ?? DateTime.now;
 
@@ -127,7 +142,47 @@ class AssistantExecutor {
         return '🪩 ¡Modo discoteca! Bailo un minuto 💃🕺 '
             '(dime «para de bailar» si quieres que pare).';
 
+      case AssistantIntent.alarm:
+        final when = c.when;
+        if (when == null) {
+          return '⏰ ¿A qué hora pongo la alarma? Dime, por ejemplo, «pon una '
+              'alarma a las 8 am reunión virtual».';
+        }
+        if (!when.isAfter(t)) return '⏰ Esa hora ya pasó. $_askWhen';
+        final repeat = AlarmRepeat.byName(c.repeat);
+        final dailyStore = daily;
+        if (repeat != AlarmRepeat.none && dailyStore != null) {
+          final task = await dailyStore.add(c.text, when.hour, when.minute,
+              days: repeat == AlarmRepeat.weekdays ? weekdays : allDays,
+              now: t);
+          return '📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} '
+              'a las ${task.time12}, «${task.text}». Sonará como alarma; la '
+              'ves con el botón ⏰ junto a mí.';
+        }
+        await store.addReminder(c.text, when, alarm: true, repeat: repeat);
+        return '⏰ Alarma puesta ${describeWhen(when, t)}'
+            '${repeat == AlarmRepeat.none ? '' : ' y luego ${repeat.label}'}: '
+            '«${c.text}». Sonará hasta que la apagues.';
+
+      case AssistantIntent.alarmStop:
+        return await onAlarm?.call(null) == true
+            ? '🔕 Alarma apagada.'
+            : '🔕 No hay ninguna alarma sonando.';
+
+      case AssistantIntent.alarmSnooze:
+        final minutes = (c.number ?? 5).clamp(1, 120);
+        return await onAlarm?.call(minutes) == true
+            ? '😴 Te la vuelvo a sonar en $minutes minutos.'
+            : '🔕 No hay ninguna alarma sonando.';
+
+      case AssistantIntent.alarmDelete:
+        return _deleteAlarm(c);
+
       case AssistantIntent.volume:
+        // «Silencia» mientras suena una alarma: la apaga.
+        if (c.text == 'mute' && await onAlarm?.call(null) == true) {
+          return '🔕 Alarma apagada.';
+        }
         final r = await mac.volume(c.text, c.number ?? 0);
         if (r == null) {
           return '🔈 Esta salida de sonido no deja cambiar el volumen desde '
@@ -190,6 +245,9 @@ class AssistantExecutor {
           return _calendarDenied;
         }
 
+      case AssistantIntent.calendarNote:
+        return _calendarNote(c, t);
+
       case AssistantIntent.createEvent:
         final when = c.when;
         if (when == null) return '📅 ¿Para cuándo es «${c.text}»? $_askWhen';
@@ -201,6 +259,41 @@ class AssistantExecutor {
           return _calendarDenied;
         }
     }
+  }
+
+  Future<String> _calendarNote(ParsedCommand c, DateTime t) async {
+    final day = c.when;
+    if (day == null) {
+      return '📅 ¿Para qué día anoto «${c.text}»? Dime, por ejemplo, «el '
+          'viernes», «mañana» o «el 20 de diciembre».';
+    }
+    final notes = calendar;
+    if (notes == null) return '📅 No tengo el calendario a mano ahora.';
+    if (!c.allDay && !day.isAfter(t)) return '📅 Esa hora ya pasó. $_askWhen';
+    if (DateTime(day.year, day.month, day.day)
+        .isBefore(DateTime(t.year, t.month, t.day))) {
+      return '📅 Ese día ya pasó. ¿Para qué día lo anoto?';
+    }
+    final note = await notes.add(c.text, day,
+        hour: c.allDay ? null : day.hour,
+        minute: day.minute,
+        alarm: c.play,
+        color: 1,
+        now: t);
+    if (note == null) return '📅 ¿Qué anoto?';
+    final when = describeDay(day, t);
+    final at = note.allDay
+        ? 'todo el día; ese día te aviso a las '
+            '${clock12(CalendarNote.noticeHour, 0)}'
+        : 'a las ${note.timeLabel}${note.alarm ? ', con alarma' : ', te aviso a esa hora'}';
+    var reply = '📅 Anotado en tu calendario: «${note.text}» $when ($at).';
+    if (notes.toMac) {
+      final problem = await copyToMacCalendar(notes, mac, note);
+      reply += problem == null
+          ? ' También está en el Calendario del Mac.'
+          : ' $problem';
+    }
+    return reply;
   }
 
   Future<String> _code(ParsedCommand c) async {
@@ -336,10 +429,42 @@ class AssistantExecutor {
         for (var i = 0; i < tasks.length; i++) '${i + 1}. ${tasks[i].text}',
       ],
       if (reminders.isNotEmpty) ...[
-        '⏰ Recordatorios:',
-        for (final r in reminders) '• ${describeWhen(r.due, t)}: ${r.text}',
+        '⏰ Recordatorios y alarmas:',
+        for (final r in reminders) '• ${_describeReminder(r, t)}',
       ],
     ].join('\n');
+  }
+
+  String _describeReminder(ReminderItem r, DateTime t) =>
+      '${r.alarm ? '🔔 ' : ''}${describeWhen(r.due, t)}'
+      '${r.repeat == AlarmRepeat.none ? '' : ' (${r.repeat.label})'}: ${r.text}';
+
+  Future<String> _deleteAlarm(ParsedCommand c) async {
+    final alarms = store.alarms;
+    if (alarms.isEmpty) return '🔕 No tienes alarmas puestas.';
+    final t = now();
+    final list = alarms.map((r) => '• ${_describeReminder(r, t)}').join('\n');
+    final hhmm = c.number;
+    final words = fold(c.text)
+        .replaceFirst(RegExp(r'^(?:la|el|las|los|mi)\s+'), '')
+        .trim();
+    final matches = alarms.where((r) {
+      if (hhmm != null) {
+        final h = hhmm ~/ 100, m = hhmm % 100;
+        return r.due.minute == m && (r.due.hour == h || r.due.hour == h + 12);
+      }
+      if (words.isNotEmpty) return fold(r.text).contains(words);
+      return alarms.length == 1;
+    }).toList();
+    if (matches.isEmpty) {
+      return '🤔 No sé cuál quitar. Tus alarmas:\n$list';
+    }
+    for (final r in matches) {
+      await store.removeReminder(r.id);
+    }
+    return matches.length == 1
+        ? '🗑️ Quité la alarma ${_describeReminder(matches.single, t)}.'
+        : '🗑️ Quité ${matches.length} alarmas.';
   }
 
   /// La tarea pendiente que más se parece a [text] (por palabras).
