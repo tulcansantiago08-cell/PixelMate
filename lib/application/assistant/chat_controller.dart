@@ -116,6 +116,19 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     final text = message.trim();
     if ((text.isEmpty && !withScreenshot) || isLoading) return;
 
+    // La respuesta a «¿Cierro Safari?…»: sí o no.
+    final executor = _ref.read(assistantExecutorProvider);
+    if (!withScreenshot && executor.awaitingConfirmation) {
+      final answer =
+          yesNo(normalizeRequest(text, petName: _ref.read(petNameProvider)));
+      if (answer != null) {
+        _add(ChatMessage(text: text, isUser: true));
+        final note = await executor.confirm(answer);
+        _add(ChatMessage(text: note, isUser: false, isNote: true));
+        return;
+      }
+    }
+
     // Órdenes claras ("recuérdame…", "abre…", "apunta…"): se hacen al
     // instante y sin IA, así funcionan siempre y nunca se inventan.
     final command = withScreenshot || text.isEmpty

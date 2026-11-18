@@ -31,7 +31,7 @@ void main() {
 
   group('estado de la meta', () {
     test('fracción, faltante y cumplida', () {
-      final s = DailyGoalStatus(done: Duration(minutes: 90), goal: h * 4);
+      final s = DailyGoalStatus(done: const Duration(minutes: 90), goal: h * 4);
       expect(s.fraction, closeTo(90 / 240, 1e-9));
       expect(s.remaining, const Duration(minutes: 150));
       expect(s.reached, isFalse);
@@ -42,14 +42,15 @@ void main() {
     });
 
     test('solo se celebra al cruzar la meta avanzando', () {
-      final before = DailyGoalStatus(done: Duration(minutes: 239), goal: h * 4);
+      final before =
+          DailyGoalStatus(done: const Duration(minutes: 239), goal: h * 4);
       final after = DailyGoalStatus(done: h * 4, goal: h * 4);
       expect(goalJustReached(before, after), isTrue);
       expect(goalJustReached(null, after), isFalse, reason: 'al abrir la app');
       expect(goalJustReached(after, after), isFalse, reason: 'ya cumplida');
       // Bajar la meta por debajo de lo hecho no cuenta como "cumplirla".
       final lowered =
-          DailyGoalStatus(done: Duration(minutes: 239), goal: h * 2);
+          DailyGoalStatus(done: const Duration(minutes: 239), goal: h * 2);
       expect(goalJustReached(before, lowered), isFalse);
       expect(goalReachedMessage(h * 4), contains('4 h'));
       expect(goalReachedMessage(const Duration(minutes: 90)),
@@ -96,7 +97,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: DailyGoalRow(
-          status: DailyGoalStatus(done: Duration(minutes: 90), goal: h * 4),
+          status:
+              DailyGoalStatus(done: const Duration(minutes: 90), goal: h * 4),
           goal: h * 4,
           onGoalChanged: chosen.add,
         ),

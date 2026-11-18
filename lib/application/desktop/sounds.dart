@@ -6,7 +6,7 @@ import '../../domain/session/session_phase.dart';
 import '../workday/workday_event.dart';
 
 /// Sonidos 8-bit de la app (archivos en `assets/sounds/`).
-enum PetSound { focus, rest, goal, level, finish, alarm }
+enum PetSound { focus, rest, goal, level, finish, alarm, alarmBell, alarmSoft }
 
 /// Qué sonido acompaña a cada suceso de la jornada (o ninguno).
 PetSound? soundForEvent(WorkdayEvent event) => switch (event) {

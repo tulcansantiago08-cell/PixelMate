@@ -21,8 +21,10 @@ import 'application/desktop/global_shortcut.dart';
 import 'application/desktop/updates.dart';
 import 'application/game/star_catch.dart';
 import 'application/mascot/music.dart';
-import 'application/assistant/alarm.dart';
+import 'application/assistant/alarm_settings.dart';
+import 'application/settings/backup.dart';
 import 'application/assistant/calendar_notes.dart';
+import 'application/assistant/daily_briefing.dart';
 import 'application/assistant/daily_tasks.dart';
 import 'application/assistant/voice.dart';
 import 'infrastructure/music/macos_music.dart';
@@ -47,6 +49,7 @@ import 'infrastructure/desktop/macos_login_item.dart';
 import 'infrastructure/desktop/native_effects.dart';
 import 'infrastructure/app/github_update_checker.dart';
 import 'infrastructure/app/macos_app_info.dart';
+import 'infrastructure/files/macos_backup_files.dart';
 import 'infrastructure/files/macos_file_saver.dart';
 import 'infrastructure/desktop/native_mascot_window.dart';
 import 'infrastructure/desktop/system_notifier.dart';
@@ -131,7 +134,10 @@ void main() async {
     voicePortProvider.overrideWithValue(MacosVoice()),
     dailyTaskStoreProvider.overrideWith((_) => DailyTaskStore(prefs)),
     calendarStoreProvider.overrideWith((_) => CalendarStore(prefs)),
-    appLogProvider.overrideWithValue(appLog),
+    briefingPrefsProvider.overrideWithValue(prefs),
+    backupPrefsProvider.overrideWithValue(prefs),
+    backupFilesProvider.overrideWithValue(MacosBackupFiles()),
+    alarmSettingsProvider.overrideWith((_) => AlarmSettings(prefs)),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),

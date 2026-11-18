@@ -5,6 +5,7 @@ import 'package:pixelmate/application/assistant/calendar_notes.dart';
 import 'package:pixelmate/application/assistant/command_parser.dart';
 import 'package:pixelmate/application/assistant/mac_actions.dart';
 import 'package:pixelmate/application/assistant/personal_store.dart';
+import 'package:pixelmate/application/assistant/reminders.dart';
 import 'package:pixelmate/application/desktop/sounds.dart';
 
 void main() {
@@ -83,7 +84,7 @@ void main() {
       addTearDown(scheduler.dispose);
       await scheduler.check();
       expect(alarms.state.text, 'Reunión');
-      expect(scheduler.debugState!.message, '⏰ ¡Recuerda: hoy es «Cumple»!');
+      expect(scheduler.state!.message, '⏰ ¡Recuerda: hoy es «Cumple»!');
     });
 
     test('se copia al Calendario del Mac y se borra de los dos', () async {
@@ -112,6 +113,88 @@ void main() {
       expect(describeDay(DateTime(2026, 11, 18), now), 'mañana');
       expect(describeDay(DateTime(2026, 11, 20), now),
           'el viernes 20 de noviembre');
+    });
+  });
+
+  group('repetir y cambiar', () {
+    test('cada año y cada semana', () async {
+      final store = CalendarStore();
+      await store.add('Cumple de mamá', DateTime(2026, 11, 20),
+          repeat: NoteRepeat.yearly, now: now);
+      await store.add('Fútbol', DateTime(2026, 11, 19),
+          hour: 18, repeat: NoteRepeat.weekly, now: now);
+      expect(store.onDay(DateTime(2027, 11, 20)).single.text, 'Cumple de mamá');
+      expect(store.onDay(DateTime(2026, 11, 26)).single.text, 'Fútbol');
+      expect(store.onDay(DateTime(2026, 11, 12)), isEmpty,
+          reason: 'antes del primer día no toca');
+      // Avisa cada vez que toca, una vez por día.
+      final week1 = await store.takeDue(DateTime(2026, 11, 19, 18));
+      final week2 = await store.takeDue(DateTime(2026, 11, 26, 18, 1));
+      expect([week1.single.text, week2.single.text], ['Fútbol', 'Fútbol']);
+      expect(await store.takeDue(DateTime(2026, 11, 26, 19)), isEmpty);
+      final next = await store.takeDue(DateTime(2027, 11, 20, 8));
+      expect(next.single.text, 'Cumple de mamá');
+    });
+
+    test('cambiar el texto no vuelve a avisar; cambiar la hora sí', () async {
+      final store = CalendarStore();
+      final n = (await store.add('Clase', DateTime(2026, 11, 18), hour: 9))!;
+      await store.takeDue(DateTime(2026, 11, 18, 9));
+      final renamed =
+          (await store.update(store.byId(n.id)!.copyWith(text: 'Clase 2')))!;
+      expect((renamed.text, renamed.notified), ('Clase 2', true));
+      final moved = (await store.update(renamed.copyWith(hour: 11),
+          now: DateTime(2026, 11, 18, 10)))!;
+      expect(moved.notified, isFalse);
+      expect((await store.takeDue(DateTime(2026, 11, 18, 11))).single.text,
+          'Clase 2');
+    });
+
+    test('al cambiarla, se rehace en el Calendario del Mac', () async {
+      final store = CalendarStore();
+      final mac = FakeMacActions();
+      final n = (await store.add('Cumple', DateTime(2026, 11, 20)))!;
+      await copyToMacCalendar(store, mac, n);
+      await editNote(
+          store,
+          mac,
+          store
+              .byId(n.id)!
+              .copyWith(text: 'Cumple Ana', repeat: NoteRepeat.yearly));
+      expect(mac.calendar.single.title, 'Cumple Ana');
+      expect(mac.lastRepeat, 'yearly');
+      expect(store.byId(n.id)!.macId, mac.calendar.single.id);
+    });
+
+    test('las guardadas antes siguen funcionando', () {
+      final old = CalendarNote.fromJson({
+        'id': '1',
+        'text': 'Vieja',
+        'day': '2026-11-10',
+        'color': 2,
+        'notified': true,
+      });
+      expect((old.notified, old.repeat), (true, NoteRepeat.none));
+    });
+
+    test('los recordatorios del chat quedan en el calendario', () async {
+      final reminders = PersonalStore();
+      final calendar = CalendarStore();
+      await reminders.addReminder('Llamar a Ana', DateTime(2026, 11, 18, 10));
+      final controller = ReminderController(reminders,
+          now: () => DateTime(2026, 11, 18, 10),
+          every: const Duration(hours: 1),
+          onFired: (items) async {
+            for (final r in items) {
+              await calendar.addRecord('rem-${r.id}', r.text, r.due);
+            }
+          });
+      addTearDown(controller.dispose);
+      await controller.check();
+      final kept = calendar.onDay(DateTime(2026, 11, 18)).single;
+      expect((kept.text, kept.color, kept.notified),
+          ('Llamar a Ana', reminderColor, true));
+      expect(reminders.reminders, isEmpty);
     });
   });
 
@@ -150,6 +233,20 @@ void main() {
           DateTime(2026, 12, 24));
     });
 
+    test('repetir', () {
+      expect(
+          p('anota en mi calendario el lunes clase de inglés cada semana')!
+              .repeat,
+          'weekly');
+      expect(p('apunta en el calendario el 2 de enero aniversario')!.repeat,
+          'yearly');
+      expect(p('anota en mi calendario el 5 pagar la luz')!.repeat, isNull);
+      expect(
+          p('anota en mi calendario el lunes clase de inglés cada semana')!
+              .text,
+          'Clase de inglés');
+    });
+
     test('sin día, pregunta', () async {
       final c = p('anota en mi calendario comprar regalo')!;
       expect((c.intent, c.when), (AssistantIntent.calendarNote, null));
@@ -173,8 +270,8 @@ void main() {
       expect(
           reply,
           '📅 Anotado en tu calendario: «Cumpleaños de mamá» el viernes 20 de '
-          'noviembre (todo el día; ese día te aviso a las 8:00 a. m.). '
-          'También está en el Calendario del Mac.');
+          'noviembre (todo el día; ese día te aviso a las 8:00 a. m.), y se '
+          'repite cada año. También está en el Calendario del Mac.');
       expect(notes.notes.single.color, 1);
       expect(mac.calendar.single.title, 'Cumpleaños de mamá');
     });

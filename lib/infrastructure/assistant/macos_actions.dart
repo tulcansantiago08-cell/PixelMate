@@ -115,7 +115,10 @@ class MacosActions implements MacActions {
 
   @override
   Future<String?> createEvent(String title, DateTime start,
-      {int minutes = 60, bool allDay = false, int? alert}) async {
+      {int minutes = 60,
+      bool allDay = false,
+      int? alert,
+      String? repeat}) async {
     try {
       final id = await _channel.invokeMethod<Object?>('createEvent', {
         'title': title,
@@ -123,6 +126,7 @@ class MacosActions implements MacActions {
         'minutes': minutes,
         'allDay': allDay,
         if (alert != null) 'alert': alert,
+        if (repeat != null) 'repeat': repeat,
       });
       return id is String && id.isNotEmpty ? id : null;
     } on PlatformException catch (e) {

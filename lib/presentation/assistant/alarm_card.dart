@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/assistant/alarm.dart';
+import '../../application/assistant/alarm_settings.dart';
 import '../../application/assistant/daily_tasks.dart';
 
 /// Tarjeta de la alarma que suena: la hora, qué toca y los botones para
@@ -102,7 +103,9 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
                     side: const BorderSide(color: Colors.white70),
                     padding: const EdgeInsets.symmetric(vertical: 6),
                   ),
-                  child: const Text('😴 5 min', style: TextStyle(fontSize: 12)),
+                  child: Text(
+                      '😴 ${ref.watch(alarmSettingsProvider).snoozeMinutes} min',
+                      style: const TextStyle(fontSize: 12)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -123,8 +126,8 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
                     padding: const EdgeInsets.symmetric(vertical: 6),
                   ),
                   child: Text(daily.isEmpty ? 'Apagar' : '✅ Hecha',
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

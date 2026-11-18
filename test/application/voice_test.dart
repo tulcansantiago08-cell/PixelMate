@@ -20,9 +20,11 @@ class FakeVoice implements VoicePort {
   final wakes = <String>[];
   String? wakeResult;
   int wakeStops = 0;
+  final strictWakes = <bool>[];
   @override
-  Future<String?> startWake(String name) async {
+  Future<String?> startWake(String name, {bool strict = false}) async {
     wakes.add(name);
+    strictWakes.add(strict);
     return wakeResult;
   }
 
@@ -164,6 +166,14 @@ void main() {
       port.say(VoiceEventType.partial, 'qué hora es');
       await Future<void>.delayed(const Duration(milliseconds: 60));
       expect(port.stops, 1);
+    });
+
+    test('el modo estricto se pasa al Mac y cambiarlo vuelve a empezar',
+        () async {
+      await voice.configureWake(enabled: true, name: 'James');
+      await voice.configureWake(enabled: true, name: 'James', strict: true);
+      expect(port.strictWakes, [false, true]);
+      expect(port.wakeStops, 1, reason: 'para la escucha anterior');
     });
 
     test('apagarlo deja de esperar', () async {

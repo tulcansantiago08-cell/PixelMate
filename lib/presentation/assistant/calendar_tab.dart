@@ -17,10 +17,11 @@ const calendarColors = [
   Color(0xFFA78BFA), // morado
   Color(0xFFF472B6), // rosa
   Color(0xFFFACC15), // amarillo
+  Color(0xFF94A3B8), // gris (los recordatorios del chat)
 ];
 
 /// Los recordatorios del chat se marcan en este color.
-const _reminderColor = Color(0xFF94A3B8);
+final _reminderColor = calendarColors[reminderColor];
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
@@ -51,7 +52,11 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   int _minute = 0;
   bool _alarm = false;
   int _color = 1;
+  NoteRepeat _repeat = NoteRepeat.none;
   String? _problem;
+
+  /// La nota que se está cambiando (`null`: una nueva).
+  CalendarNote? _editing;
 
   /// Aviso tras guardar (por ejemplo, sin permiso para el Calendario).
   String? _notice;
@@ -97,12 +102,39 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   void _openForm() {
     focusApp();
     setState(() {
+      _editing = null;
       _text.text = _quick.text;
       _quick.clear();
       _adding = true;
       _problem = null;
       _notice = null;
     });
+  }
+
+  /// Abre [note] para cambiarla.
+  void _edit(CalendarNote note) {
+    focusApp();
+    setState(() {
+      _editing = note;
+      _text.text = note.text;
+      _allDay = note.allDay;
+      _hour = note.hour ?? 9;
+      _minute = note.allDay ? 0 : note.minute;
+      _alarm = note.alarm;
+      _color = note.color;
+      _repeat = note.repeat;
+      _adding = true;
+      _problem = null;
+      _notice = null;
+    });
+  }
+
+  void _resetForm() {
+    _text.clear();
+    _editing = null;
+    _allDay = true;
+    _alarm = false;
+    _repeat = NoteRepeat.none;
   }
 
   Future<void> _save() async {
@@ -112,35 +144,51 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       return;
     }
     _now = widget.today ?? DateTime.now();
-    if (!_allDay) {
-      final when = DateTime(
-          _selected.year, _selected.month, _selected.day, _hour, _minute);
+    final editing = _editing;
+    final day = editing?.day ?? _selected;
+    if (!_allDay && _repeat == NoteRepeat.none) {
+      final when = DateTime(day.year, day.month, day.day, _hour, _minute);
       if (!when.isAfter(_now)) {
         setState(() => _problem = 'Esa hora ya pasó: elige otra.');
         return;
       }
     }
     final store = ref.read(calendarStoreProvider);
-    final note = await store.add(text, _selected,
-        hour: _allDay ? null : _hour,
-        minute: _minute,
-        alarm: _alarm,
-        color: _color,
-        now: _now);
+    final mac = ref.read(macActionsProvider);
     String? notice;
-    if (note != null && store.toMac) {
-      notice =
-          await copyToMacCalendar(store, ref.read(macActionsProvider), note);
+    if (editing != null) {
+      notice = await editNote(
+          store,
+          mac,
+          editing.copyWith(
+            text: text,
+            allDay: _allDay,
+            hour: _hour,
+            minute: _allDay ? 0 : _minute,
+            alarm: _alarm,
+            color: _color,
+            repeat: _repeat,
+          ),
+          now: _now);
+    } else {
+      final note = await store.add(text, day,
+          hour: _allDay ? null : _hour,
+          minute: _minute,
+          alarm: _alarm,
+          color: _color,
+          repeat: _repeat,
+          now: _now);
+      if (note != null && store.toMac) {
+        notice = await copyToMacCalendar(store, mac, note);
+      }
     }
     if (!mounted) return;
-    _text.clear();
     setState(() {
       _adding = false;
       _problem = null;
       _notice = notice;
       // La siguiente empieza otra vez como nota de todo el día.
-      _allDay = true;
-      _alarm = false;
+      _resetForm();
       _macDay = null; // vuelve a leer el Calendario del Mac
     });
   }
@@ -366,7 +414,10 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           color: calendarColors[n.color],
           icon: n.alarm ? '🔔' : (n.macId != null ? '🍎' : null),
           time: n.timeLabel,
-          text: n.text,
+          text: n.repeat == NoteRepeat.none
+              ? n.text
+              : '${n.text} (🔁 ${n.repeat.label})',
+          onTap: () => _edit(n),
           onDelete: () => removeNote(notes, mac, n),
         ),
       for (final r in items)
@@ -485,45 +536,49 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           String? icon,
           required String time,
           required String text,
+          VoidCallback? onTap,
           VoidCallback? onDelete}) =>
-      Padding(
-        key: key,
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(children: [
-          Container(
-            width: 4,
-            height: 22,
-            decoration: BoxDecoration(
-              color: color ?? StatsStyle.grid,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 6),
-          SizedBox(
-            width: 66,
-            child: Text(time,
-                style: const TextStyle(
-                    color: StatsStyle.textPrimary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700)),
-          ),
-          Expanded(
-            child: Text(icon == null ? text : '$icon $text',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: StatsStyle.textSecondary, fontSize: 11)),
-          ),
-          if (onDelete != null)
-            IconButton(
-              tooltip: 'Borrar',
-              visualDensity: VisualDensity.compact,
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline,
-                  size: 16, color: StatsStyle.textMuted),
-            ),
-        ]),
-      );
+      InkWell(
+          key: key,
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(4),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(children: [
+              Container(
+                width: 4,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: color ?? StatsStyle.grid,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 66,
+                child: Text(time,
+                    style: const TextStyle(
+                        color: StatsStyle.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700)),
+              ),
+              Expanded(
+                child: Text(icon == null ? text : '$icon $text',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: StatsStyle.textSecondary, fontSize: 11)),
+              ),
+              if (onDelete != null)
+                IconButton(
+                  tooltip: 'Borrar',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline,
+                      size: 16, color: StatsStyle.textMuted),
+                ),
+            ]),
+          ));
 
   Widget _form(CalendarStore notes) {
     const small = TextStyle(color: StatsStyle.textSecondary, fontSize: 11);
@@ -531,7 +586,10 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Anotar el ${_selected.day} de ${monthNames[_selected.month - 1]}',
+          _editing == null
+              ? 'Anotar el ${_selected.day} de '
+                  '${monthNames[_selected.month - 1]}'
+              : 'Cambiar la nota',
           style: const TextStyle(
               color: StatsStyle.textPrimary,
               fontSize: 12,
@@ -554,6 +612,20 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
         const Text('Color', style: small),
         const SizedBox(height: 2),
         _colorPicker(),
+        const SizedBox(height: 6),
+        const Text('Repetir', style: small),
+        Wrap(spacing: 4, children: [
+          for (final r in NoteRepeat.values)
+            ChoiceChip(
+              key: ValueKey('cal-repeat-${r.name}'),
+              label: Text(r == NoteRepeat.none ? 'No' : r.label,
+                  style: const TextStyle(fontSize: 11)),
+              selected: _repeat == r,
+              visualDensity: VisualDensity.compact,
+              showCheckmark: false,
+              onSelected: (_) => setState(() => _repeat = r),
+            ),
+        ]),
         SwitchListTile(
           key: const ValueKey('cal-allday'),
           dense: true,
@@ -604,7 +676,10 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               style: const TextStyle(color: Colors.amber, fontSize: 11)),
         Row(children: [
           TextButton(
-            onPressed: () => setState(() => _adding = false),
+            onPressed: () => setState(() {
+              _adding = false;
+              _resetForm();
+            }),
             child: const Text('Cancelar', style: TextStyle(fontSize: 12)),
           ),
           const Spacer(),

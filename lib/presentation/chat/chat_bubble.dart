@@ -71,7 +71,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
         border: Border.all(color: const Color(0xFF7C3AED), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7C3AED).withOpacity(0.25),
+            color: const Color(0xFF7C3AED).withValues(alpha: 0.25),
             blurRadius: 12,
             spreadRadius: 1,
           ),
@@ -236,7 +236,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                           decoration: InputDecoration(
                             hintText: 'Pregúntame algo...',
                             hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.35),
+                                color: Colors.white.withValues(alpha: 0.35),
                                 fontSize: 12),
                             filled: true,
                             fillColor: const Color(0xFF2d2d44),

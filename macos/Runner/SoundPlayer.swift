@@ -34,7 +34,7 @@ enum SoundPlayer {
       sound.stop()
       sound.volume = 1
       let ok = sound.play()
-      log("play \(name): \(ok) (datos: \(bytes?.count ?? 0))")
+      if !ok { log("play \(name): no sonó") }
       result(ok)
     }
   }

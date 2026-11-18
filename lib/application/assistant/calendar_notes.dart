@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'alarm.dart';
+import 'alarm_settings.dart';
 import 'daily_tasks.dart';
 import 'mac_actions.dart';
 import 'personal_store.dart';
@@ -54,11 +55,33 @@ const calendarColorNames = [
   'Morado',
   'Rosa',
   'Amarillo',
+  'Gris',
 ];
 
+/// Color de los recordatorios del chat que quedan en el calendario.
+const reminderColor = 6;
+
+/// Cada cuánto se repite una nota.
+enum NoteRepeat {
+  none,
+  weekly,
+  yearly;
+
+  static NoteRepeat byName(Object? name) =>
+      values.where((r) => r.name == name).firstOrNull ?? none;
+
+  /// "", "cada semana" o "cada año".
+  String get label => switch (this) {
+        none => '',
+        weekly => 'cada semana',
+        yearly => 'cada año',
+      };
+}
+
 /// Algo anotado en el calendario: todo el día (sin hora) o a una hora, con
-/// su color. Ese día te avisa: las de todo el día a las [noticeHour], las
-/// otras a su hora (y si llevan alarma, suena).
+/// su color, una vez o repitiéndose. Cada día que toca te avisa: las de todo
+/// el día a las [noticeHour], las otras a su hora (y si llevan alarma,
+/// suena).
 class CalendarNote {
   /// Hora del aviso de las notas de todo el día.
   static const noticeHour = 8;
@@ -66,7 +89,7 @@ class CalendarNote {
   final String id;
   final String text;
 
-  /// El día (sin hora).
+  /// El día (sin hora); si se repite, el primero.
   final DateTime day;
 
   /// `null`: todo el día.
@@ -74,9 +97,10 @@ class CalendarNote {
   final int minute;
   final bool alarm;
   final int color;
+  final NoteRepeat repeat;
 
-  /// Ya avisó.
-  final bool notified;
+  /// Último día (aaaa-mm-dd) en que avisó.
+  final String? notifiedOn;
 
   /// El evento creado en el Calendario del Mac, si se creó.
   final String? macId;
@@ -89,33 +113,63 @@ class CalendarNote {
     this.minute = 0,
     this.alarm = false,
     this.color = 0,
-    this.notified = false,
+    this.repeat = NoteRepeat.none,
+    this.notifiedOn,
     this.macId,
   }) : day = DateTime(day.year, day.month, day.day);
 
   bool get allDay => hour == null;
 
-  /// Cuándo avisa.
-  DateTime get at => DateTime(day.year, day.month, day.day, hour ?? noticeHour,
-      hour == null ? 0 : minute);
+  /// Ya avisó alguna vez.
+  bool get notified => notifiedOn != null;
+
+  /// Cuándo avisa el [d] (el primer día, si no se dice).
+  DateTime atOn(DateTime d) => DateTime(
+      d.year, d.month, d.day, hour ?? noticeHour, hour == null ? 0 : minute);
+  DateTime get at => atOn(day);
 
   /// "Todo el día" o "9:30 a. m.".
   String get timeLabel => allDay ? 'Todo el día' : clock12(hour!, minute);
 
-  bool on(DateTime d) =>
-      day.year == d.year && day.month == d.month && day.day == d.day;
+  /// Si toca el [d] (contando las repeticiones).
+  bool on(DateTime d) {
+    final target = DateTime(d.year, d.month, d.day);
+    if (target.isBefore(day)) return false;
+    return switch (repeat) {
+      NoteRepeat.none => target == day,
+      NoteRepeat.weekly => target.weekday == day.weekday,
+      NoteRepeat.yearly => target.month == day.month && target.day == day.day,
+    };
+  }
 
-  CalendarNote copyWith({bool? notified, String? macId}) => CalendarNote(
-        id: id,
-        text: text,
-        day: day,
-        hour: hour,
-        minute: minute,
-        alarm: alarm,
-        color: color,
-        notified: notified ?? this.notified,
-        macId: macId ?? this.macId,
-      );
+  CalendarNote copyWith({
+    String? text,
+    DateTime? day,
+    int? hour,
+    bool allDay = false,
+    int? minute,
+    bool? alarm,
+    int? color,
+    NoteRepeat? repeat,
+    String? notifiedOn,
+    bool clearNotified = false,
+    String? macId,
+    bool clearMac = false,
+  }) {
+    final h = allDay ? null : hour ?? this.hour;
+    return CalendarNote(
+      id: id,
+      text: text ?? this.text,
+      day: day ?? this.day,
+      hour: h,
+      minute: minute ?? this.minute,
+      alarm: h != null && (alarm ?? this.alarm),
+      color: color ?? this.color,
+      repeat: repeat ?? this.repeat,
+      notifiedOn: clearNotified ? null : notifiedOn ?? this.notifiedOn,
+      macId: clearMac ? null : macId ?? this.macId,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -125,22 +179,29 @@ class CalendarNote {
         if (hour != null) 'minute': minute,
         if (alarm) 'alarm': true,
         'color': color,
-        if (notified) 'notified': true,
+        if (repeat != NoteRepeat.none) 'repeat': repeat.name,
+        if (notifiedOn != null) 'notifiedOn': notifiedOn,
         if (macId != null) 'macId': macId,
       };
 
-  factory CalendarNote.fromJson(Map<String, dynamic> j) => CalendarNote(
-        id: j['id'] as String,
-        text: j['text'] as String,
-        day: DateTime.parse(j['day'] as String),
-        hour: j['hour'] as int?,
-        minute: j['minute'] as int? ?? 0,
-        alarm: j['alarm'] == true,
-        color:
-            ((j['color'] as int?) ?? 0).clamp(0, calendarColorNames.length - 1),
-        notified: j['notified'] == true,
-        macId: j['macId'] as String?,
-      );
+  factory CalendarNote.fromJson(Map<String, dynamic> j) {
+    final day = DateTime.parse(j['day'] as String);
+    return CalendarNote(
+      id: j['id'] as String,
+      text: j['text'] as String,
+      day: day,
+      hour: j['hour'] as int?,
+      minute: j['minute'] as int? ?? 0,
+      alarm: j['alarm'] == true,
+      color:
+          ((j['color'] as int?) ?? 0).clamp(0, calendarColorNames.length - 1),
+      repeat: NoteRepeat.byName(j['repeat']),
+      // Las guardadas antes solo decían si ya avisó.
+      notifiedOn: j['notifiedOn'] as String? ??
+          (j['notified'] == true ? dayKey(day) : null),
+      macId: j['macId'] as String?,
+    );
+  }
 }
 
 /// Las notas del calendario, guardadas solo en este Mac.
@@ -185,10 +246,14 @@ class CalendarStore extends ChangeNotifier {
       return a.at.compareTo(b.at);
     });
 
+  /// Las que tocan ese día (con las que se repiten), por hora.
   List<CalendarNote> onDay(DateTime day) => [
-        for (final n in notes)
+        for (final n in _notes)
           if (n.on(day)) n
-      ];
+      ]..sort((a, b) {
+          if (a.allDay != b.allDay) return a.allDay ? -1 : 1;
+          return a.atOn(day).compareTo(b.atOn(day));
+        });
 
   CalendarNote? byId(String id) => _notes.where((n) => n.id == id).firstOrNull;
 
@@ -198,37 +263,76 @@ class CalendarStore extends ChangeNotifier {
         _key, jsonEncode([for (final n in _notes) n.toJson()]));
   }
 
-  /// Anota [text] el [day]; sin [hour], todo el día. Si su aviso ya pasó,
-  /// no avisa (lo acabas de escribir).
+  /// Si el aviso de hoy ya pasó (lo acabas de escribir), no avisa hoy.
+  CalendarNote _skipPast(CalendarNote n, DateTime? now) =>
+      now != null && n.on(now) && n.atOn(now).isBefore(now)
+          ? n.copyWith(notifiedOn: dayKey(now))
+          : n;
+
+  /// Anota [text] el [day]; sin [hour], todo el día.
   Future<CalendarNote?> add(String text, DateTime day,
       {int? hour,
       int minute = 0,
       bool alarm = false,
       int color = 0,
+      NoteRepeat repeat = NoteRepeat.none,
       DateTime? now}) async {
     final clean = text.trim();
     if (clean.isEmpty) return null;
-    var note = CalendarNote(
-      id: '${DateTime.now().microsecondsSinceEpoch}-${_seq++}',
-      text: clean,
-      day: day,
-      hour: hour?.clamp(0, 23),
-      minute: minute.clamp(0, 59),
-      alarm: hour != null && alarm,
-      color: color.clamp(0, calendarColorNames.length - 1),
-    );
-    if (now != null && note.at.isBefore(now)) {
-      note = note.copyWith(notified: true);
-    }
+    final note = _skipPast(
+        CalendarNote(
+          id: '${DateTime.now().microsecondsSinceEpoch}-${_seq++}',
+          text: clean,
+          day: day,
+          hour: hour?.clamp(0, 23),
+          minute: minute.clamp(0, 59),
+          alarm: hour != null && alarm,
+          color: color.clamp(0, calendarColorNames.length - 1),
+          repeat: repeat,
+        ),
+        now);
     _notes.add(note);
     await _save();
     return note;
   }
 
-  Future<void> setMacId(String id, String macId) async {
+  /// Guarda un recordatorio que ya avisó, para que quede en el calendario.
+  Future<void> addRecord(String id, String text, DateTime at) async {
+    if (byId(id) != null) return;
+    _notes.add(CalendarNote(
+      id: id,
+      text: text,
+      day: at,
+      hour: at.hour,
+      minute: at.minute,
+      color: reminderColor,
+      notifiedOn: dayKey(at),
+    ));
+    await _save();
+  }
+
+  /// Cambia una nota. Si cambió el día o la hora, vuelve a avisar.
+  Future<CalendarNote?> update(CalendarNote changed, {DateTime? now}) async {
+    final i = _notes.indexWhere((n) => n.id == changed.id);
+    if (i < 0 || changed.text.trim().isEmpty) return null;
+    final old = _notes[i];
+    var note = changed;
+    if (old.at != changed.at ||
+        old.day != changed.day ||
+        old.repeat != changed.repeat) {
+      note = _skipPast(changed.copyWith(clearNotified: true), now);
+    }
+    _notes[i] = note;
+    await _save();
+    return note;
+  }
+
+  Future<void> setMacId(String id, String? macId) async {
     final i = _notes.indexWhere((n) => n.id == id);
     if (i < 0) return;
-    _notes[i] = _notes[i].copyWith(macId: macId);
+    _notes[i] = macId == null
+        ? _notes[i].copyWith(clearMac: true)
+        : _notes[i].copyWith(macId: macId);
     await _save();
   }
 
@@ -237,30 +341,23 @@ class CalendarStore extends ChangeNotifier {
     await _save();
   }
 
-  /// Las que tienen que avisar ya. Las marca como avisadas. Si el Mac
-  /// estaba dormido: las de un día que ya pasó no avisan, y una alarma de
-  /// hace más de [lateAlarm] llega como aviso, sin sonar.
+  /// Las que tienen que avisar ya: las de hoy cuya hora llegó y que hoy no
+  /// han avisado. Las marca. Una alarma de hace más de [lateAlarm] (el Mac
+  /// estaba dormido) llega como aviso, sin sonar.
   Future<List<CalendarNote>> takeDue(DateTime now) async {
+    final key = dayKey(now);
     final due = <CalendarNote>[];
-    var changed = false;
     for (var i = 0; i < _notes.length; i++) {
       final n = _notes[i];
-      if (n.notified || n.at.isAfter(now)) continue;
-      _notes[i] = n.copyWith(notified: true);
-      changed = true;
-      if (!n.on(now)) continue;
-      due.add(n.alarm && now.difference(n.at) > lateAlarm
-          ? CalendarNote(
-              id: n.id,
-              text: n.text,
-              day: n.day,
-              hour: n.hour,
-              minute: n.minute,
-              color: n.color)
-          : n);
+      if (!n.on(now) || n.notifiedOn == key || n.atOn(now).isAfter(now)) {
+        continue;
+      }
+      _notes[i] = n.copyWith(notifiedOn: key);
+      final late = now.difference(n.atOn(now)) > lateAlarm;
+      due.add(n.alarm && late ? n.copyWith(alarm: false) : n);
     }
-    if (changed) await _save();
-    return due..sort((a, b) => a.at.compareTo(b.at));
+    if (due.isNotEmpty) await _save();
+    return due..sort((a, b) => a.atOn(now).compareTo(b.atOn(now)));
   }
 }
 
@@ -279,31 +376,77 @@ class CalendarScheduler extends StateNotifier<ReminderAlert?> {
   final DateTime Function() _now;
   Timer? _timer;
 
+  /// Tareas diarias (para el aviso previo).
+  final DailyTaskStore? daily;
+
+  /// Minutos antes de una tarea con hora en que avisa (0: no avisa antes).
+  final int Function() leadMinutes;
+
+  /// Avisos previos ya dados (id + día).
+  final Set<String> _early = {};
+
   CalendarScheduler(this.store, this.alarms,
-      {DateTime Function()? now, Duration every = const Duration(seconds: 5)})
+      {DateTime Function()? now,
+      Duration every = const Duration(seconds: 5),
+      this.daily,
+      int Function()? leadMinutes})
       : _now = now ?? DateTime.now,
+        leadMinutes = leadMinutes ?? (() => 0),
         super(null) {
     _timer = Timer.periodic(every, (_) => check());
     scheduleMicrotask(check);
   }
 
+  /// "en 10 min: Dentista" de lo que empieza dentro de [leadMinutes].
+  List<ReminderItem> _upcoming(DateTime t) {
+    final lead = leadMinutes();
+    if (lead <= 0) return const [];
+    final key = dayKey(t);
+    final soon = <ReminderItem>[];
+    void check(String id, String text, DateTime at) {
+      final left = at.difference(t);
+      if (left <= Duration.zero || left > Duration(minutes: lead)) return;
+      if (!_early.add('$id@$key')) return;
+      final minutes = (left.inSeconds / 60).ceil();
+      soon.add(ReminderItem('early-$id',
+          'en $minutes min: $text (${clock12(at.hour, at.minute)})', t));
+    }
+
+    for (final n in store.onDay(t)) {
+      if (!n.allDay && n.notifiedOn != key) check(n.id, n.text, n.atOn(t));
+    }
+    for (final d in daily?.today(t) ?? <DailyTask>[]) {
+      if (!d.doneToday(t)) check('daily-${d.id}', d.text, d.at(t));
+    }
+    return soon;
+  }
+
   Future<List<CalendarNote>> check() async {
     final t = _now();
     final due = await store.takeDue(t);
-    if (due.isEmpty || !mounted) return due;
+    if (!mounted) return due;
+    final soon = _upcoming(t);
+    if (due.isEmpty) {
+      if (soon.isNotEmpty) state = ReminderAlert(soon, t);
+      return due;
+    }
     final ring = [
       for (final n in due)
         if (n.alarm)
-          ReminderItem('$alarmPrefix${n.id}', n.text, n.at, alarm: true)
+          ReminderItem('$alarmPrefix${n.id}', n.text, n.atOn(t), alarm: true)
     ];
     if (ring.isNotEmpty) alarms.ring(ring);
     final notices = [
       for (final n in due)
         if (!n.alarm)
-          ReminderItem('$alarmPrefix${n.id}',
-              n.allDay ? 'hoy es «${n.text}»' : n.text, n.allDay ? t : n.at)
+          ReminderItem(
+              '$alarmPrefix${n.id}',
+              n.allDay ? 'hoy es «${n.text}»' : n.text,
+              n.allDay ? t : n.atOn(t))
     ];
-    if (notices.isNotEmpty) state = ReminderAlert(notices, t);
+    if (notices.isNotEmpty || soon.isNotEmpty) {
+      state = ReminderAlert([...soon, ...notices], t);
+    }
     return due;
   }
 
@@ -318,7 +461,11 @@ final calendarAlertProvider =
     StateNotifierProvider<CalendarScheduler, ReminderAlert?>((ref) =>
         // `read`: la tienda avisa de cada cambio; con `watch` se rehace.
         CalendarScheduler(
-            ref.read(calendarStoreProvider), ref.read(alarmProvider.notifier)));
+          ref.read(calendarStoreProvider),
+          ref.read(alarmProvider.notifier),
+          daily: ref.read(dailyTaskStoreProvider),
+          leadMinutes: () => ref.read(alarmSettingsProvider).leadMinutes,
+        ));
 
 /// Qué decir si el Mac no deja usar su Calendario.
 const calendarDeniedMessage =
@@ -335,6 +482,7 @@ Future<String?> copyToMacCalendar(
       note.text,
       note.allDay ? note.day : note.at,
       allDay: note.allDay,
+      repeat: note.repeat == NoteRepeat.none ? null : note.repeat.name,
       alert: note.allDay
           ? CalendarNote.noticeHour * 60
           : note.alarm
@@ -361,4 +509,19 @@ Future<void> removeNote(
   } catch (_) {
     // Si no se puede, queda en el Calendario del Mac.
   }
+}
+
+/// Guarda los cambios de [changed] (y rehace su copia en el Calendario del
+/// Mac, si la tiene). Devuelve el problema con el Mac, o `null`.
+Future<String?> editNote(
+    CalendarStore store, MacActions mac, CalendarNote changed,
+    {DateTime? now}) async {
+  final old = store.byId(changed.id);
+  final saved = await store.update(changed, now: now);
+  if (saved == null || old?.macId == null) return null;
+  try {
+    await mac.deleteEvent(old!.macId!);
+  } catch (_) {}
+  await store.setMacId(saved.id, null);
+  return copyToMacCalendar(store, mac, store.byId(saved.id)!);
 }

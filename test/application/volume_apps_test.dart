@@ -202,9 +202,36 @@ void main() {
       expect(saved, 'Santi');
     });
 
-    test('cierra una app abierta', () async {
-      expect(await run.run(p('Cierra Spotify')!), '👋 Cerré Spotify.');
-      expect(await run.run(p('Cierra Spotify')!), contains('No veo'));
+    test('cierra una app abierta, después de preguntar', () async {
+      expect(await run.run(p('Cierra Spotify')!),
+          startsWith('⚠️ ¿Cierro Spotify?'));
+      expect(run.awaitingConfirmation, isTrue);
+      expect(await run.confirm(true), '👋 Cerré Spotify.');
+      expect(run.awaitingConfirmation, isFalse);
+      await run.run(p('Cierra Spotify')!);
+      expect(await run.confirm(true), contains('No veo'));
+    });
+
+    test('«no» la deja abierta', () async {
+      await run.run(p('Cierra Spotify')!);
+      expect(await run.confirm(false), '👌 Vale, no lo hago.');
+      expect(await run.confirm(true), contains('No tenía nada pendiente'));
+    });
+
+    test('otra orden cancela la pregunta', () async {
+      await run.run(p('Cierra Spotify')!);
+      await run.run(p('sube el volumen')!);
+      expect(run.awaitingConfirmation, isFalse);
+    });
+
+    test('sí y no', () {
+      for (final yes in ['sí', 'Sí, ciérrala', 'dale', 'claro!', 'ok']) {
+        expect(yesNo(yes), isTrue, reason: yes);
+      }
+      for (final no in ['no', 'mejor no', 'No, gracias', 'cancela']) {
+        expect(yesNo(no), isFalse, reason: no);
+      }
+      expect(yesNo('sí quiero un chiste'), isNull);
     });
   });
 }

@@ -18,8 +18,10 @@ class MascotSettings extends ChangeNotifier {
   static const _auraKey = 'mascot.aura';
   static const _musicKey = 'mascot.music';
   static const _voiceKey = 'mascot.voiceReplies';
+  static const _briefingKey = 'mascot.morningBriefing';
   static const _userKey = 'user.name';
   static const _wakeKey = 'mascot.wakeWord';
+  static const _wakeStrictKey = 'mascot.wakeStrict';
 
   /// Nombre por defecto, hasta que el usuario elija uno.
   static const defaultName = 'Pixel';
@@ -96,6 +98,17 @@ class MascotSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// «Oye <nombre>» estricto: solo «oye» (no «hola» ni «hey») y al empezar
+  /// a hablar, para que no se despierte con conversaciones.
+  bool get wakeStrict => _prefs?.getBool(_wakeStrictKey) ?? _wakeStrictValue;
+  bool _wakeStrictValue = false;
+
+  Future<void> setWakeStrict(bool value) async {
+    _wakeStrictValue = value;
+    await _prefs?.setBool(_wakeStrictKey, value);
+    notifyListeners();
+  }
+
   /// Si ya vio la bienvenida de la primera vez. Sin preferencias guardadas
   /// (pruebas) se da por vista.
   bool get onboardingDone => _prefs?.getBool(_onboardingKey) ?? _prefs == null;
@@ -163,6 +176,16 @@ class MascotSettings extends ChangeNotifier {
   Future<void> setVoiceReplies(bool value) async {
     _voice = value;
     await _prefs?.setBool(_voiceKey, value);
+    notifyListeners();
+  }
+
+  /// Contarte por la mañana lo que tienes ese día.
+  bool get morningBriefing => _prefs?.getBool(_briefingKey) ?? _briefing;
+  bool _briefing = true;
+
+  Future<void> setMorningBriefing(bool value) async {
+    _briefing = value;
+    await _prefs?.setBool(_briefingKey, value);
     notifyListeners();
   }
 

@@ -64,6 +64,13 @@ SOUNDS = {
     "alarm": [("A6", .09, "square", .5, 2.2), None, ("A6", .09, "square", .5, 2.2),
               None, ("A6", .09, "square", .5, 2.2), None,
               ("A6", .09, "square", .5, 2.2), None, None, None, None],
+    # Alarma «campana»: ding-dong que baja (triangular, más cálida).
+    "alarmBell": [("E6", .22, "triangle", .5, 2.4), ("C6", .34, "triangle", .5, 2.4),
+                  None, None, None, None],
+    # Alarma «suave»: subida tranquila para despertar sin susto.
+    "alarmSoft": [("C5", .16, "triangle", .5, 1.8), ("E5", .16, "triangle", .5, 1.8),
+                  ("G5", .16, "triangle", .5, 1.8), ("C6", .3, "triangle", .5, 1.8),
+                  None, None, None],
 }
 
 

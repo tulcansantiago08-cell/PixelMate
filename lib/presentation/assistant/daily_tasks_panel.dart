@@ -47,10 +47,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
     });
   }
 
-  void _testSound() {
-    appLog('Probar sonido');
-    _ring();
-  }
+  void _testSound() => _ring();
 
   void _ring() => ref.read(alarmProvider.notifier).ring([
         ReminderItem('test', '🔔 Prueba de alarma', DateTime.now(), alarm: true)

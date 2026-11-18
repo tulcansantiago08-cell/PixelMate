@@ -9,6 +9,7 @@ import '../../application/assistant/alarm.dart';
 import '../../application/assistant/daily_tasks.dart';
 import '../../application/assistant/reminders.dart';
 import '../../application/assistant/calendar_notes.dart';
+import '../../application/assistant/daily_briefing.dart';
 import '../../application/assistant/voice.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/updates.dart';
@@ -188,6 +189,15 @@ class DesktopShell {
     });
     _cleanup.add(ringing.close);
 
+    // Resumen del día: si la mascota está oculta, por notificación.
+    final briefing =
+        container.listen<String?>(briefingProvider, (before, message) {
+      if (message != null && message != before && !window.visible.value) {
+        unawaited(notifier.show(WorkdayNotice('Tu día', message)));
+      }
+    });
+    _cleanup.add(briefing.close);
+
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {
       if (msg != null && before == null && !window.visible.value) {
@@ -206,9 +216,11 @@ class DesktopShell {
     _cleanup.add(talks.cancel);
 
     // «Oye <nombre>»: al oír su nombre sale y abre el chat escuchando.
-    void applyWake() => unawaited(container
-        .read(voiceProvider.notifier)
-        .configureWake(enabled: mascot.wakeWord, name: mascot.name));
+    void applyWake() =>
+        unawaited(container.read(voiceProvider.notifier).configureWake(
+            enabled: mascot.wakeWord,
+            name: mascot.name,
+            strict: mascot.wakeStrict));
     applyWake();
     mascot.addListener(applyWake);
     _cleanup.add(() => mascot.removeListener(applyWake));

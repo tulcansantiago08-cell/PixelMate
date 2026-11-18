@@ -57,9 +57,10 @@ abstract class MacActions {
 
   /// Crea el evento y devuelve su id. [allDay]: todo el día de [start].
   /// [alert]: aviso del Calendario, en minutos antes (o, si es de todo el
-  /// día, a esa hora del día contada desde la medianoche).
+  /// día, a esa hora del día contada desde la medianoche). [repeat]:
+  /// "weekly", "yearly" o `null`.
   Future<String?> createEvent(String title, DateTime start,
-      {int minutes = 60, bool allDay = false, int? alert});
+      {int minutes = 60, bool allDay = false, int? alert, String? repeat});
 
   /// Borra el evento. `false` si ya no estaba.
   Future<bool> deleteEvent(String id);
@@ -89,6 +90,9 @@ class FakeMacActions implements MacActions {
   final List<String> opened = [];
   final List<CalendarEvent> calendar;
   bool calendarAllowed;
+
+  /// La repetición del último evento creado.
+  String? lastRepeat;
 
   FakeMacActions(
       {this.apps = const {},
@@ -209,7 +213,11 @@ class FakeMacActions implements MacActions {
 
   @override
   Future<String?> createEvent(String title, DateTime start,
-      {int minutes = 60, bool allDay = false, int? alert}) async {
+      {int minutes = 60,
+      bool allDay = false,
+      int? alert,
+      String? repeat}) async {
+    lastRepeat = repeat;
     if (!calendarAllowed) throw const CalendarDenied();
     final id = 'ev${calendar.length + 1}';
     calendar.add(CalendarEvent(

@@ -36,18 +36,31 @@
   sumar» (lo escribe la IA de Apple, te pregunta dónde guardarlo y lo abre
   en tu editor). Las órdenes claras se entienden al instante (aunque tengan
   faltas o se las digas con «¿puedes…?») y usan tu Calendario de macOS;
-  las tareas y recordatorios se ven en el panel «Pendientes».
+  las tareas y recordatorios se ven en el panel «Pendientes». Antes de
+  cerrar una app o quitar una alarma te pregunta («¿Cierro Safari?») y
+  espera tu «sí».
 - **Alarmas** — «pon una alarma a las 8 am reunión virtual», «despiértame a
   las 6», «alarma de lunes a viernes a las 7 gimnasio». Suenan con un bip que
   se repite, la mascota aparece con la hora y el texto y te lo dice en voz
   alta; «😴 5 min» o «pospón 10 minutos» la vuelven a sonar y «apaga la
-  alarma» la para. En el botón ⏰ están tus **tareas diarias** (suenan los
-  días que elijas y se tachan cada día).
+  alarma» la para. En Ajustes eliges el sonido (bip, campana o suave),
+  cuánto se pospone y si te avisa unos minutos antes. En el botón ⏰ están
+  tus **tareas diarias** (suenan los días que elijas y se tachan cada día).
 - **Calendario** — en la pestaña 📅 del botón ⏰ anotas cosas en cualquier
   día, todo el día o a una hora (con alarma si quieres), con un color; el
-  día queda marcado de ese color y ese día te avisa. También por chat o voz:
-  «anota en mi calendario el viernes cumpleaños de mamá». Si lo activas, se
-  copian al Calendario del Mac.
+  día queda marcado de ese color y ese día te avisa. Elige un día y escribe
+  directo; toca una nota para cambiarla o repetirla cada semana o cada año.
+  También por chat o voz: «anota en mi calendario el viernes cumpleaños de
+  mamá» (los cumpleaños se repiten solos). Si lo activas, se copian al
+  Calendario del Mac. Los recordatorios del chat quedan en el calendario
+  (en gris) después de avisar.
+- **Resumen del día** — por la mañana te cuenta lo que tienes hoy
+  (calendario, tareas diarias, recordatorios y Calendario del Mac) y cuántas
+  tareas te quedan. «¿Qué tengo hoy?» o «¿qué tengo mañana?» te lo dicen
+  cuando quieras.
+- **Copia de seguridad** — en Ajustes, «Guardar…» guarda tus tareas,
+  calendario, alarmas y ajustes en un archivo y «Restaurar…» los recupera
+  (por ejemplo, en otro Mac).
 - **Te cuida** — guardián del enfoque (avisa si WhatsApp, Mensajes o un
   juego siguen al frente durante el enfoque), consejos de bienestar en los
   descansos y recordatorio para descansar si trabajas hasta muy tarde.
@@ -74,7 +87,7 @@
 
 ## Instalar
 
-1. Descarga `PixelMate-1.2.0-macOS.zip` desde
+1. Descarga `PixelMate-1.3.0-macOS.zip` desde
    [Releases](https://github.com/tulcansantiago08-cell/PixelMate/releases).
 2. Descomprímelo y arrastra **PixelMate.app** a **Aplicaciones**.
 3. La primera vez, haz **clic derecho → Abrir** (la app no está firmada por

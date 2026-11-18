@@ -1,4 +1,5 @@
 import 'calendar_notes.dart';
+import 'daily_briefing.dart';
 import 'code_writer.dart';
 import 'command_parser.dart';
 import 'daily_tasks.dart';
@@ -89,15 +90,48 @@ class AssistantExecutor {
       this.onAlarm,
       this.daily,
       this.calendar,
+      int Function()? snoozeMinutes,
       DateTime Function()? now})
-      : now = now ?? DateTime.now;
+      : now = now ?? DateTime.now,
+        snoozeMinutes = snoozeMinutes ?? (() => 5);
+
+  /// Lo que se pospone una alarma si no dices cuánto.
+  final int Function() snoozeMinutes;
 
   static const _askWhen =
       '¿Para cuándo? Dime, por ejemplo, «en 20 minutos», «a las 5» o '
       '«mañana a las 9».';
 
-  Future<String> run(ParsedCommand c) async {
+  /// Lo que espera un «sí» antes de hacerse (cerrar una app, quitar una
+  /// alarma), y desde cuándo.
+  ParsedCommand? _pending;
+  DateTime? _pendingAt;
+  static const confirmWindow = Duration(minutes: 2);
+
+  /// Hay algo esperando «sí» o «no».
+  bool get awaitingConfirmation =>
+      _pending != null && now().difference(_pendingAt!) <= confirmWindow;
+
+  /// Pregunta antes de hacer [c].
+  String _ask(ParsedCommand c, String question) {
+    _pending = c;
+    _pendingAt = now();
+    return '$question Responde «sí» o «no».';
+  }
+
+  /// La respuesta a la pregunta pendiente.
+  Future<String> confirm(bool yes) async {
+    final c = awaitingConfirmation ? _pending : null;
+    _pending = null;
+    if (c == null) return '🤔 No tenía nada pendiente de confirmar.';
+    if (!yes) return '👌 Vale, no lo hago.';
+    return run(c, confirmed: true);
+  }
+
+  Future<String> run(ParsedCommand c, {bool confirmed = false}) async {
     final t = now();
+    // Otra orden: lo que esperaba confirmación ya no se hace.
+    _pending = null;
     switch (c.intent) {
       case AssistantIntent.remind:
         final when = c.when;
@@ -136,8 +170,9 @@ class AssistantExecutor {
         return _code(c);
 
       case AssistantIntent.danceStart:
-        if (onDance == null)
+        if (onDance == null) {
           return '💃 ¡Me encantaría bailar, pero ahora no puedo!';
+        }
         onDance!(true);
         return '🪩 ¡Modo discoteca! Bailo un minuto 💃🕺 '
             '(dime «para de bailar» si quieres que pare).';
@@ -170,13 +205,13 @@ class AssistantExecutor {
             : '🔕 No hay ninguna alarma sonando.';
 
       case AssistantIntent.alarmSnooze:
-        final minutes = (c.number ?? 5).clamp(1, 120);
+        final minutes = (c.number ?? snoozeMinutes()).clamp(1, 120);
         return await onAlarm?.call(minutes) == true
             ? '😴 Te la vuelvo a sonar en $minutes minutos.'
             : '🔕 No hay ninguna alarma sonando.';
 
       case AssistantIntent.alarmDelete:
-        return _deleteAlarm(c);
+        return _deleteAlarm(c, confirmed: confirmed);
 
       case AssistantIntent.volume:
         // «Silencia» mientras suena una alarma: la apaga.
@@ -222,6 +257,10 @@ class AssistantExecutor {
                 'pulsa ⌃⌥V.';
 
       case AssistantIntent.closeApp:
+        if (!confirmed) {
+          return _ask(c,
+              '⚠️ ¿Cierro ${c.text}? Si tiene algo sin guardar, podrías perderlo.');
+        }
         final closed = await mac.closeApp(c.text);
         return closed == null
             ? '🤔 No veo «${c.text}» abierta.'
@@ -232,18 +271,7 @@ class AssistantExecutor {
         return '🛑 Listo, paro de bailar.';
 
       case AssistantIntent.showAgenda:
-        try {
-          final events = await mac.events(c.dayOffset);
-          final label = c.dayOffset == 1 ? 'Mañana' : 'Hoy';
-          if (events.isEmpty)
-            return '📅 $label no tienes eventos en el calendario.';
-          return '📅 $label:\n${[
-            for (final e in events)
-              '• ${e.allDay ? 'Todo el día' : '${_hm(e.start)}–${_hm(e.end)}'} ${e.title}'
-          ].join('\n')}';
-        } on CalendarDenied {
-          return _calendarDenied;
-        }
+        return _agenda(c.dayOffset, t);
 
       case AssistantIntent.calendarNote:
         return _calendarNote(c, t);
@@ -259,6 +287,33 @@ class AssistantExecutor {
           return _calendarDenied;
         }
     }
+  }
+
+  /// Lo que tienes hoy o mañana: tu calendario, tareas diarias,
+  /// recordatorios y el Calendario del Mac.
+  Future<String> _agenda(int dayOffset, DateTime t) async {
+    final day = DateTime(t.year, t.month, t.day + dayOffset);
+    var mac = const <CalendarEvent>[];
+    var denied = false;
+    try {
+      mac = await this.mac.events(dayOffset);
+    } on CalendarDenied {
+      denied = true;
+    } catch (_) {}
+    final items = agendaFor(day,
+        notes: calendar,
+        daily: daily,
+        reminders: store.reminders,
+        macEvents: mac);
+    final label = dayOffset == 1 ? 'Mañana' : 'Hoy';
+    if (items.isEmpty) {
+      return denied
+          ? '📅 $label no tienes nada anotado en PixelMate. $_calendarDenied'
+          : '📅 $label no tienes nada anotado.';
+    }
+    return '📅 $label:\n${[
+      for (final i in items) '• ${i.time} · ${i.text}'
+    ].join('\n')}';
   }
 
   Future<String> _calendarNote(ParsedCommand c, DateTime t) async {
@@ -279,6 +334,7 @@ class AssistantExecutor {
         minute: day.minute,
         alarm: c.play,
         color: 1,
+        repeat: NoteRepeat.byName(c.repeat),
         now: t);
     if (note == null) return '📅 ¿Qué anoto?';
     final when = describeDay(day, t);
@@ -286,7 +342,11 @@ class AssistantExecutor {
         ? 'todo el día; ese día te aviso a las '
             '${clock12(CalendarNote.noticeHour, 0)}'
         : 'a las ${note.timeLabel}${note.alarm ? ', con alarma' : ', te aviso a esa hora'}';
-    var reply = '📅 Anotado en tu calendario: «${note.text}» $when ($at).';
+    final every = note.repeat == NoteRepeat.none
+        ? ''
+        : ', y se repite ${note.repeat.label}';
+    var reply =
+        '📅 Anotado en tu calendario: «${note.text}» $when ($at)$every.';
     if (notes.toMac) {
       final problem = await copyToMacCalendar(notes, mac, note);
       reply += problem == null
@@ -439,7 +499,7 @@ class AssistantExecutor {
       '${r.alarm ? '🔔 ' : ''}${describeWhen(r.due, t)}'
       '${r.repeat == AlarmRepeat.none ? '' : ' (${r.repeat.label})'}: ${r.text}';
 
-  Future<String> _deleteAlarm(ParsedCommand c) async {
+  Future<String> _deleteAlarm(ParsedCommand c, {bool confirmed = false}) async {
     final alarms = store.alarms;
     if (alarms.isEmpty) return '🔕 No tienes alarmas puestas.';
     final t = now();
@@ -458,6 +518,15 @@ class AssistantExecutor {
     }).toList();
     if (matches.isEmpty) {
       return '🤔 No sé cuál quitar. Tus alarmas:\n$list';
+    }
+    if (!confirmed) {
+      return _ask(
+          c,
+          matches.length == 1
+              ? '⚠️ ¿Quito la alarma ${_describeReminder(matches.single, t)}?'
+              : '⚠️ ¿Quito estas ${matches.length} alarmas?\n${[
+                  for (final r in matches) '• ${_describeReminder(r, t)}'
+                ].join('\n')}\n');
     }
     for (final r in matches) {
       await store.removeReminder(r.id);
