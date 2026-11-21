@@ -47,11 +47,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/sprites/idle/
-    - assets/sprites/walk/
-    - assets/sprites/work/
-    - assets/sprites/sleep/
-    - assets/sprites/celebrate/
     - assets/tray/
     - assets/config/
     - assets/pets/cat/
