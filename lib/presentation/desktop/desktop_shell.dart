@@ -9,9 +9,11 @@ import '../../application/assistant/alarm.dart';
 import '../../application/assistant/chat_controller.dart';
 import '../../application/assistant/daily_tasks.dart';
 import '../../application/assistant/reminders.dart';
+import '../../application/assistant/apple_reminders.dart';
 import '../../application/assistant/calendar_notes.dart';
 import '../../application/assistant/daily_briefing.dart';
 import '../../application/assistant/voice.dart';
+import '../../application/workday/focus_mode.dart';
 import '../../application/desktop/global_shortcut.dart';
 import '../../application/desktop/updates.dart';
 import '../../application/desktop/login_item.dart';
@@ -126,6 +128,10 @@ class DesktopShell {
       final notice = noticeFor(event, mode: _workday.currentMode);
       if (notice != null) unawaited(notifier.show(notice));
       _play(soundForEvent(event));
+      // Modo Concentración de macOS durante el enfoque (si está activado).
+      unawaited(container.read(focusModeProvider).onEvent(event,
+          current:
+              container.read(workdayControllerProvider).status?.phase?.kind));
     });
     _cleanup.add(events.cancel);
 
@@ -209,6 +215,9 @@ class DesktopShell {
     // Alarmas (también las de las tareas diarias): la mascota a la vista y
     // una notificación.
     container.read(dailyTaskSchedulerProvider);
+    // Pendientes en Recordatorios (iPhone), si está activado.
+    final apple = container.read(appleRemindersProvider);
+    if (apple.enabled) unawaited(apple.push());
     final ringing = container.listen<AlarmState>(alarmProvider, (before, now) {
       if (!now.active || (before?.active ?? false)) return;
       if (!window.visible.value) unawaited(window.show());

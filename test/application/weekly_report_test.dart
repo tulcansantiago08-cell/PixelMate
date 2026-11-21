@@ -100,6 +100,25 @@ void main() {
           isTrue);
     });
 
+    test('cuándo te enfocas más y una meta realista', () {
+      final r = buildWeeklyReport(
+          history: history, weekStart: monday, goal: const Duration(hours: 1));
+      expect(r.bestTimeOfDay, 'por la mañana');
+      expect(r.suggestedGoal, const Duration(hours: 1),
+          reason: '1 h 30 min por día activo: 1 h es realista');
+      // Cumpliste la meta 5 días: un poco más.
+      final strong = buildWeeklyReport(history: [
+        for (var d = 0; d < 5; d++)
+          rec('s$d', DateTime(2026, 11, 2 + d, 16), 150),
+      ], weekStart: monday, goal: const Duration(hours: 2));
+      expect(strong.bestTimeOfDay, 'por la tarde');
+      expect(strong.suggestedGoal, const Duration(hours: 3));
+      // Sin sesiones no hay consejo.
+      final empty = buildWeeklyReport(
+          history: history, weekStart: DateTime(2026, 11, 9));
+      expect((empty.bestTimeOfDay, empty.suggestedGoal), (null, null));
+    });
+
     test('el pedido a la IA lleva los números de la semana', () {
       final p = weeklyPrompt(buildWeeklyReport(
           history: history, weekStart: monday, goal: const Duration(hours: 1)));
@@ -215,6 +234,8 @@ void main() {
     expect(find.textContaining('Meta cumplida 2 de 7 días'), findsOneWidget);
     expect(find.textContaining('Mejor día: Miércoles 4 nov'), findsOneWidget);
     expect(find.textContaining('El miércoles brillaste'), findsOneWidget);
+    expect(find.textContaining('Te enfocas más por la mañana'), findsOneWidget);
+    expect(find.byKey(const ValueKey('weekly-goal')), findsOneWidget);
   });
 
   testWidgets('una semana sin sesiones lo dice', (tester) async {

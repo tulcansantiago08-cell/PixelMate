@@ -291,62 +291,70 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
     final today = _sameDay(day, _now);
     // El día se pinta del color de lo primero que anotaste.
     final tint = colors.isEmpty ? null : colors.first;
-    return InkWell(
-      key: ValueKey('cal-day-${day.day}'),
-      borderRadius: BorderRadius.circular(6),
-      onTap: () {
-        setState(() {
-          _selected = day;
-          _adding = false;
-          _notice = null;
-        });
-        // Elegir un día y escribir: el teclado va directo a su campo.
-        if (!day.isBefore(DateTime(_now.year, _now.month, _now.day))) {
-          focusApp();
-          WidgetsBinding.instance
-              .addPostFrameCallback((_) => _quickFocus.requestFocus());
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.all(1.5),
-        decoration: BoxDecoration(
-          color: selected ? StatsStyle.accent : tint?.withValues(alpha: 0.28),
-          borderRadius: BorderRadius.circular(6),
-          border: today && !selected
-              ? Border.all(color: StatsStyle.accent, width: 1.5)
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('${day.day}',
-                style: TextStyle(
-                    color: selected ? Colors.white : StatsStyle.textPrimary,
-                    fontSize: 11,
-                    fontWeight: today ? FontWeight.w700 : FontWeight.w400)),
-            const SizedBox(height: 1),
-            SizedBox(
-              height: 4,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (final c in colors.take(3))
-                    Container(
-                      width: 4,
-                      height: 4,
-                      margin: const EdgeInsets.symmetric(horizontal: 0.75),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: c,
-                        border: selected
-                            ? Border.all(color: Colors.white, width: 0.5)
-                            : null,
+    return Semantics(
+      button: true,
+      selected: selected,
+      excludeSemantics: true,
+      label: '${day.day} de ${monthNames[day.month - 1]}'
+          '${today ? ', hoy' : ''}'
+          '${colors.isEmpty ? '' : ', con cosas anotadas'}',
+      child: InkWell(
+        key: ValueKey('cal-day-${day.day}'),
+        borderRadius: BorderRadius.circular(6),
+        onTap: () {
+          setState(() {
+            _selected = day;
+            _adding = false;
+            _notice = null;
+          });
+          // Elegir un día y escribir: el teclado va directo a su campo.
+          if (!day.isBefore(DateTime(_now.year, _now.month, _now.day))) {
+            focusApp();
+            WidgetsBinding.instance
+                .addPostFrameCallback((_) => _quickFocus.requestFocus());
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.all(1.5),
+          decoration: BoxDecoration(
+            color: selected ? StatsStyle.accent : tint?.withValues(alpha: 0.28),
+            borderRadius: BorderRadius.circular(6),
+            border: today && !selected
+                ? Border.all(color: StatsStyle.accent, width: 1.5)
+                : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('${day.day}',
+                  style: TextStyle(
+                      color: selected ? Colors.white : StatsStyle.textPrimary,
+                      fontSize: 11,
+                      fontWeight: today ? FontWeight.w700 : FontWeight.w400)),
+              const SizedBox(height: 1),
+              SizedBox(
+                height: 4,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (final c in colors.take(3))
+                      Container(
+                        width: 4,
+                        height: 4,
+                        margin: const EdgeInsets.symmetric(horizontal: 0.75),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: c,
+                          border: selected
+                              ? Border.all(color: Colors.white, width: 0.5)
+                              : null,
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -482,7 +490,6 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               key: const ValueKey('cal-quick'),
               controller: _quick,
               focusNode: _quickFocus,
-              autofocus: true,
               onTap: focusApp,
               textInputAction: TextInputAction.done,
               style: const TextStyle(color: Colors.white, fontSize: 13),

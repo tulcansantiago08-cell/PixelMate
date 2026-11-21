@@ -296,7 +296,9 @@ class VoiceController extends StateNotifier<VoiceState> {
         state = VoiceState(status: VoiceStatus.listening, heard: e.text);
         if (e.text.trim().isNotEmpty) {
           _silenceTimer?.cancel();
-          _silenceTimer = Timer(silence, finish);
+          // Una nota dictada es larga y con pausas: espera un poco más.
+          _silenceTimer =
+              Timer(isDictatedNote(e.text) ? silence * 2 : silence, finish);
         }
       case VoiceEventType.done:
         unawaited(_heard(e.text));
@@ -365,3 +367,9 @@ final voiceProvider = StateNotifierProvider<VoiceController, VoiceState>((ref) {
     speakReplies: () => ref.read(mascotSettingsProvider).voiceReplies,
   );
 });
+
+/// Si lo dicho es una nota («toma nota…», «guarda esta idea…»).
+bool isDictatedNote(String text) => RegExp(
+        r'(toma(me)? (una )?nota|nota r[aá]pida|(guarda|anota|apunta)(me)? (esta|una|la) (idea|nota))',
+        caseSensitive: false)
+    .hasMatch(text);

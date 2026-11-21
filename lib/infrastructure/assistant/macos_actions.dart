@@ -144,4 +144,53 @@ class MacosActions implements MacActions {
       rethrow;
     }
   }
+
+  Future<T> _reminders<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } on PlatformException catch (e) {
+      if (e.code == 'denied') throw const CalendarDenied();
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String?> addAppleReminder(String title, {DateTime? due}) =>
+      _reminders(() => _channel.invokeMethod<String>('addReminder', {
+            'title': title,
+            if (due != null) 'due': due.millisecondsSinceEpoch,
+          }));
+
+  @override
+  Future<bool> setAppleReminderDone(String id, bool done) =>
+      _reminders(() async =>
+          await _channel.invokeMethod<bool>(
+              'setReminderDone', {'id': id, 'done': done}) ??
+          false);
+
+  @override
+  Future<bool> removeAppleReminder(String id) => _reminders(() async =>
+      await _channel.invokeMethod<bool>('removeReminder', id) ?? false);
+
+  @override
+  Future<Map<String, bool>> appleRemindersDone(List<String> ids) =>
+      _reminders(() async {
+        final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
+                'remindersDone', ids) ??
+            const {};
+        return {
+          for (final MapEntry(:key, :value) in raw.entries)
+            if (key is String && value is bool) key: value
+        };
+      });
+
+  @override
+  Future<String> runShortcut(String name) async {
+    try {
+      return await _channel.invokeMethod<String>('runShortcut', name) ??
+          'failed';
+    } catch (_) {
+      return 'failed';
+    }
+  }
 }

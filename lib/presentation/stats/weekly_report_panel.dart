@@ -144,6 +144,11 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                         _Line(Icons.emoji_events_outlined,
                             'Mejor día: ${longDate(best.day)} (${formatSpent(best.total)})'),
                       _Line(Icons.star_outline_rounded, '+${report.xp} XP'),
+                      if (report.bestTimeOfDay case final moment?)
+                        _Line(
+                            Icons.schedule_rounded, 'Te enfocas más $moment.'),
+                      if (report.suggestedGoal case final next?)
+                        _GoalSuggestion(next: next, current: goal),
                       const SizedBox(height: 10),
                       FutureBuilder<String?>(
                         future: _comment,
@@ -227,4 +232,42 @@ class _Arrow extends StatelessWidget {
             size: 20,
             color: onTap == null ? StatsStyle.grid : StatsStyle.textSecondary),
       );
+}
+
+/// «Meta para la próxima semana: 3 h al día» y un botón para usarla.
+class _GoalSuggestion extends ConsumerWidget {
+  final Duration next;
+  final Duration? current;
+  const _GoalSuggestion({required this.next, required this.current});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final same = current == next;
+    return Container(
+      key: const ValueKey('weekly-goal'),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+      decoration: StatsStyle.card(highlighted: true),
+      child: Row(children: [
+        const Icon(Icons.flag_outlined, size: 16, color: Colors.white),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+              same
+                  ? 'Tu meta de ${next.inHours} h al día va bien: mantenla.'
+                  : 'Para la próxima semana: ${next.inHours} h al día.',
+              style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ),
+        if (!same)
+          TextButton(
+            key: const ValueKey('weekly-goal-use'),
+            style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                visualDensity: VisualDensity.compact),
+            onPressed: () => ref.read(dailyGoalSettingsProvider).setGoal(next),
+            child: const Text('Usarla', style: TextStyle(fontSize: 12)),
+          ),
+      ]),
+    );
+  }
 }

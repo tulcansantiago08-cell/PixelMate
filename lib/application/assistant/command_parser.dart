@@ -66,6 +66,9 @@ enum AssistantIntent {
   /// «Quita la alarma de las 8», «borra la alarma de la reunión».
   alarmDelete,
 
+  /// «Toma nota: …», «guarda esta idea: …» (el texto tal cual).
+  note,
+
   /// «Anota en mi calendario el viernes cumpleaños de mamá» ([ParsedCommand.when]
   /// es el día, con hora si la dijo; [ParsedCommand.allDay] si no).
   calendarNote,
@@ -509,6 +512,18 @@ ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
     }
   }
 
+  // Nota o idea: "toma nota: …", "guarda esta idea: …", "nota rápida …".
+  final quickNote = RegExp(
+          r'^(?:por favor,?\s*)?(?:toma(?:me)? (?:una )?nota|nota rapida|(?:guarda|anota|apunta|guardame)(?:me)? (?:esta|una|la) (?:idea|nota))\s*(?:de que|que|de)?[\s:,]*')
+      .firstMatch(m);
+  if (quickNote != null) {
+    final what = tail(quickNote).trim();
+    if (what.isNotEmpty) {
+      return ParsedCommand(AssistantIntent.note,
+          text: what[0].toUpperCase() + what.substring(1));
+    }
+  }
+
   // Nueva tarea: "apunta llamar al banco", "añade a mis tareas pagar la luz".
   final add = RegExp(
           r'^(?:por favor,?\s*)?(?:anade|agrega|apunta|anota)[\s:]+(?:(?:a|en)\s+(?:mis tareas|mi lista|la lista(?: de tareas)?|pendientes)\s*:?\s*|(?:la tarea|una tarea|tarea)\s*:?\s*(?:de\s+)?)?')
@@ -522,7 +537,13 @@ ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
             r'\s+(a|en)\s+(mis tareas|mi lista|la lista( de tareas)?|pendientes)\s*$',
             caseSensitive: false),
         '');
-    what = cleanText(what);
+    what = cleanText(what)
+        // «anota que tengo que comprar pan» → «comprar pan».
+        .replaceFirst(
+            RegExp(r'^(?:que\s+)?(?:tengo que|hay que|debo|necesito)\s+',
+                caseSensitive: false),
+            '')
+        .replaceFirst(RegExp(r'^que\s+', caseSensitive: false), '');
     if (what.isNotEmpty) {
       return ParsedCommand(AssistantIntent.addTask, text: what);
     }

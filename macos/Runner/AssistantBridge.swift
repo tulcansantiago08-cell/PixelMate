@@ -121,6 +121,90 @@ enum AssistantBridge {
             result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
           }
         }
+      case "runShortcut":
+        // Atajos de la app Atajos (para el modo Concentración).
+        let name = ((call.arguments as? String) ?? "")
+          .replacingOccurrences(of: "\\", with: "")
+          .replacingOccurrences(of: "\"", with: "")
+        var error: NSDictionary?
+        NSAppleScript(
+          source: "tell application id \"com.apple.shortcuts.events\" to run shortcut \"\(name)\""
+        )?.executeAndReturnError(&error)
+        if let error = error {
+          let code = (error[NSAppleScript.errorNumber] as? Int) ?? -1
+          result(code == -1743 ? "denied" : code == -1728 || code == -1700 ? "missing" : "failed")
+        } else {
+          result("ok")
+        }
+      case "addReminder":
+        guard let args = call.arguments as? [String: Any], let title = args["title"] as? String
+        else {
+          result(FlutterError(code: "args", message: nil, details: nil))
+          return
+        }
+        let dueMs = (args["due"] as? Double) ?? (args["due"] as? Int).map(Double.init)
+        withRemindersAccess(result) {
+          let reminder = EKReminder(eventStore: store)
+          reminder.title = title
+          reminder.calendar = store.defaultCalendarForNewReminders()
+          if let ms = dueMs {
+            let date = Date(timeIntervalSince1970: ms / 1000)
+            reminder.dueDateComponents = Calendar.current.dateComponents(
+              [.year, .month, .day, .hour, .minute], from: date)
+          }
+          do {
+            try store.save(reminder, commit: true)
+            result(reminder.calendarItemIdentifier)
+          } catch {
+            result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
+          }
+        }
+      case "setReminderDone":
+        guard let args = call.arguments as? [String: Any], let id = args["id"] as? String
+        else {
+          result(FlutterError(code: "args", message: nil, details: nil))
+          return
+        }
+        let done = (args["done"] as? Bool) ?? true
+        withRemindersAccess(result) {
+          guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else {
+            result(false)
+            return
+          }
+          reminder.isCompleted = done
+          do {
+            try store.save(reminder, commit: true)
+            result(true)
+          } catch {
+            result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
+          }
+        }
+      case "removeReminder":
+        let id = (call.arguments as? String) ?? ""
+        withRemindersAccess(result) {
+          guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else {
+            result(false)
+            return
+          }
+          do {
+            try store.remove(reminder, commit: true)
+            result(true)
+          } catch {
+            result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
+          }
+        }
+      case "remindersDone":
+        // {id: hecho} de los que siguen existiendo.
+        let ids = (call.arguments as? [String]) ?? []
+        withRemindersAccess(result) {
+          var states: [String: Bool] = [:]
+          for id in ids {
+            if let reminder = store.calendarItem(withIdentifier: id) as? EKReminder {
+              states[id] = reminder.isCompleted
+            }
+          }
+          result(states)
+        }
       case "deleteEvent":
         let id = (call.arguments as? String) ?? ""
         withCalendarAccess(result) {
@@ -402,6 +486,25 @@ enum AssistantBridge {
       store.requestFullAccessToEvents(completion: done)
     } else {
       store.requestAccess(to: .event, completion: done)
+    }
+  }
+
+  private static func withRemindersAccess(
+    _ result: @escaping FlutterResult, _ action: @escaping () -> Void
+  ) {
+    let done: (Bool, Error?) -> Void = { granted, _ in
+      DispatchQueue.main.async {
+        if granted {
+          action()
+        } else {
+          result(FlutterError(code: "denied", message: nil, details: nil))
+        }
+      }
+    }
+    if #available(macOS 14.0, *) {
+      store.requestFullAccessToReminders(completion: done)
+    } else {
+      store.requestAccess(to: .reminder, completion: done)
     }
   }
 

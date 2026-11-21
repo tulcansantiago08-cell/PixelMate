@@ -140,6 +140,10 @@ class AssistantExecutor {
         await store.addReminder(c.text, when);
         return '⏰ Listo: te recuerdo «${c.text}» ${describeWhen(when, t)}.';
 
+      case AssistantIntent.note:
+        await store.addNote(c.text);
+        return '📝 Guardé tu nota. La tienes en Pendientes, en «Notas».';
+
       case AssistantIntent.addTask:
         await store.addTask(c.text);
         final n = store.pending.length;

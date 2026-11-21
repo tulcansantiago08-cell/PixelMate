@@ -44,6 +44,44 @@ class WeeklyReport {
     }
     return best;
   }
+
+  /// Cuándo te enfocas más: "por la mañana", "por la tarde" o "por la
+  /// noche" (o `null` sin sesiones).
+  String? get bestTimeOfDay {
+    final byPart = <String, Duration>{};
+    for (final s in stats.sessions) {
+      final h = s.startedAt.toLocal().hour;
+      final part = h >= 5 && h < 12
+          ? 'por la mañana'
+          : h >= 12 && h < 19
+              ? 'por la tarde'
+              : 'por la noche';
+      byPart[part] = (byPart[part] ?? Duration.zero) + s.effectiveFocus;
+    }
+    if (byPart.isEmpty) return null;
+    return (byPart.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
+        .first
+        .key;
+  }
+
+  /// Una meta realista para la próxima semana (de las que se pueden
+  /// elegir), según lo que hiciste: si cumpliste casi todos los días, un
+  /// poco más; si no, lo que sueles hacer un día activo. `null` sin datos.
+  Duration? get suggestedGoal {
+    if (activeDays == 0) return null;
+    const options = [1, 2, 3, 4, 5, 6, 8];
+    final current = goal;
+    if (current != null && current > Duration.zero && goalDays >= 5) {
+      final next = options.where((h) => Duration(hours: h) > current);
+      return next.isEmpty ? current : Duration(hours: next.first);
+    }
+    final perDay = focus.inMinutes / activeDays;
+    var best = options.first;
+    for (final h in options) {
+      if (h * 60 <= perDay + 20) best = h; // lo que ya haces, sin forzar
+    }
+    return Duration(hours: best);
+  }
 }
 
 /// Lunes de la semana de [date] (hora local).

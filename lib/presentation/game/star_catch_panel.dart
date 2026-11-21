@@ -84,11 +84,11 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     super.dispose();
   }
 
-  void _start() {
+  void _start([GameMode mode = GameMode.classic]) {
     _breakKey = currentBreakKey(ref.read(workdayControllerProvider));
     setState(() {
       final store = ref.read(gameStoreProvider);
-      _game = StarCatchGame(skin: store.skin);
+      _game = StarCatchGame(skin: store.skin, mode: mode);
       _daily = store.dailyDone ? null : store.daily;
       _dailyAnnounced = false;
       _result = null;
@@ -148,7 +148,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
   Future<void> _finish(int score, GameRun run) async {
     final result = await ref
         .read(gameStoreProvider)
-        .finish(score, breakKey: _breakKey, run: run);
+        .finish(score, breakKey: _breakKey, run: run, mode: _game!.mode);
     if (ref.read(soundSettingsProvider).enabled &&
         (result.newBest || result.xp > 0 || result.newMedals.isNotEmpty)) {
       ref.read(soundPlayerProvider).play(PetSound.goal);
@@ -241,7 +241,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
   }
 
   Widget _hud(StarCatchGame game) => Text(
-        '${'❤️' * game.lives}${'🖤' * (StarCatchGame.startLives - game.lives)}'
+        '${game.mode == GameMode.timeAttack ? '⏱ ${game.timeLeft.inSeconds} s ' : '${'❤️' * game.lives}${'🖤' * (StarCatchGame.startLives - game.lives)}'}'
         '${'🛡️' * game.shields} ${game.score} pts'
         '${game.multiplier > 1 ? ' x${game.multiplier}🔥' : ''}',
         key: const ValueKey('game-hud'),
@@ -300,9 +300,12 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
           key: const ValueKey('game-xp-info'),
           textAlign: TextAlign.center,
           style: _body.copyWith(color: StatsStyle.textPrimary)),
-      if (store.best > 0) ...[
+      if (store.best > 0 || store.bestTimeAttack > 0) ...[
         const SizedBox(height: 6),
-        Text('🏆 Récord: ${store.best}', style: _body),
+        Text(
+            'Récord: ${store.best}'
+            '${store.bestTimeAttack > 0 ? ' · contrarreloj: ${store.bestTimeAttack}' : ''}',
+            style: _body),
       ],
       const SizedBox(height: 8),
       _dailyCard(store),
@@ -318,6 +321,12 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
           key: const ValueKey('game-start'),
           onPressed: _start,
           child: const Text('¡Jugar!'),
+        ),
+        OutlinedButton.icon(
+          key: const ValueKey('game-start-time'),
+          onPressed: () => _start(GameMode.timeAttack),
+          icon: const Icon(Icons.timer_outlined, size: 16),
+          label: const Text('Contrarreloj 60 s'),
         ),
         OutlinedButton(
           key: const ValueKey('game-medals'),
@@ -343,8 +352,12 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
               fontWeight: FontWeight.w600)),
       const SizedBox(height: 4),
       Text(
-          'Nivel ${_game!.level} · ${_game!.starsCaught} estrellas · '
-          'aguantaste ${_game!.elapsed.inSeconds} s · récord ${store.best}',
+          _game!.mode == GameMode.timeAttack
+              ? 'Contrarreloj · nivel ${_game!.level} · '
+                  '${_game!.starsCaught} estrellas · récord '
+                  '${store.bestTimeAttack}'
+              : 'Nivel ${_game!.level} · ${_game!.starsCaught} estrellas · '
+                  'aguantaste ${_game!.elapsed.inSeconds} s · récord ${store.best}',
           textAlign: TextAlign.center,
           style: _body),
       if (r.dailyXp > 0) ...[
@@ -383,7 +396,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
       Wrap(spacing: 8, alignment: WrapAlignment.center, children: [
         FilledButton(
           key: const ValueKey('game-again'),
-          onPressed: _start,
+          onPressed: () => _start(_game?.mode ?? GameMode.classic),
           child: const Text('Otra vez'),
         ),
         OutlinedButton(

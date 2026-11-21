@@ -31,6 +31,23 @@ class TaskItem {
       );
 }
 
+/// Una nota o idea guardada tal cual («toma nota: …»).
+class NoteItem {
+  final String id;
+  final String text;
+  final DateTime createdAt;
+
+  const NoteItem(this.id, this.text, this.createdAt);
+
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'text': text, 'createdAt': createdAt.toIso8601String()};
+
+  factory NoteItem.fromJson(Map<String, dynamic> j) => NoteItem(
+      j['id'] as String,
+      j['text'] as String,
+      DateTime.parse(j['createdAt'] as String));
+}
+
 /// Cada cuánto se repite una alarma.
 enum AlarmRepeat {
   none,
@@ -96,16 +113,19 @@ class ReminderItem {
 class PersonalStore extends ChangeNotifier {
   static const _tasksKey = 'assistant.tasks';
   static const _remindersKey = 'assistant.reminders';
+  static const _notesKey = 'assistant.notes';
 
   final SharedPreferences? _prefs;
   final List<TaskItem> _tasks;
   final List<ReminderItem> _reminders;
+  final List<NoteItem> _notes;
   int _seq = 0;
 
   PersonalStore([this._prefs])
       : _tasks = _load(_prefs?.getString(_tasksKey), TaskItem.fromJson),
         _reminders =
-            _load(_prefs?.getString(_remindersKey), ReminderItem.fromJson);
+            _load(_prefs?.getString(_remindersKey), ReminderItem.fromJson),
+        _notes = _load(_prefs?.getString(_notesKey), NoteItem.fromJson);
 
   static List<T> _load<T>(
       String? raw, T Function(Map<String, dynamic>) fromJson) {
@@ -127,6 +147,8 @@ class PersonalStore extends ChangeNotifier {
         _tasksKey, jsonEncode([for (final t in _tasks) t.toJson()]));
     await _prefs?.setString(
         _remindersKey, jsonEncode([for (final r in _reminders) r.toJson()]));
+    await _prefs?.setString(
+        _notesKey, jsonEncode([for (final n in _notes) n.toJson()]));
     notifyListeners();
   }
 
@@ -141,6 +163,24 @@ class PersonalStore extends ChangeNotifier {
         for (final t in _tasks.reversed)
           if (t.done) t
       ].take(10).toList();
+
+  /// Notas e ideas, la más reciente primero.
+  List<NoteItem> get notes => _notes.reversed.toList();
+
+  Future<NoteItem> addNote(String text) async {
+    final n = NoteItem(_id(), text.trim(), DateTime.now());
+    _notes.add(n);
+    await _save();
+    return n;
+  }
+
+  Future<void> removeNote(String id) async {
+    _notes.removeWhere((n) => n.id == id);
+    await _save();
+  }
+
+  /// Todas las tareas (hechas y por hacer).
+  List<TaskItem> get allTasks => List.unmodifiable(_tasks);
 
   /// Recordatorios por llegar, el más próximo primero.
   List<ReminderItem> get reminders =>

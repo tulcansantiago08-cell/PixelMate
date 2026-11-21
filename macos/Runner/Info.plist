@@ -9,7 +9,11 @@
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>PixelMate convierte en texto lo que le dices para responderte y hacer lo que le pides.</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>PixelMate pausa, reanuda y cambia la canción de Spotify o Música cuando se lo pides.</string>
+	<string>PixelMate pausa, reanuda y cambia la canción de Spotify o Música cuando se lo pides, y ejecuta tus atajos del modo Concentración si lo activas.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>PixelMate guarda tus pendientes en Recordatorios para que te lleguen al iPhone, si lo activas.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>PixelMate guarda tus pendientes en Recordatorios para que te lleguen al iPhone, si lo activas.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>PixelMate muestra tu agenda y crea eventos cuando se lo pides en el chat.</string>
 	<key>CFBundleDevelopmentRegion</key>

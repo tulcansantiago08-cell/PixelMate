@@ -64,6 +64,19 @@ abstract class MacActions {
 
   /// Borra el evento. `false` si ya no estaba.
   Future<bool> deleteEvent(String id);
+
+  /// Recordatorios de Apple (llegan al iPhone por iCloud). Lanzan
+  /// [CalendarDenied] sin permiso.
+  Future<String?> addAppleReminder(String title, {DateTime? due});
+  Future<bool> setAppleReminderDone(String id, bool done);
+  Future<bool> removeAppleReminder(String id);
+
+  /// Si están hechos, de los que siguen existiendo.
+  Future<Map<String, bool>> appleRemindersDone(List<String> ids);
+
+  /// Ejecuta un atajo de la app Atajos: "ok", "missing" (no existe),
+  /// "denied" (sin permiso) o "failed".
+  Future<String> runShortcut(String name);
 }
 
 /// Lo que pasó al controlar la música: el reproductor, la canción (para
@@ -93,6 +106,13 @@ class FakeMacActions implements MacActions {
 
   /// La repetición del último evento creado.
   String? lastRepeat;
+
+  /// Atajos ejecutados, y los que existen (`null`: todos).
+  final List<String> shortcutsRun = [];
+  Set<String>? shortcuts;
+
+  /// Recordatorios de Apple: id → (texto, hecho).
+  final Map<String, (String, bool)> appleReminders = {};
 
   FakeMacActions(
       {this.apps = const {},
@@ -238,6 +258,39 @@ class FakeMacActions implements MacActions {
     calendar.removeWhere((e) => e.id == id);
     return calendar.length < before;
   }
+
+  @override
+  Future<String> runShortcut(String name) async {
+    if (shortcuts != null && !shortcuts!.contains(name)) return 'missing';
+    shortcutsRun.add(name);
+    return 'ok';
+  }
+
+  @override
+  Future<String?> addAppleReminder(String title, {DateTime? due}) async {
+    if (!calendarAllowed) throw const CalendarDenied();
+    final id = 'rem${appleReminders.length + 1}';
+    appleReminders[id] = (title, false);
+    return id;
+  }
+
+  @override
+  Future<bool> setAppleReminderDone(String id, bool done) async {
+    final r = appleReminders[id];
+    if (r == null) return false;
+    appleReminders[id] = (r.$1, done);
+    return true;
+  }
+
+  @override
+  Future<bool> removeAppleReminder(String id) async =>
+      appleReminders.remove(id) != null;
+
+  @override
+  Future<Map<String, bool>> appleRemindersDone(List<String> ids) async => {
+        for (final id in ids)
+          if (appleReminders[id] case final r?) id: r.$2
+      };
 }
 
 /// Webs conocidas por nombre (para "abre YouTube" sin app instalada).

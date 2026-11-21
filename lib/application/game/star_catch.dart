@@ -153,8 +153,26 @@ class CatchEvent {
 /// sube de nivel: todo cae más rápido, la cesta se achica y aparecen
 /// trampas nuevas. La cesta tiene su propia velocidad: no salta adonde
 /// apunta el ratón, va hacia allí.
+/// Clásico (3 vidas) o contrarreloj (60 s; fallar quita tiempo).
+enum GameMode { classic, timeAttack }
+
 class StarCatchGame {
   static const startLives = 3;
+
+  /// Contrarreloj: lo que dura y lo que quita o da cada fallo o corazón.
+  static const timeLimit = Duration(seconds: 60);
+  static const timePenalty = Duration(seconds: 5);
+
+  final GameMode mode;
+
+  /// Tiempo perdido (o ganado, si es negativo) en contrarreloj.
+  Duration _penalty = Duration.zero;
+
+  /// Lo que queda en contrarreloj.
+  Duration get timeLeft {
+    final left = timeLimit - elapsed - _penalty;
+    return left.isNegative ? Duration.zero : left;
+  }
 
   /// Media anchura de la cesta en el nivel 1.
   static const basketHalfWidth = 0.12;
@@ -198,7 +216,10 @@ class StarCatchGame {
   /// Efectos activos y los segundos que les quedan.
   final Map<GameEffect, double> effects = {};
 
-  StarCatchGame({Random? random, this.skin = BasketSkin.basket})
+  StarCatchGame(
+      {Random? random,
+      this.skin = BasketSkin.basket,
+      this.mode = GameMode.classic})
       : _random = random ?? Random() {
     if (skin.startShield) shields = 1;
     if (skin.startMagnet) _addEffect(GameEffect.magnet);
@@ -209,7 +230,8 @@ class StarCatchGame {
 
   static const comboStep = 8;
 
-  bool get over => lives <= 0;
+  bool get over =>
+      mode == GameMode.timeAttack ? timeLeft == Duration.zero : lives <= 0;
 
   bool has(GameEffect e) => (effects[e] ?? 0) > 0;
 
@@ -350,8 +372,13 @@ class StarCatchGame {
       shields--;
       return CatchEvent(item.kind, item.x, label: '🛡️ ¡Salvado!');
     }
-    lives--;
     combo = 0;
+    if (mode == GameMode.timeAttack) {
+      _penalty += timePenalty;
+      return CatchEvent(item.kind, item.x,
+          label: '-${timePenalty.inSeconds} s');
+    }
+    lives--;
     return CatchEvent(item.kind, item.x, lostLife: true, label: '💔');
   }
 
@@ -402,6 +429,10 @@ class StarCatchGame {
         shields = min(shields + 1, 2);
         return CatchEvent(kind, item.x, label: '🛡️ ¡Escudo!');
       case FallingKind.heart:
+        if (mode == GameMode.timeAttack) {
+          _penalty -= timePenalty;
+          return CatchEvent(kind, item.x, label: '+${timePenalty.inSeconds} s');
+        }
         if (lives < startLives) {
           lives++;
           return CatchEvent(kind, item.x, label: '+❤️');
@@ -472,7 +503,7 @@ class StarCatchGame {
       return false;
     });
     if (over) {
-      lives = 0;
+      if (mode == GameMode.classic) lives = 0;
       return events;
     }
 
@@ -682,6 +713,7 @@ class GameResult {
 /// juego acompaña al descanso sin convertirse en la forma de subir de nivel.
 class GameStore extends ChangeNotifier {
   static const _bestKey = 'game.stars.best';
+  static const _bestTimeKey = 'game.stars.bestTimeAttack';
   static const _xpKey = 'game.stars.xp';
   static const _lastBreakKey = 'game.stars.lastBreak';
   static const _skinKey = 'game.stars.skin';
@@ -736,6 +768,10 @@ class GameStore extends ChangeNotifier {
         ? _streak
         : 0;
   }
+
+  /// Récord en contrarreloj.
+  int get bestTimeAttack => _prefs?.getInt(_bestTimeKey) ?? _bestTime;
+  int _bestTime = 0;
 
   int get best => _best;
   int get bonusXp => _bonusXp;
@@ -804,7 +840,9 @@ class GameStore extends ChangeNotifier {
 
   /// Guarda una partida que acabó con [score] durante [breakKey].
   Future<GameResult> finish(int score,
-      {String? breakKey, GameRun run = const GameRun()}) async {
+      {String? breakKey,
+      GameRun run = const GameRun(),
+      GameMode mode = GameMode.classic}) async {
     final statsBefore = _stats;
     await _record(run);
     final daily = await _checkDaily(run);
@@ -812,10 +850,19 @@ class GameStore extends ChangeNotifier {
       for (final m in gameMedals)
         if (m.done(_stats) && !m.done(statsBefore)) m
     ];
-    final newBest = score > _best;
-    if (newBest) {
-      _best = score;
-      await _prefs?.setInt(_bestKey, score);
+    final bool newBest;
+    if (mode == GameMode.timeAttack) {
+      newBest = score > bestTimeAttack;
+      if (newBest) {
+        _bestTime = score;
+        await _prefs?.setInt(_bestTimeKey, score);
+      }
+    } else {
+      newBest = score > _best;
+      if (newBest) {
+        _best = score;
+        await _prefs?.setInt(_bestKey, score);
+      }
     }
     var xp = 0;
     String? reason;

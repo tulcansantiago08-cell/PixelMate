@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/assistant/apple_reminders.dart';
 import '../../application/assistant/assistant_executor.dart';
 import '../../application/assistant/personal_store.dart';
 import '../stats/stats_style.dart';
@@ -61,11 +64,14 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                       size: 18, color: StatsStyle.textSecondary),
                 ),
               ]),
+              const _AppleRemindersRow(),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.only(right: 4),
                   children: [
-                    if (pending.isEmpty && reminders.isEmpty)
+                    if (pending.isEmpty &&
+                        reminders.isEmpty &&
+                        store.notes.isEmpty)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: Text(
@@ -98,6 +104,17 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                               '${r.repeat == AlarmRepeat.none ? '' : ' (${r.repeat.label})'}'
                               ': ${r.text}',
                           onDelete: () => store.removeReminder(r.id),
+                        ),
+                    ],
+                    if (store.notes.isNotEmpty) ...[
+                      const _Header('Notas'),
+                      for (final n in store.notes)
+                        _Row(
+                          key: ValueKey('note-${n.id}'),
+                          leading: const Icon(Icons.sticky_note_2_outlined,
+                              size: 16, color: StatsStyle.accentLight),
+                          text: n.text,
+                          onDelete: () => store.removeNote(n.id),
                         ),
                     ],
                     if (done.isNotEmpty) ...[
@@ -239,4 +256,62 @@ class _Row extends StatelessWidget {
           ),
         ]),
       );
+}
+
+/// «También en Recordatorios (iPhone)».
+class _AppleRemindersRow extends ConsumerStatefulWidget {
+  const _AppleRemindersRow();
+
+  @override
+  ConsumerState<_AppleRemindersRow> createState() => _AppleRemindersRowState();
+}
+
+class _AppleRemindersRowState extends ConsumerState<_AppleRemindersRow> {
+  @override
+  void initState() {
+    super.initState();
+    // Al abrir Pendientes, trae lo que tachaste en el iPhone.
+    unawaited(ref.read(appleRemindersProvider).pull());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sync = ref.watch(appleRemindersProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 4, right: 4),
+          padding: const EdgeInsets.fromLTRB(10, 2, 2, 2),
+          decoration: StatsStyle.card(radius: 12),
+          child: Row(children: [
+            const Icon(Icons.phone_iphone_rounded,
+                size: 16, color: StatsStyle.accentLight),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('También en Recordatorios (iPhone)',
+                  style:
+                      TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
+            ),
+            Transform.scale(
+              scale: 0.7,
+              child: Switch(
+                key: const ValueKey('apple-reminders'),
+                value: sync.enabled,
+                activeTrackColor: StatsStyle.accent,
+                onChanged: sync.setEnabled,
+              ),
+            ),
+          ]),
+        ),
+        if (sync.problem != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(sync.problem!,
+                key: const ValueKey('apple-reminders-problem'),
+                style: const TextStyle(color: Colors.amber, fontSize: 10)),
+          ),
+      ],
+    );
+  }
 }

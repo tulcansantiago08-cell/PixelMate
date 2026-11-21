@@ -61,6 +61,14 @@
   (calendario, tareas diarias, recordatorios y Calendario del Mac) y cuántas
   tareas te quedan. «¿Qué tengo hoy?» o «¿qué tengo mañana?» te lo dicen
   cuando quieras.
+- **En tu iPhone** — activa «También en Recordatorios (iPhone)» en
+  Pendientes: tus tareas y recordatorios se guardan en la app Recordatorios
+  y llegan al iPhone por iCloud; lo que taches allí se tacha aquí.
+- **Modo Concentración** — en Ajustes, PixelMate activa tu modo
+  Concentración al empezar el enfoque y lo quita en los descansos (con dos
+  atajos de la app Atajos).
+- **Notas rápidas** — «toma nota: …» o «guarda esta idea: …», por voz o
+  escrito; quedan en Pendientes › Notas.
 - **Copia de seguridad** — en Ajustes, «Guardar…» guarda tus tareas,
   calendario, alarmas y ajustes en un archivo y «Restaurar…» los recupera
   (por ejemplo, en otro Mac).
@@ -90,7 +98,7 @@
 
 ## Instalar
 
-1. Descarga `PixelMate-1.3.0-macOS.zip` desde
+1. Descarga `PixelMate-1.4.0-macOS.zip` desde
    [Releases](https://github.com/tulcansantiago08-cell/PixelMate/releases).
 2. Descomprímelo y arrastra **PixelMate.app** a **Aplicaciones**.
 3. La primera vez, haz **clic derecho → Abrir** (la app no está firmada por

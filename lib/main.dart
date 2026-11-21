@@ -22,7 +22,9 @@ import 'application/desktop/updates.dart';
 import 'application/game/star_catch.dart';
 import 'application/mascot/music.dart';
 import 'application/assistant/alarm_settings.dart';
+import 'application/assistant/apple_reminders.dart';
 import 'application/settings/backup.dart';
+import 'application/workday/focus_mode.dart';
 import 'application/assistant/calendar_notes.dart';
 import 'application/assistant/daily_briefing.dart';
 import 'application/assistant/daily_tasks.dart';
@@ -137,6 +139,8 @@ void main() async {
     calendarStoreProvider.overrideWith((_) => CalendarStore(prefs)),
     briefingPrefsProvider.overrideWithValue(prefs),
     backupPrefsProvider.overrideWithValue(prefs),
+    appleRemindersPrefsProvider.overrideWithValue(prefs),
+    focusModeSettingsProvider.overrideWith((_) => FocusModeSettings(prefs)),
     backupFilesProvider.overrideWithValue(MacosBackupFiles()),
     alarmSettingsProvider.overrideWith((_) => AlarmSettings(prefs)),
     // IA del chat: la de Apple si está disponible; si no, Claude.
