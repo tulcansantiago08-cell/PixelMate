@@ -70,11 +70,18 @@ class _CollectionPanelState extends ConsumerState<CollectionPanel> {
         children: [
           Row(children: [
             const Expanded(
-              child: Text('📖 Álbum',
-                  style: TextStyle(
-                      color: StatsStyle.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600)),
+              child: Row(children: [
+                Icon(Icons.collections_bookmark_outlined,
+                    size: 18, color: StatsStyle.accentLight),
+                SizedBox(width: 6),
+                Flexible(
+                    child: Text('Álbum',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color: StatsStyle.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600))),
+              ]),
             ),
             Text(
                 '${collection.unlocked}/${collection.total} · '

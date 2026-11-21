@@ -122,7 +122,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                       color: msg.isUser
                           ? null
                           : msg.isNote
-                              ? const Color(0xFF15352E) // acción realizada
+                              ? const Color(0xFF1B2A6B) // acción realizada
                               : StatsStyle.surfaceRaised,
                       borderRadius: BorderRadius.circular(14),
                       border: msg.isUser
@@ -160,9 +160,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                                 color: StatsStyle.textPrimary,
                                 fontSize: 12,
                                 height: 1.35),
-                            iconColor: msg.isNote
-                                ? const Color(0xFF5EEAD4)
-                                : StatsStyle.accentLight,
+                            iconColor: StatsStyle.accentLight,
                           ),
                       ],
                     ),

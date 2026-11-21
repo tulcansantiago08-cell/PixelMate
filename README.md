@@ -54,6 +54,9 @@
   mamá» (los cumpleaños se repiten solos). Si lo activas, se copian al
   Calendario del Mac. Los recordatorios del chat quedan en el calendario
   (en gris) después de avisar.
+- **Escóndelo cuando quieras** — el botón del ojo (o «Esconder» en el menú
+  ⋯) lo quita de la pantalla; sigue en la barra de menú y vuelve con
+  «Oye James» o ⌃⌥P.
 - **Resumen del día** — por la mañana te cuenta lo que tienes hoy
   (calendario, tareas diarias, recordatorios y Calendario del Mac) y cuántas
   tareas te quedan. «¿Qué tengo hoy?» o «¿qué tengo mañana?» te lo dicen
