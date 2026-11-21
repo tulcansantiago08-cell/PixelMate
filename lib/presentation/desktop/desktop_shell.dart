@@ -6,6 +6,7 @@ import '../../application/activity/detection_settings.dart';
 import '../../application/activity/focus_guard.dart';
 import '../../application/activity/focus_guard_controller.dart';
 import '../../application/assistant/alarm.dart';
+import '../../application/assistant/chat_controller.dart';
 import '../../application/assistant/daily_tasks.dart';
 import '../../application/assistant/reminders.dart';
 import '../../application/assistant/calendar_notes.dart';
@@ -44,6 +45,11 @@ class DesktopShell {
   final SoundSettings soundSettings;
   final Future<void> Function() quitApp;
 
+  /// Si estaba escondida y la llamaste por voz: cuánto se queda a la vista
+  /// tras responderte, y tras una falsa alarma.
+  final Duration rehideAfter;
+  final Duration rehideSilent;
+
   late final MenuBarTray _tray = MenuBarTray(onSelected: _onTrayAction);
   final List<void Function()> _cleanup = [];
 
@@ -60,6 +66,8 @@ class DesktopShell {
     SoundPlayer? sounds,
     SoundSettings? soundSettings,
     required this.quitApp,
+    this.rehideAfter = const Duration(seconds: 25),
+    this.rehideSilent = const Duration(seconds: 3),
   })  : focusGuard = focusGuard ?? FocusGuardSettings(),
         launchAtLogin = launchAtLogin ?? LaunchAtLogin(NoopLoginItem()),
         shortcut = shortcut ?? NoopGlobalShortcut(),
@@ -85,6 +93,25 @@ class DesktopShell {
     void onVisibility() =>
         _refreshTray(container.read(workdayControllerProvider));
     window.visible.addListener(onVisibility);
+    // Al esconderla, una vez: cómo hacer que vuelva.
+    void onHidden() {
+      if (window.visible.value) return;
+      if (_quietHide) {
+        _quietHide = false;
+        return;
+      }
+      if (_toldHowToReturn) return;
+      _toldHowToReturn = true;
+      unawaited(notifier.show(WorkdayNotice(
+          '${mascot.name} se escondió 🙈',
+          hiddenMascotHelp(
+              name: mascot.name,
+              wake: mascot.wakeWord,
+              shortcut: shortcutSettings.enabled))));
+    }
+
+    window.visible.addListener(onHidden);
+    _cleanup.add(() => window.visible.removeListener(onHidden));
     _cleanup.add(() => window.visible.removeListener(onVisibility));
     detection.addListener(onVisibility);
     _cleanup.add(() => detection.removeListener(onVisibility));
@@ -225,11 +252,15 @@ class DesktopShell {
     mascot.addListener(applyWake);
     _cleanup.add(() => mascot.removeListener(applyWake));
     // Si se abrió el chat al oír su nombre y luego no dijiste nada (una
-    // falsa alarma), se vuelve a cerrar para no tapar la pantalla.
+    // falsa alarma), se vuelve a cerrar para no tapar la pantalla. Y si
+    // estaba escondida, al terminar de hablar se vuelve a esconder.
     MascotPanel? beforeVoice;
+    var hiddenBeforeVoice = false;
     final heard = container.listen<VoiceState>(voiceProvider, (before, now) {
       final started = now.listening && !(before?.listening ?? false);
       if (started) {
+        _rehide?.cancel();
+        hiddenBeforeVoice = !window.visible.value;
         final panel = container.read(mascotPanelProvider);
         if (panel != MascotPanel.chat) {
           beforeVoice = panel;
@@ -239,13 +270,19 @@ class DesktopShell {
         }
         return;
       }
-      final ended = (before?.listening ?? false) && !now.listening;
-      if (!ended) return;
+      final wasBusy = before != null && before.status != VoiceStatus.idle;
+      if (!wasBusy || now.status != VoiceStatus.idle) return;
+      final silent = now.problem == nothingHeard;
       final back = beforeVoice;
       beforeVoice = null;
+      if (hiddenBeforeVoice) {
+        hiddenBeforeVoice = false;
+        // Falsa alarma: enseguida; si respondió, deja leer la respuesta.
+        _rehideLater(silent ? rehideSilent : rehideAfter);
+        return;
+      }
       if (back != null &&
-          now.status == VoiceStatus.idle &&
-          now.problem == nothingHeard &&
+          silent &&
           container.read(mascotPanelProvider) == MascotPanel.chat) {
         unawaited(_showPanel(back));
       }
@@ -337,6 +374,34 @@ class DesktopShell {
     await container.read(voiceProvider.notifier).toggle();
   }
 
+  Timer? _rehide;
+
+  /// Vuelve a esconder la mascota pasado [after], si mientras tanto no
+  /// seguiste hablándole ni escribiéndole y no suena una alarma.
+  void _rehideLater(Duration after) {
+    _rehide?.cancel();
+    final messages = container.read(chatProvider).length;
+    _rehide = Timer(after, () async {
+      if (!window.visible.value) return;
+      if (container.read(voiceProvider).status != VoiceStatus.idle) return;
+      if (container.read(alarmProvider).active) return;
+      if (container.read(chatProvider).length != messages) return;
+      await setMascotPanel(
+        window: window,
+        panel: container.read(mascotPanelProvider.notifier),
+        next: MascotPanel.none,
+      );
+      _quietHide = true;
+      await window.hide();
+    });
+  }
+
+  /// La próxima vez que se esconda, sin avisar cómo traerla.
+  bool _quietHide = false;
+
+  /// Ya se explicó en esta sesión cómo traerla de vuelta.
+  bool _toldHowToReturn = false;
+
   Future<void> _showPanel(MascotPanel next) async {
     if (!window.visible.value) await window.show();
     await setMascotPanel(
@@ -347,10 +412,23 @@ class DesktopShell {
   }
 
   Future<void> dispose() async {
+    _rehide?.cancel();
     for (final c in _cleanup) {
       c();
     }
     _cleanup.clear();
     await _tray.dispose();
   }
+}
+
+/// Cómo traer de vuelta a la mascota escondida.
+String hiddenMascotHelp(
+    {required String name, required bool wake, required bool shortcut}) {
+  const menu = 'elige «Mostrar mascota» en el menú 🐾 de la barra superior';
+  final ways = [
+    if (wake) 'di «Oye $name»',
+    if (shortcut) 'pulsa ⌃⌥P',
+  ];
+  final how = ways.isEmpty ? menu : '${ways.join(', ')} o $menu';
+  return 'Sigue aquí. Para que vuelva, $how.';
 }

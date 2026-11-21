@@ -16,6 +16,9 @@ class MascotQuickActions extends StatelessWidget {
   final VoidCallback? onDaily;
   final bool dailyOpen;
 
+  /// Esconder la mascota (o `null` para no mostrar el botón).
+  final VoidCallback? onHide;
+
   const MascotQuickActions({
     super.key,
     required this.statsOpen,
@@ -25,6 +28,7 @@ class MascotQuickActions extends StatelessWidget {
     this.gameOpen = false,
     this.onDaily,
     this.dailyOpen = false,
+    this.onHide,
   });
 
   @override
@@ -64,6 +68,15 @@ class MascotQuickActions extends StatelessWidget {
             icon: Icons.more_horiz_rounded,
             onPressed: onMenu,
           ),
+          if (onHide != null) ...[
+            const SizedBox(height: 6),
+            _RoundButton(
+              key: const ValueKey('mascot-hide'),
+              tooltip: 'Esconder (vuelve con «Oye…», ⌃⌥P o el menú 🐾)',
+              icon: Icons.visibility_off_rounded,
+              onPressed: (_) => onHide!(),
+            ),
+          ],
         ],
       ),
     );
@@ -77,6 +90,7 @@ class _RoundButton extends StatelessWidget {
   final void Function(Offset globalPosition) onPressed;
 
   const _RoundButton({
+    super.key,
     required this.tooltip,
     required this.icon,
     required this.onPressed,

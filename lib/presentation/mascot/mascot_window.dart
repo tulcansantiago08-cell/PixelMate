@@ -335,6 +335,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         onRename: () => _rename(context),
         onSettings: () => _openPanel(MascotPanel.settings),
         onPending: () => _openPanel(MascotPanel.pending),
+        onHide: _hide,
       );
     } finally {
       _holdExpanded--;
@@ -373,6 +374,14 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         MascotReaction(
             '¡Me encanta! Desde ahora soy $name 🐾', MascotState.celebrating),
         replace: true);
+  }
+
+  /// Esconde la mascota (la app sigue en la barra de menú y, si está
+  /// activado, esperando «Oye <nombre>»).
+  Future<void> _hide() async {
+    _walker.stop();
+    await _openPanel(MascotPanel.none);
+    await ref.read(mascotWindowProvider).hide();
   }
 
   /// Clic en la mascota: abre o cierra el chat (o cierra otro panel).
@@ -634,6 +643,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                       _wake();
                       _showMenu(context, position);
                     },
+                    onHide: _hide,
                   ),
                   GestureDetector(
                     key: mascotKey,

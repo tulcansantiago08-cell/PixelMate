@@ -277,7 +277,6 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     {
       woke = true
       wakeTimer?.invalidate()
-      SoundPlayer.log("wake: \(res.bestTranscription.formattedString.suffix(80))")
       NSSound(named: "Tink")?.play()
       send("wake", afterName(res.bestTranscription.formattedString))
       return

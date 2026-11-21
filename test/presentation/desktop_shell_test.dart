@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pixelmate/application/activity/detection_settings.dart';
+import 'package:pixelmate/application/assistant/voice.dart';
 import 'package:pixelmate/application/desktop/login_item.dart';
 import 'package:pixelmate/application/progress/celebrations.dart';
 import 'package:pixelmate/domain/session/workday_config.dart';
@@ -233,4 +236,105 @@ void main() {
     await pumpEventQueue();
     expect(player.played, [PetSound.level], reason: 'solo el nivel suena');
   });
+
+  group('escondida, «Oye James» la trae', () {
+    late _WakeVoice voice;
+    late NoopMascotWindow window;
+    late ProviderContainer container;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      voice = _WakeVoice();
+      window = NoopMascotWindow();
+      container = ProviderContainer(overrides: [
+        workdayStoreProvider.overrideWithValue(SqliteWorkdayStore.inMemory()),
+        mascotWindowProvider.overrideWithValue(window),
+        voicePortProvider.overrideWithValue(voice),
+      ]);
+      addTearDown(container.dispose);
+      final mascot = MascotSettings();
+      await mascot.setWakeWord(true);
+      final shell = DesktopShell(
+        container: container,
+        window: window,
+        notifier: SystemNotifier(),
+        detection: DetectionSettings(prefs),
+        mascot: mascot,
+        quitApp: () async {},
+        rehideAfter: const Duration(milliseconds: 80),
+        rehideSilent: const Duration(milliseconds: 20),
+      );
+      await shell.start();
+      addTearDown(shell.dispose);
+      await pumpEventQueue();
+    });
+
+    test('aparece con el chat y, tras responder, se vuelve a esconder',
+        () async {
+      await window.hide();
+      voice.say(VoiceEventType.wake, 'apunta comprar pan');
+      await pumpEventQueue();
+      expect(window.visible.value, isTrue);
+      expect(container.read(mascotPanelProvider), MascotPanel.chat);
+      voice.say(VoiceEventType.done, 'apunta comprar pan');
+      await pumpEventQueue();
+      expect(window.visible.value, isTrue, reason: 'deja leer la respuesta');
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(window.visible.value, isFalse);
+      expect(container.read(mascotPanelProvider), MascotPanel.none);
+    });
+
+    test('una falsa alarma la esconde enseguida', () async {
+      await window.hide();
+      voice.say(VoiceEventType.wake);
+      await pumpEventQueue();
+      expect(window.visible.value, isTrue);
+      voice.say(VoiceEventType.end);
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(window.visible.value, isFalse);
+    });
+
+    test('si estaba a la vista, se queda', () async {
+      voice.say(VoiceEventType.wake, 'apunta comprar pan');
+      voice.say(VoiceEventType.done, 'apunta comprar pan');
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(window.visible.value, isTrue);
+    });
+  });
+
+  test('cómo traerla de vuelta', () {
+    expect(
+        hiddenMascotHelp(name: 'James', wake: true, shortcut: true),
+        'Sigue aquí. Para que vuelva, di «Oye James», pulsa ⌃⌥P o elige '
+        '«Mostrar mascota» en el menú 🐾 de la barra superior.');
+    expect(
+        hiddenMascotHelp(name: 'James', wake: false, shortcut: false),
+        'Sigue aquí. Para que vuelva, elige «Mostrar mascota» en el menú 🐾 '
+        'de la barra superior.');
+  });
+}
+
+/// Voz de mentira: espera el nombre y deja simular lo que oye.
+class _WakeVoice implements VoicePort {
+  final _events = StreamController<VoiceEvent>.broadcast(sync: true);
+  void say(VoiceEventType type, [String text = '']) =>
+      _events.add(VoiceEvent(type, text));
+
+  @override
+  Stream<VoiceEvent> get events => _events.stream;
+  @override
+  Future<String?> start() async => null;
+  @override
+  Future<void> stop() async {}
+  @override
+  Future<void> cancel() async {}
+  @override
+  Future<String?> startWake(String name, {bool strict = false}) async => null;
+  @override
+  Future<void> stopWake() async {}
+  @override
+  Future<void> speak(String text) async {}
+  @override
+  Future<void> stopSpeaking() async {}
 }
