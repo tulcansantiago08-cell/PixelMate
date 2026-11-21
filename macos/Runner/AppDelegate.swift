@@ -26,6 +26,12 @@ class AppDelegate: FlutterAppDelegate {
       registerAppInfo(with: controller.engine.binaryMessenger)
     }
     super.applicationDidFinishLaunching(notification)
+    SoundPlayer.log("app: abierta")
+  }
+
+  override func applicationWillTerminate(_ notification: Notification) {
+    SoundPlayer.log("app: se cierra")
+    super.applicationWillTerminate(notification)
   }
 
   /// Canal "com.pixelmate/app": versión instalada y abrir el repositorio.
@@ -70,9 +76,11 @@ class AppDelegate: FlutterAppDelegate {
     }
   }
 
+  // Vive en la barra de menú: esconder (o cerrar) la ventana de la mascota
+  // no debe cerrar la app, que sigue esperando «Oye <nombre>» y las alarmas.
   override func applicationShouldTerminateAfterLastWindowClosed(
     _ sender: NSApplication
-  ) -> Bool { return true }
+  ) -> Bool { return false }
 
   override func applicationSupportsSecureRestorableState(
     _ app: NSApplication

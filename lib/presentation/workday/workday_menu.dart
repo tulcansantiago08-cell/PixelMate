@@ -22,6 +22,7 @@ Future<MenuAction?> showWorkdayMenu({
   MenuAction? onRename,
   MenuAction? onSettings,
   MenuAction? onPending,
+  MenuAction? onHide,
 }) async {
   final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final position = RelativeRect.fromRect(
@@ -79,6 +80,12 @@ Future<MenuAction?> showWorkdayMenu({
   if (onSettings != null) {
     items.add(
         PopupMenuItem(value: onSettings, child: const Text('⚙️  Ajustes')));
+  }
+
+  if (onHide != null) {
+    items
+      ..add(const PopupMenuDivider())
+      ..add(PopupMenuItem(value: onHide, child: const Text('🙈  Esconder')));
   }
 
   return showMenu<MenuAction>(

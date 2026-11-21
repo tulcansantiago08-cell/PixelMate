@@ -7,6 +7,7 @@ import FlutterMacOS
 ///   play({name, data?}) → la primera vez llega el WAV; luego basta el nombre.
 enum SoundPlayer {
   private static var sounds: [String: NSSound] = [:]
+  private static var datas: [String: Data] = [:]
 
   static func register(with messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(name: "com.pixelmate/sound", binaryMessenger: messenger)
@@ -25,6 +26,7 @@ enum SoundPlayer {
       let bytes = (args["data"] as? FlutterStandardTypedData)?.data
       if let data = bytes, let sound = NSSound(data: data) {
         sounds[name] = sound
+        datas[name] = data
       }
       guard let sound = sounds[name] else {
         log("play \(name): sin sonido (datos: \(bytes?.count ?? -1))")
@@ -33,7 +35,14 @@ enum SoundPlayer {
       }
       sound.stop()
       sound.volume = 1
-      let ok = sound.play()
+      var ok = sound.play()
+      // A veces un NSSound deja de sonar (por ejemplo, tras cambiar la
+      // salida de audio o despertar el Mac): se rehace y se prueba otra vez.
+      if !ok, let data = datas[name], let fresh = NSSound(data: data) {
+        fresh.volume = 1
+        sounds[name] = fresh
+        ok = fresh.play()
+      }
       if !ok { log("play \(name): no sonó") }
       result(ok)
     }
