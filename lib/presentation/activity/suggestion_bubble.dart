@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../application/activity/suggestion.dart';
+import '../common/plain_text.dart';
+import '../stats/stats_style.dart';
 
 /// Globo de la mascota con una pregunta y botones de respuesta.
 class SuggestionBubble extends StatelessWidget {
@@ -18,18 +20,15 @@ class SuggestionBubble extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxWidth: 264),
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-      decoration: BoxDecoration(
-        color: const Color(0xF21E1B2E),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF7C3AED), width: 2),
-      ),
+      decoration: StatsStyle.panel(radius: 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
+          PlainText(
             suggestion.message,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
+            style: const TextStyle(
+                color: StatsStyle.textPrimary, fontSize: 13, height: 1.35),
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -64,7 +63,7 @@ class _OptionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: primary ? const Color(0xFF7C3AED) : const Color(0xFF3A3550),
+      color: primary ? StatsStyle.accent : StatsStyle.surfaceRaised,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
@@ -72,7 +71,7 @@ class _OptionButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           child: Text(
-            label,
+            stripEmoji(label),
             style: TextStyle(
               color: primary ? Colors.white : const Color(0xFFD8CCFF),
               fontSize: 12,

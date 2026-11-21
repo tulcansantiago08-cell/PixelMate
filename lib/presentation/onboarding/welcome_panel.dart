@@ -52,11 +52,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
   Widget build(BuildContext context) {
     final name = ref.watch(petNameProvider);
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -109,8 +105,24 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
         child: Text(text,
             style: const TextStyle(
                 color: StatsStyle.textPrimary,
-                fontSize: 15,
+                fontSize: 20,
+                height: 1.2,
                 fontWeight: FontWeight.w600)),
+      );
+
+  /// Una línea con ícono, para las explicaciones.
+  Widget _tip(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: StatsStyle.card(radius: 8),
+            child: Icon(icon, size: 15, color: StatsStyle.accentLight),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: _body(text)),
+        ]),
       );
 
   Widget _body(String text) => Text(text,
@@ -119,7 +131,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
   Widget _nameStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title('¡Hola! 🐾'),
+          _title('¡Hola!'),
           _body('Soy tu nueva mascota. Vivo en tu escritorio y te acompaño '
               'mientras trabajas, estudias o juegas.\n\n¿Cómo quieres '
               'llamarme?'),
@@ -145,7 +157,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
       builder: (_, __) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title('Encantado, soy $name 😺'),
+          _title('Encantado, soy $name'),
           _body('¿Cuánto quieres enfocarte al día? Te aviso cuando lo '
               'cumplas. Puedes cambiarlo cuando quieras.'),
           const SizedBox(height: 10),
@@ -201,12 +213,12 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
           _body(assistant == null
               ? (ai == null
                   ? 'Comprobando la IA…'
-                  : '💬 Para charlar conmigo: ${ai.problem ?? ''}')
+                  : 'Para charlar conmigo: ${ai.problem ?? ''}')
               : assistant.onDevice
-                  ? '💬 Puedo charlar contigo gratis y sin internet, con la '
+                  ? 'Puedo charlar contigo gratis y sin internet, con la '
                       'IA de tu Mac. Pregúntame cuánto te falta o pídeme '
                       'que empiece una jornada.'
-                  : '💬 Charlamos con ${assistant.label}.'),
+                  : 'Charlamos con ${assistant.label}.'),
         ],
       ),
     );
@@ -216,13 +228,16 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _title('¡Listo! Así me usas'),
-          _body('👆  Haz clic en mí para charlar.\n'
-              '📊  Tus estadísticas, nivel y logros.\n'
-              '⋯   Jornadas, pausa, paseo y mi nombre.\n'
-              '🖱️  Arrástrame a donde quieras.\n'
-              '⚙️  Todo lo demás en Ajustes (barra de menú).\n\n'
-              'Cuando abras tu editor o un juego, $name te propondrá '
-              'empezar. ¡A por ello!'),
+          _tip(Icons.chat_bubble_outline_rounded,
+              'Haz clic en mí para charlar.'),
+          _tip(Icons.bar_chart_rounded, 'Tus estadísticas, nivel y logros.'),
+          _tip(Icons.more_horiz_rounded, 'Jornadas, pausa, paseo y mi nombre.'),
+          _tip(Icons.open_with_rounded, 'Arrástrame a donde quieras.'),
+          _tip(Icons.settings_outlined,
+              'Todo lo demás en Ajustes (barra de menú).'),
+          const SizedBox(height: 6),
+          _body('Cuando abras tu editor o un juego, $name te propondrá '
+              'empezar.'),
         ],
       );
 }

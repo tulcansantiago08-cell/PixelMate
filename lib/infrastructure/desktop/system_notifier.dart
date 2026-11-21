@@ -29,8 +29,8 @@ class SystemNotifier {
     try {
       await _plugin.show(
         id: _nextId++,
-        title: notice.title,
-        body: notice.body,
+        title: _plain(notice.title),
+        body: _plain(notice.body),
         notificationDetails: const NotificationDetails(
           macOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -44,3 +44,15 @@ class SystemNotifier {
     }
   }
 }
+
+/// Las notificaciones de macOS, sin emojis (como el resto de la interfaz).
+String _plain(String s) => s
+    .replaceAll(
+        RegExp(
+            r'[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}'
+            r'\u{231A}\u{231B}\u{23E9}-\u{23FA}\u{25B6}\u{25C0}\u{FE0F}'
+            r'\u{200D}\u{20E3}]',
+            unicode: true),
+        '')
+    .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
+    .trim();

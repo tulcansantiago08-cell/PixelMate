@@ -161,9 +161,9 @@ void main() {
     expect(find.text('Trabajo'), findsOneWidget);
     expect(find.text('Estudio'), findsOneWidget);
     expect(find.text('Juego'), findsOneWidget);
-    await tester.scrollUntilVisible(find.textContaining('✓ completa'), 100,
+    await tester.scrollUntilVisible(find.textContaining('completa'), 100,
         scrollable: find.byType(Scrollable).last);
-    expect(find.textContaining('✓ completa'), findsOneWidget);
+    expect(find.textContaining('completa'), findsOneWidget);
     expect(find.textContaining('máx.'), findsNothing); // "Hoy" no tiene gráfico
 
     await tester.tap(find.text('Semana'));

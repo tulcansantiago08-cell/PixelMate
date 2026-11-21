@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/assistant/chat_controller.dart';
 import '../../application/assistant/voice.dart';
 import '../../application/mascot/mascot_settings.dart';
+import '../common/plain_text.dart';
+import '../stats/stats_style.dart';
 
 class ChatBubble extends ConsumerStatefulWidget {
   const ChatBubble({super.key});
@@ -65,30 +67,19 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1a1a2e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF7C3AED), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7C3AED).withValues(alpha: 0.25),
-            blurRadius: 12,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
+      decoration: StatsStyle.panel(),
       child: Column(
         children: [
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
-              color: Color(0xFF7C3AED),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+              gradient: StatsStyle.accentGradient,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(19)),
             ),
             child: Row(
               children: [
-                const Text('🐾', style: TextStyle(fontSize: 14)),
+                const Icon(Icons.pets_rounded, size: 15, color: Colors.white),
                 const SizedBox(width: 6),
                 Text(
                   ref.watch(petNameProvider),
@@ -127,12 +118,16 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     constraints: const BoxConstraints(maxWidth: 210),
                     decoration: BoxDecoration(
+                      gradient: msg.isUser ? StatsStyle.accentGradient : null,
                       color: msg.isUser
-                          ? const Color(0xFF7C3AED)
+                          ? null
                           : msg.isNote
-                              ? const Color(0xFF1F3A2E) // acción realizada
-                              : const Color(0xFF2d2d44),
-                      borderRadius: BorderRadius.circular(10),
+                              ? const Color(0xFF15352E) // acción realizada
+                              : StatsStyle.surfaceRaised,
+                      borderRadius: BorderRadius.circular(14),
+                      border: msg.isUser
+                          ? null
+                          : Border.all(color: StatsStyle.glassBorder),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,11 +147,23 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                               ],
                             ),
                           ),
-                        Text(
-                          msg.text,
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 12),
-                        ),
+                        if (msg.isUser)
+                          Text(
+                            msg.text,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
+                          )
+                        else
+                          PlainText(
+                            msg.text,
+                            style: const TextStyle(
+                                color: StatsStyle.textPrimary,
+                                fontSize: 12,
+                                height: 1.35),
+                            iconColor: msg.isNote
+                                ? const Color(0xFF5EEAD4)
+                                : StatsStyle.accentLight,
+                          ),
                       ],
                     ),
                   ),
@@ -170,7 +177,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
             Padding(
               key: const ValueKey('voice-problem'),
               padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
-              child: Text(voice.problem!,
+              child: PlainText(voice.problem!,
+                  iconColor: Colors.amber,
                   style: const TextStyle(color: Colors.amber, fontSize: 10)),
             ),
 
@@ -186,7 +194,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                     height: 14,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF7C3AED),
+                      color: StatsStyle.accent,
                     ),
                   ),
                   SizedBox(width: 6),
@@ -209,11 +217,10 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2d2d44),
+                        color: StatsStyle.surfaceRaised,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color:
-                                const Color(0xFF7C3AED).withValues(alpha: 0.5)),
+                            color: StatsStyle.accent.withValues(alpha: 0.5)),
                       ),
                       child: const Icon(Icons.screenshot,
                           color: Colors.white70, size: 16),
@@ -239,7 +246,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                                 color: Colors.white.withValues(alpha: 0.35),
                                 fontSize: 12),
                             filled: true,
-                            fillColor: const Color(0xFF2d2d44),
+                            fillColor: StatsStyle.surfaceRaised,
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
                             border: OutlineInputBorder(
@@ -271,7 +278,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7C3AED),
+                      color: StatsStyle.accent,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child:
@@ -300,12 +307,12 @@ class _Listening extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
-        color: const Color(0xFF2d2d44),
+        color: StatsStyle.surfaceRaised,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFFF4F7B), width: 1),
       ),
       child: Text(
-        heard.isEmpty ? 'Te escucho… habla 🎙️' : heard,
+        heard.isEmpty ? 'Te escucho… habla' : heard,
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
@@ -371,12 +378,12 @@ class _MicButtonState extends State<_MicButton>
           color: widget.listening
               ? Color.lerp(const Color(0xFFE0245E), const Color(0xFFFF6B8F),
                   _pulse.value)
-              : const Color(0xFF2d2d44),
+              : StatsStyle.surfaceRaised,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
               color: widget.listening
                   ? Colors.white70
-                  : const Color(0xFF7C3AED).withValues(alpha: 0.5)),
+                  : StatsStyle.accent.withValues(alpha: 0.5)),
         ),
         child: Icon(widget.listening ? Icons.stop_rounded : Icons.mic,
             color: Colors.white, size: 16),

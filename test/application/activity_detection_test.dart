@@ -53,8 +53,8 @@ void main() {
         'com.google.android.studio',
         'com.apple.dt.Xcode',
       ]) {
-        expect(catalog.identify(ForegroundApp(bundleId: id, name: 'x')),
-            isNotNull,
+        expect(
+            catalog.identify(ForegroundApp(bundleId: id, name: 'x')), isNotNull,
             reason: id);
       }
     });
@@ -143,7 +143,8 @@ void main() {
     final t0 = DateTime(2026, 11, 9, 9);
     late DateTime now;
 
-    Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 20));
+    Future<void> settle() =>
+        Future<void>.delayed(const Duration(milliseconds: 20));
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
@@ -257,8 +258,10 @@ void main() {
     });
 
     test('el estudio tiene su propio saludo', () {
-      expect(reactionFor(const WorkdayStarted(), mode: ActivityMode.study)!
-          .message, contains('estudiar'));
+      expect(
+          reactionFor(const WorkdayStarted(), mode: ActivityMode.study)!
+              .message,
+          contains('estudiar'));
     });
   });
 
@@ -271,7 +274,8 @@ void main() {
     expect(entry(true).key, isNot(entry(false).key));
   });
 
-  testWidgets('el globo muestra la pregunta y responde al tocar', (tester) async {
+  testWidgets('el globo muestra la pregunta y responde al tocar',
+      (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(overrides: [
@@ -291,8 +295,8 @@ void main() {
       ),
     ));
     // El saludo cambia con la hora; las opciones no.
-    expect(find.text('💼 Trabajar'), findsOneWidget);
-    await tester.tap(find.text('📚 Estudiar'));
+    expect(find.text('Trabajar'), findsOneWidget);
+    await tester.tap(find.text('Estudiar'));
     await tester.pump();
     final view = container.read(workdayControllerProvider);
     expect(view.mode, ActivityMode.study);

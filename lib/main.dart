@@ -56,6 +56,7 @@ import 'infrastructure/desktop/system_notifier.dart';
 import 'infrastructure/persistence/sqlite_workday_store.dart';
 import 'presentation/desktop/desktop_shell.dart';
 import 'presentation/mascot/mascot_window.dart';
+import 'presentation/stats/stats_style.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -187,9 +188,51 @@ class PixelMateApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: StatsStyle.fontFamily,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7C3AED),
+          seedColor: StatsStyle.accent,
           brightness: Brightness.dark,
+        ).copyWith(
+          primary: StatsStyle.accent,
+          onPrimary: Colors.white,
+          surface: StatsStyle.surface,
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: StatsStyle.surface,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: StatsStyle.glassBorder)),
+        ),
+        popupMenuTheme: PopupMenuThemeData(
+          color: StatsStyle.surfaceRaised,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: StatsStyle.glassBorder)),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: StatsStyle.accent,
+            foregroundColor: Colors.white,
+            shape: const StadiumBorder(),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: StatsStyle.textPrimary,
+            side: const BorderSide(color: StatsStyle.glassBorder),
+            shape: const StadiumBorder(),
+          ),
+        ),
+        tooltipTheme: TooltipThemeData(
+          decoration: BoxDecoration(
+            color: StatsStyle.surfaceRaised,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: StatsStyle.glassBorder),
+          ),
+          textStyle: const TextStyle(
+              color: StatsStyle.textPrimary,
+              fontSize: 11,
+              fontFamily: StatsStyle.fontFamily),
         ),
       ),
       home: const MascotWindow(),

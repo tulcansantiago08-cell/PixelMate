@@ -112,7 +112,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('update-check')));
     await tester.pumpAndSettle();
-    expect(find.text('🆕 Versión 1.1.0 disponible.'), findsOneWidget);
+    expect(find.text('Versión 1.1.0 disponible.'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('update-download')));
     expect(mac.opened.single, '$releasesPage/tag/v1.1.0');
     expect(find.text('Buscar actualizaciones solo'), findsOneWidget);

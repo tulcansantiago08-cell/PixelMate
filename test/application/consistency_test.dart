@@ -75,7 +75,7 @@ void main() {
       home: Scaffold(
           body: ConsistencyRow(consistency: consistencyAt(days, d(8)))),
     ));
-    expect(find.text('🌱 4 de los últimos 7 días'), findsOneWidget);
+    expect(find.text('4 de los últimos 7 días'), findsOneWidget);
     expect(find.byType(Tooltip), findsNWidgets(7));
     expect(find.byTooltip('Domingo 8 nov: con sesión'), findsOneWidget);
     expect(find.byTooltip('Viernes 6 nov: sin sesión'), findsOneWidget);
@@ -84,6 +84,6 @@ void main() {
       home:
           Scaffold(body: ConsistencyRow(consistency: consistencyAt({}, d(8)))),
     ));
-    expect(find.text('🌱 Sin sesiones en los últimos 7 días'), findsOneWidget);
+    expect(find.text('Sin sesiones en los últimos 7 días'), findsOneWidget);
   });
 }

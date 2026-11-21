@@ -372,7 +372,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     if (name == null || !mounted) return;
     _react(
         MascotReaction(
-            '¡Me encanta! Desde ahora soy $name 🐾', MascotState.celebrating),
+            '¡Me encanta! Desde ahora soy $name.', MascotState.celebrating),
         replace: true);
   }
 

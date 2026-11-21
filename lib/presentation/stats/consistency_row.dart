@@ -15,8 +15,8 @@ class ConsistencyRow extends StatelessWidget {
       Expanded(
         child: Text(
           c.active == 0
-              ? '🌱 Sin sesiones en los últimos 7 días'
-              : '🌱 ${c.active} de los últimos ${c.window} días',
+              ? 'Sin sesiones en los últimos 7 días'
+              : '${c.active} de los últimos ${c.window} días',
           key: const ValueKey('consistency-text'),
           style: const TextStyle(color: StatsStyle.textSecondary, fontSize: 11),
         ),

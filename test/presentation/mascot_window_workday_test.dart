@@ -42,7 +42,7 @@ void main() {
     await settleMenu(tester);
     expect(find.text('Iniciar jornada'), findsOneWidget);
 
-    await tester.tap(find.text('💼  8 horas'));
+    await tester.tap(find.text('8 horas'));
     await settleMenu(tester);
 
     expect(find.textContaining('Enfoque'), findsOneWidget);
@@ -53,13 +53,13 @@ void main() {
     // Con jornada activa el menú ofrece pausar y finalizar.
     await tester.tap(mascot, buttons: kSecondaryButton);
     await settleMenu(tester);
-    await tester.tap(find.text('⏸️  Pausar'));
+    await tester.tap(find.text('Pausar'));
     await settleMenu(tester);
-    expect(find.textContaining('⏸'), findsWidgets);
+    expect(find.textContaining('en pausa'), findsWidgets);
 
     await tester.tap(mascot, buttons: kSecondaryButton);
     await settleMenu(tester);
-    await tester.tap(find.text('⏹️  Finalizar jornada'));
+    await tester.tap(find.text('Finalizar jornada'));
     await settleMenu(tester);
     expect(store.loadActive(), isNull);
     expect(store.history(), hasLength(1));
@@ -107,9 +107,9 @@ void main() {
     await tester.tap(find.byTooltip('Menú: jornada, pausa…'));
     await settleMenu(tester);
     expect(window.expandedCalls, [true], reason: 'ampliada con el menú');
-    expect(find.text('✏️  Cambiar nombre'), findsOneWidget);
+    expect(find.text('Cambiar nombre'), findsOneWidget);
 
-    await tester.tap(find.text('✏️  Cambiar nombre'));
+    await tester.tap(find.text('Cambiar nombre'));
     await settleMenu(tester);
     expect(window.expandedCalls, [true],
         reason: 'sigue ampliada con el diálogo abierto');

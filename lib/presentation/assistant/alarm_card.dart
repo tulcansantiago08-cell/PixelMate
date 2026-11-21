@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/assistant/alarm.dart';
 import '../../application/assistant/alarm_settings.dart';
 import '../../application/assistant/daily_tasks.dart';
+import '../common/plain_text.dart';
+import '../stats/stats_style.dart';
 
 /// Tarjeta de la alarma que suena: la hora, qué toca y los botones para
 /// posponerla o apagarla. La campana se mueve mientras suena.
@@ -48,14 +50,17 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE0245E), Color(0xFFFF8A3D)],
+          colors: [Color(0xFF2E4BFF), Color(0xFF1A2A8C)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white70, width: 1.5),
-        boxShadow: const [
-          BoxShadow(color: Color(0x66E0245E), blurRadius: 14, spreadRadius: 1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0x33FFFFFF)),
+        boxShadow: [
+          BoxShadow(
+              color: StatsStyle.accent.withValues(alpha: 0.55),
+              blurRadius: 22,
+              spreadRadius: 1),
         ],
       ),
       child: Column(
@@ -70,7 +75,8 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
                   angle: sin(_shake.value * 2 * pi * 2) * 0.35,
                   child: child,
                 ),
-                child: const Text('⏰', style: TextStyle(fontSize: 26)),
+                child: const Icon(Icons.alarm_rounded,
+                    color: Colors.white, size: 26),
               ),
               const SizedBox(width: 8),
               Text(
@@ -84,7 +90,7 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
           ),
           const SizedBox(height: 4),
           Text(
-            alarm.text,
+            stripEmoji(alarm.text),
             key: const ValueKey('alarm-text'),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
@@ -103,9 +109,13 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
                     side: const BorderSide(color: Colors.white70),
                     padding: const EdgeInsets.symmetric(vertical: 6),
                   ),
-                  child: Text(
-                      '😴 ${ref.watch(alarmSettingsProvider).snoozeMinutes} min',
-                      style: const TextStyle(fontSize: 12)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.snooze_rounded, size: 15),
+                    const SizedBox(width: 4),
+                    Text(
+                        '${ref.watch(alarmSettingsProvider).snoozeMinutes} min',
+                        style: const TextStyle(fontSize: 12)),
+                  ]),
                 ),
               ),
               const SizedBox(width: 8),
@@ -122,10 +132,10 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFFE0245E),
+                    foregroundColor: StatsStyle.accent,
                     padding: const EdgeInsets.symmetric(vertical: 6),
                   ),
-                  child: Text(daily.isEmpty ? 'Apagar' : '✅ Hecha',
+                  child: Text(daily.isEmpty ? 'Apagar' : 'Hecha',
                       style: const TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w700)),
                 ),

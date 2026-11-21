@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../application/workday/workday_controller.dart';
 import '../../domain/session/workday_config.dart';
 import '../../domain/session/workday_timer.dart';
+import '../stats/stats_style.dart';
 
 /// Acción elegida en el menú (se ejecuta después de cerrarlo).
 typedef MenuAction = FutureOr<void> Function();
@@ -37,7 +38,7 @@ Future<MenuAction?> showWorkdayMenu({
       for (final hours in WorkdayConfig.presetWorkdays)
         PopupMenuItem(
           value: () => controller.start(WorkdayConfig(workday: hours)),
-          child: Text('💼  ${hours.inHours} horas'),
+          child: _label(Icons.work_outline_rounded, '${hours.inHours} horas'),
         ),
     ];
   } else {
@@ -45,16 +46,18 @@ Future<MenuAction?> showWorkdayMenu({
     items = [
       PopupMenuItem(
         value: paused ? controller.resume : controller.pause,
-        child: Text(paused ? '▶️  Reanudar' : '⏸️  Pausar'),
+        child: paused
+            ? _label(Icons.play_arrow_rounded, 'Reanudar')
+            : _label(Icons.pause_rounded, 'Pausar'),
       ),
       PopupMenuItem(
         value: controller.skipPhase,
-        child: const Text('⏭️  Saltar fase'),
+        child: _label(Icons.skip_next_rounded, 'Saltar fase'),
       ),
       const PopupMenuDivider(),
       PopupMenuItem(
         value: controller.finish,
-        child: const Text('⏹️  Finalizar jornada'),
+        child: _label(Icons.stop_rounded, 'Finalizar jornada'),
       ),
     ];
   }
@@ -62,30 +65,35 @@ Future<MenuAction?> showWorkdayMenu({
   items
     ..add(const PopupMenuDivider())
     ..add(PopupMenuItem(
-        value: onShowStats, child: const Text('📊  Estadísticas')));
+        value: onShowStats,
+        child: _label(Icons.bar_chart_rounded, 'Estadísticas')));
   if (onPending != null) {
-    items.add(
-        PopupMenuItem(value: onPending, child: const Text('📝  Pendientes')));
+    items.add(PopupMenuItem(
+        value: onPending,
+        child: _label(Icons.checklist_rounded, 'Pendientes')));
   }
   if (onWalk != null) {
-    items.add(
-        PopupMenuItem(value: onWalk, child: const Text('🚶  Dar un paseo')));
+    items.add(PopupMenuItem(
+        value: onWalk,
+        child: _label(Icons.directions_walk_rounded, 'Dar un paseo')));
   }
 
   if (onRename != null) {
     items.add(PopupMenuItem(
-        value: onRename, child: const Text('✏️  Cambiar nombre')));
+        value: onRename, child: _label(Icons.edit_outlined, 'Cambiar nombre')));
   }
 
   if (onSettings != null) {
-    items.add(
-        PopupMenuItem(value: onSettings, child: const Text('⚙️  Ajustes')));
+    items.add(PopupMenuItem(
+        value: onSettings, child: _label(Icons.settings_outlined, 'Ajustes')));
   }
 
   if (onHide != null) {
     items
       ..add(const PopupMenuDivider())
-      ..add(PopupMenuItem(value: onHide, child: const Text('🙈  Esconder')));
+      ..add(PopupMenuItem(
+          value: onHide,
+          child: _label(Icons.visibility_off_outlined, 'Esconder')));
   }
 
   return showMenu<MenuAction>(
@@ -94,3 +102,15 @@ Future<MenuAction?> showWorkdayMenu({
     items: items,
   );
 }
+
+/// Una opción del menú: ícono de línea y texto.
+Widget _label(IconData icon, String text) =>
+    Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 18, color: StatsStyle.textSecondary),
+      const SizedBox(width: 10),
+      Flexible(
+        child: Text(text,
+            style:
+                const TextStyle(color: StatsStyle.textPrimary, fontSize: 13)),
+      ),
+    ]);

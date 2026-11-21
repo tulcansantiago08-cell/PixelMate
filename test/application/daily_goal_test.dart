@@ -104,7 +104,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('🎯 Faltan 2 h 30 min para tu meta'), findsOneWidget);
+    expect(find.text('Faltan 2 h 30 min para tu meta'), findsOneWidget);
     expect(find.text('Meta: 4 h ▾'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('goal-picker')));
     await tester.pumpAndSettle();

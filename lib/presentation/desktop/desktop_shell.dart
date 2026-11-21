@@ -103,7 +103,7 @@ class DesktopShell {
       if (_toldHowToReturn) return;
       _toldHowToReturn = true;
       unawaited(notifier.show(WorkdayNotice(
-          '${mascot.name} se escondió 🙈',
+          '${mascot.name} se escondió',
           hiddenMascotHelp(
               name: mascot.name,
               wake: mascot.wakeWord,
@@ -212,7 +212,7 @@ class DesktopShell {
     final ringing = container.listen<AlarmState>(alarmProvider, (before, now) {
       if (!now.active || (before?.active ?? false)) return;
       if (!window.visible.value) unawaited(window.show());
-      unawaited(notifier.show(WorkdayNotice('⏰ Alarma', now.text)));
+      unawaited(notifier.show(WorkdayNotice('Alarma', now.text)));
     });
     _cleanup.add(ringing.close);
 
@@ -228,7 +228,7 @@ class DesktopShell {
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {
       if (msg != null && before == null && !window.visible.value) {
-        unawaited(notifier.show(WorkdayNotice('Es tarde 🌙', msg)));
+        unawaited(notifier.show(WorkdayNotice('Es tarde', msg)));
       }
     });
     _cleanup.add(night.close);
@@ -424,7 +424,8 @@ class DesktopShell {
 /// Cómo traer de vuelta a la mascota escondida.
 String hiddenMascotHelp(
     {required String name, required bool wake, required bool shortcut}) {
-  const menu = 'elige «Mostrar mascota» en el menú 🐾 de la barra superior';
+  const menu =
+      'elige «Mostrar mascota» en el menú de PixelMate (barra superior)';
   final ways = [
     if (wake) 'di «Oye $name»',
     if (shortcut) 'pulsa ⌃⌥P',

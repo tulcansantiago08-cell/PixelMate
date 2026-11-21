@@ -31,11 +31,11 @@ class _ExportCsvButtonState extends ConsumerState<ExportCsvButton> {
           .saveText(csvFileName(DateTime.now()), workdaysCsv(history));
       status = path == null
           ? ''
-          : '✅ ${history.length} '
+          : '${history.length} '
               '${history.length == 1 ? 'jornada guardada' : 'jornadas guardadas'}'
               ' en ${path.split('/').last}';
     } catch (_) {
-      status = '⚠️ No se pudo guardar el archivo.';
+      status = 'No se pudo guardar el archivo.';
     }
     if (mounted) {
       setState(() {
@@ -49,10 +49,11 @@ class _ExportCsvButtonState extends ConsumerState<ExportCsvButton> {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          OutlinedButton(
+          OutlinedButton.icon(
             key: const ValueKey('export-csv'),
             onPressed: _busy ? null : _export,
-            child: const Text('⬇️ Exportar CSV'),
+            icon: const Icon(Icons.download_rounded, size: 16),
+            label: const Text('Exportar CSV'),
           ),
           if (_status != null)
             Padding(

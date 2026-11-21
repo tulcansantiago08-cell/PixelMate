@@ -49,9 +49,8 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
 
   void _testSound() => _ring();
 
-  void _ring() => ref.read(alarmProvider.notifier).ring([
-        ReminderItem('test', '🔔 Prueba de alarma', DateTime.now(), alarm: true)
-      ]);
+  void _ring() => ref.read(alarmProvider.notifier).ring(
+      [ReminderItem('test', 'Prueba de alarma', DateTime.now(), alarm: true)]);
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +59,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
     final today = store.today(now);
     final done = today.where((t) => t.doneToday(now)).length;
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -83,11 +78,11 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                 segments: const [
                   ButtonSegment(
                       value: 0,
-                      label: Text('⏰ Diarias', style: TextStyle(fontSize: 11))),
+                      label: Text('Diarias', style: TextStyle(fontSize: 11))),
                   ButtonSegment(
                       value: 1,
-                      label: Text('📅 Calendario',
-                          style: TextStyle(fontSize: 11))),
+                      label:
+                          Text('Calendario', style: TextStyle(fontSize: 11))),
                 ],
                 selected: {_tab},
                 onSelectionChanged: (v) => setState(() {
@@ -128,20 +123,22 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
             if (!_adding)
               Row(children: [
                 Expanded(
-                  child: TextButton(
+                  child: TextButton.icon(
                     key: const ValueKey('daily-test-sound'),
                     onPressed: _testSound,
                     style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         visualDensity: VisualDensity.compact),
-                    child: const Text('🔔 Probar sonido',
+                    icon: const Icon(Icons.volume_up_outlined, size: 16),
+                    label: const Text('Probar sonido',
                         style: TextStyle(fontSize: 11)),
                   ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: FilledButton(
+                  child: FilledButton.icon(
                     key: const ValueKey('daily-add'),
+                    icon: const Icon(Icons.add_rounded, size: 16),
                     onPressed: () {
                       focusApp();
                       setState(() => _adding = true);
@@ -149,8 +146,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                     style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         visualDensity: VisualDensity.compact),
-                    child:
-                        const Text('＋ Añadir', style: TextStyle(fontSize: 12)),
+                    label: const Text('Añadir', style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ]),
@@ -236,8 +232,14 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                   tooltip: t.enabled ? 'Silenciar' : 'Activar',
                   visualDensity: VisualDensity.compact,
                   onPressed: () => store.setEnabled(t.id, !t.enabled),
-                  icon: Text(t.enabled ? '🔔' : '🔕',
-                      style: const TextStyle(fontSize: 14)),
+                  icon: Icon(
+                      t.enabled
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_off_outlined,
+                      size: 17,
+                      color: t.enabled
+                          ? StatsStyle.accentLight
+                          : StatsStyle.textMuted),
                 ),
                 IconButton(
                   key: ValueKey('daily-delete-${t.id}'),
