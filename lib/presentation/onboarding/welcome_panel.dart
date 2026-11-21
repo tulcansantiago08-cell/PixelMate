@@ -26,7 +26,8 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
     padding: WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
     minimumSize: WidgetStatePropertyAll(Size(0, 32)),
-    textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12)),
+    textStyle: WidgetStatePropertyAll(
+        TextStyle(fontSize: 12, fontFamily: StatsStyle.fontFamily)),
     visualDensity: VisualDensity.compact,
   );
   int _step = 0;
@@ -224,20 +225,33 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
     );
   }
 
-  Widget _tipsStep(String name) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _title('¡Listo! Así me usas'),
-          _tip(Icons.chat_bubble_outline_rounded,
-              'Haz clic en mí para charlar.'),
-          _tip(Icons.bar_chart_rounded, 'Tus estadísticas, nivel y logros.'),
-          _tip(Icons.more_horiz_rounded, 'Jornadas, pausa, paseo y mi nombre.'),
-          _tip(Icons.open_with_rounded, 'Arrástrame a donde quieras.'),
-          _tip(Icons.settings_outlined,
-              'Todo lo demás en Ajustes (barra de menú).'),
-          const SizedBox(height: 6),
-          _body('Cuando abras tu editor o un juego, $name te propondrá '
-              'empezar.'),
-        ],
+  Widget _tipsStep(String name) => SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _title('¡Listo! Así me usas'),
+            _tip(
+                Icons.chat_bubble_outline_rounded,
+                'Haz clic en mí para charlar o pedirme cosas: «abre Notas», '
+                '«sube el volumen», «¿qué tengo hoy?».'),
+            _tip(
+                Icons.mic_none_rounded,
+                'Háblame con el micrófono, ⌃⌥V o diciendo «Oye $name» '
+                '(actívalo en Ajustes).'),
+            _tip(Icons.alarm_rounded,
+                'Alarmas, tareas diarias y tu calendario con colores.'),
+            _tip(Icons.bar_chart_rounded, 'Tus estadísticas, nivel y logros.'),
+            _tip(
+                Icons.star_outline_rounded, 'Un minijuego para los descansos.'),
+            _tip(Icons.more_horiz_rounded,
+                'Jornadas de enfoque, pausa, paseo y mi nombre.'),
+            _tip(Icons.visibility_off_outlined,
+                'Escóndeme cuando quieras: vuelvo con «Oye $name» o ⌃⌥P.'),
+            _tip(Icons.settings_outlined,
+                'Todo lo demás en Ajustes (barra de menú).'),
+            const SizedBox(height: 6),
+            _body('Cada mañana te cuento lo que tienes ese día.'),
+          ],
+        ),
       );
 }

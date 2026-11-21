@@ -15,7 +15,7 @@ import '../../application/desktop/mascot_window_port.dart';
 /// - Guarda la posición cada vez que el usuario la arrastra.
 class NativeMascotWindow extends MascotWindowPort with WindowListener {
   static const compactSize = Size(280, 340);
-  static const expandedSize = Size(320, 480);
+  static const expandedSize = Size(360, 640);
 
   static const _keyX = 'mascot.bottomRight.x';
   static const _keyY = 'mascot.bottomRight.y';

@@ -185,10 +185,9 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         : GameTheme.forLevel(_game!.level);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 600),
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme?.accent ?? StatsStyle.accent, width: 2),
+      decoration: StatsStyle.panel().copyWith(
+        border: Border.all(
+            color: (theme?.accent ?? StatsStyle.accent).withValues(alpha: 0.6)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 4, 4, 8),
       child: Column(
@@ -203,11 +202,18 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
                           color: theme!.accent,
                           fontSize: 15,
                           fontWeight: FontWeight.w700))
-                  : const Text('🌟 Atrapa estrellas',
-                      style: TextStyle(
-                          color: StatsStyle.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600)),
+                  : const Row(children: [
+                      Icon(Icons.star_outline_rounded,
+                          size: 18, color: StatsStyle.accentLight),
+                      SizedBox(width: 6),
+                      Flexible(
+                          child: Text('Atrapa estrellas',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: StatsStyle.textPrimary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600))),
+                    ]),
             ),
             if (_stage == _Stage.playing) _hud(_game!),
             IconButton(

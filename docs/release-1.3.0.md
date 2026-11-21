@@ -2,6 +2,12 @@
 
 ### Novedades
 
+- **Nuevo diseño**: azul noche con tarjetas de vidrio, íconos de línea en
+  lugar de emojis, letra Avenir Next y paneles más grandes. La IA responde
+  con un tono sobrio.
+- **Esconde a James** con el botón del ojo o «Esconder» en el menú ⋯: la app
+  sigue en la barra de menú, con sus alarmas, y vuelve con «Oye James» (se
+  vuelve a esconder sola cuando terminas) o ⌃⌥P.
 - **Alarmas** con sonido que se repite hasta apagarlas, tarjeta con
   «😴 Posponer» y «Apagar», y la mascota te dice qué toca.
   - Por chat o voz: «pon una alarma a las 8 am reunión virtual»,
@@ -54,4 +60,4 @@ necesita macOS 26 o posterior con Apple Intelligence.
 Tus datos se quedan en tu Mac. La copia de seguridad es un archivo que
 guardas tú donde quieras.
 
-SHA-256 del zip: `fc6ccee19d64f8699c126001bbe3d4987ef07c625e3da82172c67dbc4aea37d9`
+SHA-256 del zip: `936ba1984f35858982c0ec4433fa3508a00773dfbdd2c24d8bb8cd5b186d6e86`
