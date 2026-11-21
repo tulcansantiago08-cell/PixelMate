@@ -204,7 +204,7 @@ void main() {
     // Navegar entre semanas.
     await tester.tap(find.byKey(const ValueKey('weekly-prev')));
     await tester.pumpAndSettle();
-    expect(find.text('📅 Tu semana · 26 oct – 1 nov'), findsOneWidget);
+    expect(find.text('Tu semana · 26 oct – 1 nov'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('weekly-next')));
     await tester.pumpAndSettle();
     expect(find.text('4 h 30 min'), findsOneWidget);
@@ -283,7 +283,8 @@ void main() {
           MaterialApp(home: Scaffold(body: WeeklyReportPanel(onClose: () {}))),
     ));
     await tester.pumpAndSettle();
-    expect(find.textContaining('📅 Esta semana'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const ValueKey('weekly-title'))).data,
+        startsWith('Esta semana'));
     final next = tester.widget<IconButton>(find.descendant(
         of: find.byKey(const ValueKey('weekly-next')),
         matching: find.byType(IconButton)));

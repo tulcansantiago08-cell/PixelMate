@@ -19,6 +19,7 @@ import '../../application/settings/backup.dart';
 import '../../domain/mascot/pet_accessory.dart';
 import '../../domain/mascot/pet_kind.dart';
 import '../mascot/rename_dialog.dart';
+import '../common/plain_text.dart';
 import '../stats/level_card.dart';
 import '../stats/stats_style.dart';
 
@@ -53,18 +54,14 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final sound = ref.watch(soundSettingsProvider);
 
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
             const Expanded(
-              child: Text('⚙️ Ajustes',
+              child: Text('Ajustes',
                   style: TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 15,
@@ -102,7 +99,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                             await showRenameDialog(context, mascot.name);
                         if (typed != null) await mascot.setName(typed);
                       },
-                      child: Text('${mascot.name} ✏️'),
+                      child: _Editable(mascot.name),
                     ),
                   ),
                   _Row(
@@ -112,12 +109,12 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       onPressed: () async {
                         final typed = await showRenameDialog(
                             context, mascot.userName ?? '',
-                            title: '¿Cómo te llamo? 😊',
+                            title: '¿Cómo te llamo?',
                             hint: 'Tu nombre o apodo',
                             fieldKey: 'user-name');
                         if (typed != null) await mascot.setUserName(typed);
                       },
-                      child: Text('${mascot.userName ?? 'Dímelo'} ✏️'),
+                      child: _Editable(mascot.userName ?? 'Dímelo'),
                     ),
                   ),
                   const Padding(
@@ -144,7 +141,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   ),
                   _Switch(
                     keyName: 'aura',
-                    label: 'Aura brillante ✨',
+                    label: 'Aura brillante',
                     help: level >= auraUnlockLevel
                         ? 'Chispitas alrededor de ${mascot.name}.'
                         : '🔒 Se desbloquea en el nivel $auraUnlockLevel.',
@@ -226,7 +223,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   _Switch(
                     keyName: 'voice',
                     label: 'Responder en voz alta',
-                    help: 'Cuando le hablas con 🎙️ o $voiceShortcutLabel, '
+                    help:
+                        'Cuando le hablas con el micrófono o $voiceShortcutLabel, '
                         'lee su respuesta con la voz del Mac.',
                     value: mascot.voiceReplies,
                     onChanged: mascot.setVoiceReplies,
@@ -320,7 +318,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                               color: StatsStyle.textSecondary, fontSize: 10)),
                   ],
                   const _Section('Inteligencia artificial'),
-                  Text(
+                  PlainText(
                     ai == null
                         ? 'Comprobando…'
                         : ai.assistant != null
@@ -353,7 +351,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   ),
                   const Text(
                     'Tu compañero pixel art para enfocarte, descansar y '
-                    'jugar.\n🔒 Tus datos se quedan en este Mac.',
+                    'jugar. Tus datos se quedan en este Mac.',
                     style: TextStyle(
                         color: StatsStyle.textSecondary, fontSize: 11),
                   ),
@@ -452,7 +450,8 @@ class _Switch extends StatelessWidget {
                     style: const TextStyle(
                         color: StatsStyle.textPrimary, fontSize: 12)),
                 if (help != null)
-                  Text(help!,
+                  PlainText(help!,
+                      iconColor: StatsStyle.textMuted,
                       style: const TextStyle(
                           color: StatsStyle.textMuted, fontSize: 10)),
               ],
@@ -582,7 +581,7 @@ class _UpdateRow extends StatelessWidget {
       spacing: 4,
       children: [
         if (text.isNotEmpty)
-          Text(text,
+          PlainText(text,
               key: const ValueKey('update-status'),
               style: const TextStyle(
                   color: StatsStyle.textSecondary, fontSize: 11)),
@@ -744,11 +743,27 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
           if (_message != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(_message!,
+              child: PlainText(_message!,
                   key: const ValueKey('backup-message'),
                   style: const TextStyle(
                       color: StatsStyle.textSecondary, fontSize: 11)),
             ),
+        ],
+      );
+}
+
+/// Un valor que se puede cambiar: el texto y un lápiz.
+class _Editable extends StatelessWidget {
+  final String text;
+  const _Editable(this.text);
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(text),
+          const SizedBox(width: 4),
+          const Icon(Icons.edit_outlined, size: 14),
         ],
       );
 }

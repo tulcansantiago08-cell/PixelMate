@@ -122,7 +122,7 @@ void main() {
     await pumpPanel(tester, env,
         SettingsPanel(onClose: () {}, onShowWelcome: () => welcome++));
 
-    expect(find.text('Pixel ✏️'), findsOneWidget);
+    expect(find.text('Pixel'), findsOneWidget);
     // Especie: el perro (Nv. 5) y el zorro (Nv. 10) aún están bloqueados.
     expect(find.text('Perro · Nv. 5'), findsOneWidget);
     expect(find.text('Zorro · Nv. 10'), findsOneWidget);
@@ -130,7 +130,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(env.mascot.species, PetKind.cat, reason: 'bloqueado: no cambia');
     // El aura se ve bloqueada hasta el nivel 20.
-    expect(find.text('🔒 Se desbloquea en el nivel 20.'), findsOneWidget);
+    expect(find.text('Se desbloquea en el nivel 20.'), findsOneWidget);
     final aura =
         tester.widget<Switch>(find.byKey(const ValueKey('settings-aura')));
     expect(aura.onChanged, isNull);
@@ -196,7 +196,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('pet-name-save')));
     await tester.pumpAndSettle();
     expect(env.mascot.name, 'Luna');
-    expect(find.text('Luna ✏️'), findsOneWidget);
+    expect(find.text('Luna'), findsOneWidget);
 
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-welcome')), 100,
@@ -222,12 +222,12 @@ void main() {
     var done = 0;
     await pumpPanel(tester, env, WelcomePanel(onDone: () => done++));
 
-    expect(find.text('¡Hola! 🐾'), findsOneWidget);
+    expect(find.text('¡Hola!'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('welcome-name')), 'Nube');
     await tester.tap(find.byKey(const ValueKey('welcome-next')));
     await tester.pumpAndSettle();
     expect(env.mascot.name, 'Nube');
-    expect(find.text('Encantado, soy Nube 😺'), findsOneWidget);
+    expect(find.text('Encantado, soy Nube'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('welcome-goal-3')));
     await tester.pumpAndSettle();
@@ -344,7 +344,7 @@ void main() {
     expect(shortcut.enabled, isTrue, reason: 'activado por defecto');
     shortcut.reportWorking(false);
     await tester.pump();
-    expect(find.text('⚠️ Otra app ya usa ⌃⌥P.'), findsOneWidget);
+    expect(find.text('Otra app ya usa ⌃⌥P.'), findsOneWidget);
 
     Future<void> tapKey(String key) async {
       final f = find.byKey(ValueKey(key));

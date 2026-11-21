@@ -63,11 +63,7 @@ class _CollectionPanelState extends ConsumerState<CollectionPanel> {
     }
 
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(12, 4, 4, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

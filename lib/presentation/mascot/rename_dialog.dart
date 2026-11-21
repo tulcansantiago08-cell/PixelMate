@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../application/mascot/mascot_settings.dart';
+import '../stats/stats_style.dart';
 
 /// Pide un nombre para la mascota. Devuelve el texto escrito o `null` si se
 /// cancela.
 Future<String?> showRenameDialog(BuildContext context, String current,
-        {String title = '¿Cómo me llamo? 🐾',
+        {String title = '¿Cómo me llamo?',
         String hint = 'Michi, Luna, Nube…',
         String fieldKey = 'pet-name'}) =>
     showDialog<String>(
@@ -43,7 +44,7 @@ class _RenameDialogState extends State<_RenameDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E1B2E),
+      backgroundColor: StatsStyle.surface,
       title: Text(widget.title,
           style: const TextStyle(color: Colors.white, fontSize: 15)),
       content: TextField(

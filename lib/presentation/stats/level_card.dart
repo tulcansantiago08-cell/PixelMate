@@ -102,10 +102,16 @@ class _LevelCardState extends State<LevelCard> {
                           color: StatsStyle.textMuted, fontSize: 10),
                     ),
                   ),
+                  if (!_expanded)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 3),
+                      child: Icon(Icons.emoji_events_outlined,
+                          size: 12, color: StatsStyle.textSecondary),
+                    ),
                   Text(
                     _expanded
                         ? 'Ocultar ▴'
-                        : '🏅 $unlocked/${achievements.length}'
+                        : '$unlocked/${achievements.length}'
                             '${onEquip != null ? ' · accesorios' : ''} ▾',
                     style: const TextStyle(
                         color: StatsStyle.textSecondary, fontSize: 10),

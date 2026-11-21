@@ -300,8 +300,8 @@ void main() {
       ),
     ));
     expect(find.text('Nv. 3'), findsOneWidget);
-    expect(find.text('🏅 1/${achievements.length} · accesorios ▾'),
-        findsOneWidget);
+    expect(
+        find.text('1/${achievements.length} · accesorios ▾'), findsOneWidget);
     expect(find.text('Accesorios'), findsNothing);
     expect(find.text('🐾'), findsNothing);
 

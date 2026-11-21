@@ -63,11 +63,7 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
     final current = week == weekStartOf(DateTime.now());
 
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,7 +78,7 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
             ),
             Expanded(
               child: Text(
-                  '📅 ${current ? 'Esta semana' : 'Tu semana'} · '
+                  '${current ? 'Esta semana' : 'Tu semana'} · '
                   '${weekRange(report.start, report.end)}',
                   key: const ValueKey('weekly-title'),
                   style: const TextStyle(
@@ -115,7 +111,7 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                         padding: EdgeInsets.only(top: 12),
                         child: Text(
                             'Esta semana no hubo sesiones. ¡La próxima la '
-                            'empezamos juntos! 🐾',
+                            'empezamos juntos!',
                             style: TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 12)),
                       ),
@@ -134,26 +130,27 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                       const SizedBox(height: 10),
                       StatsDayChart(days: report.stats.days, height: 80),
                       const SizedBox(height: 10),
-                      _Line('📆', '${report.activeDays} de 7 días activos'),
+                      _Line(Icons.calendar_today_outlined,
+                          '${report.activeDays} de 7 días activos'),
                       _Line(
-                          '✅',
+                          Icons.check_circle_outline_rounded,
                           '${report.sessions} '
-                              '${report.sessions == 1 ? 'sesión' : 'sesiones'}'
-                              '${report.completed > 0 ? ' · ${report.completed} ${report.completed == 1 ? 'completa' : 'completas'}' : ''}'),
+                          '${report.sessions == 1 ? 'sesión' : 'sesiones'}'
+                          '${report.completed > 0 ? ' · ${report.completed} ${report.completed == 1 ? 'completa' : 'completas'}' : ''}'),
                       if (report.goal != null)
-                        _Line(
-                            '🎯', 'Meta cumplida ${report.goalDays} de 7 días'),
+                        _Line(Icons.flag_outlined,
+                            'Meta cumplida ${report.goalDays} de 7 días'),
                       if (report.bestDay case final best?)
-                        _Line('🏆',
+                        _Line(Icons.emoji_events_outlined,
                             'Mejor día: ${longDate(best.day)} (${formatSpent(best.total)})'),
-                      _Line('⭐', '+${report.xp} XP'),
+                      _Line(Icons.star_outline_rounded, '+${report.xp} XP'),
                       const SizedBox(height: 10),
                       FutureBuilder<String?>(
                         future: _comment,
                         builder: (context, snap) {
                           final text = snap.data;
                           if (snap.connectionState != ConnectionState.done) {
-                            return Text('💬 $name está pensando…',
+                            return Text('$name está pensando…',
                                 style: const TextStyle(
                                     color: StatsStyle.textMuted, fontSize: 12));
                           }
@@ -165,7 +162,7 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                               color: StatsStyle.surfaceRaised,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text('💬 $name: $text',
+                            child: Text('$name: $text',
                                 style: const TextStyle(
                                     color: StatsStyle.textPrimary,
                                     fontSize: 12)),
@@ -193,16 +190,22 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
 }
 
 class _Line extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String text;
   const _Line(this.icon, this.text);
 
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Text('$icon  $text',
-            style:
-                const TextStyle(color: StatsStyle.textPrimary, fontSize: 12)),
+        child: Row(children: [
+          Icon(icon, size: 15, color: StatsStyle.accentLight),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text,
+                style: const TextStyle(
+                    color: StatsStyle.textPrimary, fontSize: 12)),
+          ),
+        ]),
       );
 }
 

@@ -29,8 +29,8 @@ class DailyGoalRow extends StatelessWidget {
               s == null
                   ? 'Sin meta diaria'
                   : s.reached
-                      ? '🎯 ¡Meta cumplida!'
-                      : '🎯 Faltan ${formatSpent(s.remaining)} para tu meta',
+                      ? '¡Meta cumplida!'
+                      : 'Faltan ${formatSpent(s.remaining)} para tu meta',
               style: const TextStyle(
                   color: StatsStyle.textSecondary, fontSize: 11),
             ),

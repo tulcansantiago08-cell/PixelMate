@@ -347,7 +347,7 @@ void main() {
     await tester.tap(find.byType(Checkbox).first);
     await tester.pump();
     expect(store.pending, isEmpty);
-    expect(find.text('✅ Hechas'), findsOneWidget);
+    expect(find.text('Hechas'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Borrar').first);
     await tester.pump();

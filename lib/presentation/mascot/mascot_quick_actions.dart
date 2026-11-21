@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../stats/stats_style.dart';
 
 /// Botones pequeños junto a la mascota, siempre visibles, para que las
 /// funciones principales no dependan de saber usar el clic derecho o la
@@ -72,7 +73,7 @@ class MascotQuickActions extends StatelessWidget {
             const SizedBox(height: 6),
             _RoundButton(
               key: const ValueKey('mascot-hide'),
-              tooltip: 'Esconder (vuelve con «Oye…», ⌃⌥P o el menú 🐾)',
+              tooltip: 'Esconder (vuelve con «Oye…», ⌃⌥P o la barra superior)',
               icon: Icons.visibility_off_rounded,
               onPressed: (_) => onHide!(),
             ),
@@ -102,9 +103,11 @@ class _RoundButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: active ? const Color(0xFF7C3AED) : const Color(0xEE1E1B2E),
-        shape: const CircleBorder(
-          side: BorderSide(color: Color(0xFF7C3AED), width: 1.5),
+        color: active ? StatsStyle.accent : const Color(0xEE111833),
+        shape: CircleBorder(
+          side: BorderSide(
+              color: active ? StatsStyle.accentLight : StatsStyle.glassBorder,
+              width: 1.2),
         ),
         child: InkWell(
           customBorder: const CircleBorder(),

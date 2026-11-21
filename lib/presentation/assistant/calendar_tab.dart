@@ -391,7 +391,11 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
             key: const ValueKey('cal-add'),
             style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
             onPressed: _openForm,
-            child: const Text('⏰ Con hora', style: TextStyle(fontSize: 11)),
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.schedule_rounded, size: 14),
+              SizedBox(width: 4),
+              Text('Con hora', style: TextStyle(fontSize: 11)),
+            ]),
           ),
       ]),
       if (!past) _quickRow(),
@@ -412,11 +416,13 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
         _row(
           key: ValueKey('cal-note-${n.id}'),
           color: calendarColors[n.color],
-          icon: n.alarm ? '🔔' : (n.macId != null ? '🍎' : null),
+          icon: n.alarm
+              ? Icons.notifications_active_outlined
+              : (n.macId != null ? Icons.event_available_outlined : null),
           time: n.timeLabel,
           text: n.repeat == NoteRepeat.none
               ? n.text
-              : '${n.text} (🔁 ${n.repeat.label})',
+              : '${n.text} · ${n.repeat.label}',
           onTap: () => _edit(n),
           onDelete: () => removeNote(notes, mac, n),
         ),
@@ -424,7 +430,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
         _row(
           key: ValueKey('cal-item-${r.id}'),
           color: _reminderColor,
-          icon: r.alarm ? '🔔' : '⏰',
+          icon: r.alarm
+              ? Icons.notifications_active_outlined
+              : Icons.schedule_rounded,
           time: clock12(r.due.hour, r.due.minute),
           text: r.text,
           onDelete: () => store.removeReminder(r.id),
@@ -432,7 +440,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       for (final t in routine)
         _row(
           key: ValueKey('cal-daily-${t.id}'),
-          icon: isToday && t.doneToday(_now) ? '✅' : '🔁',
+          icon: isToday && t.doneToday(_now)
+              ? Icons.check_circle_outline_rounded
+              : Icons.repeat_rounded,
           time: t.time12,
           text: '${t.text} (diaria)',
         ),
@@ -449,7 +459,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               for (final e in events)
                 _row(
                   key: ValueKey('cal-mac-${e.id}-${e.title}'),
-                  icon: '🍎',
+                  icon: Icons.event_available_outlined,
                   time: e.allDay
                       ? 'Todo el día'
                       : clock12(e.start.hour, e.start.minute),
@@ -462,7 +472,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   }
 
   /// Escribir y ↩: se anota en el día elegido (todo el día), del color
-  /// marcado. «⏰ Con hora» abre el formulario completo.
+  /// marcado. «Con hora» abre el formulario completo.
   Widget _quickRow() => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Column(
@@ -533,7 +543,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   Widget _row(
           {required Key key,
           Color? color,
-          String? icon,
+          IconData? icon,
           required String time,
           required String text,
           VoidCallback? onTap,
@@ -562,8 +572,13 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700)),
               ),
+              if (icon != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 5),
+                  child: Icon(icon, size: 14, color: StatsStyle.accentLight),
+                ),
               Expanded(
-                child: Text(icon == null ? text : '$icon $text',
+                child: Text(text,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

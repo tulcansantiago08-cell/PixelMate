@@ -71,7 +71,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(saver.files.keys.single, startsWith('pixelmate-jornadas-'));
     expect(saver.files.values.single, contains('estudio;45'));
-    expect(find.textContaining('✅ 2 jornadas guardadas en pixelmate-jornadas-'),
+    expect(find.textContaining('2 jornadas guardadas en pixelmate-jornadas-'),
         findsOneWidget);
   });
 

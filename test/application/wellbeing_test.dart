@@ -14,6 +14,7 @@ import 'package:pixelmate/domain/session/workday_config.dart';
 import 'package:pixelmate/infrastructure/persistence/sqlite_workday_store.dart';
 import 'package:pixelmate/presentation/mascot/mascot_window.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pixelmate/presentation/common/plain_text.dart';
 
 void main() {
   test('rota los consejos sin repetir seguidos, distintos en corto y largo',
@@ -78,10 +79,10 @@ void main() {
     final c = await launch(tester);
     final workday = c.read(workdayControllerProvider.notifier);
     // La pregunta de bienvenida (su saludo cambia con la hora).
-    expect(find.text('💼 Trabajar'), findsOneWidget);
+    expect(find.text('Trabajar'), findsOneWidget);
     workday.start(const WorkdayConfig());
     await tester.pump();
-    expect(find.text('💼 Trabajar'), findsNothing,
+    expect(find.text('Trabajar'), findsNothing,
         reason: 'al empezar la jornada se quita la pregunta de bienvenida');
     await tester.pump(const Duration(seconds: 7));
     workday.skipPhase(); // enfoque -> descanso corto
@@ -89,7 +90,7 @@ void main() {
     expect(find.textContaining('Vamos a descansar'), findsOneWidget);
     // Llega después del aviso (y de cualquier otro mensaje en cola, como
     // un logro que dependa de la hora, p. ej. "Madrugador").
-    final tip = find.textContaining(WellnessTip.short.first.text);
+    final tip = find.textContaining(stripEmoji(WellnessTip.short.first.text));
     for (var s = 0; s < 40 && tip.evaluate().isEmpty; s++) {
       await tester.pump(const Duration(seconds: 1));
     }
@@ -108,7 +109,7 @@ void main() {
     workday.skipPhase();
     await tester.pump(const Duration(seconds: 8));
     for (final t in WellnessTip.values) {
-      expect(find.textContaining(t.text), findsNothing);
+      expect(find.textContaining(stripEmoji(t.text)), findsNothing);
     }
     workday.finish();
     await tester.pump(const Duration(seconds: 7));
@@ -119,7 +120,7 @@ void main() {
     workday.skipPhase();
     await tester.pump(const Duration(seconds: 8));
     for (final t in WellnessTip.values) {
-      expect(find.textContaining(t.text), findsNothing);
+      expect(find.textContaining(stripEmoji(t.text)), findsNothing);
     }
     workday.finish();
     await tester.pumpWidget(const SizedBox());

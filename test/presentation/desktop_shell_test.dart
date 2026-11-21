@@ -307,11 +307,11 @@ void main() {
     expect(
         hiddenMascotHelp(name: 'James', wake: true, shortcut: true),
         'Sigue aquí. Para que vuelva, di «Oye James», pulsa ⌃⌥P o elige '
-        '«Mostrar mascota» en el menú 🐾 de la barra superior.');
+        '«Mostrar mascota» en el menú de PixelMate (barra superior).');
     expect(
         hiddenMascotHelp(name: 'James', wake: false, shortcut: false),
-        'Sigue aquí. Para que vuelva, elige «Mostrar mascota» en el menú 🐾 '
-        'de la barra superior.');
+        'Sigue aquí. Para que vuelva, elige «Mostrar mascota» en el menú de '
+        'PixelMate (barra superior).');
   });
 }
 

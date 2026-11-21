@@ -40,28 +40,25 @@ class StatsPanel extends ConsumerWidget {
         ref.watch(workdayControllerProvider.select((v) => v.timer?.id));
 
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
             const Expanded(
-              child: Text('📊 Estadísticas',
+              child: Text('Estadísticas',
                   style: TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
             ),
             if (onShowAlbum != null)
-              TextButton(
+              TextButton.icon(
                 key: const ValueKey('open-album'),
                 onPressed: onShowAlbum,
-                child: const Text('📖 Álbum'),
+                icon: const Icon(Icons.collections_bookmark_outlined, size: 16),
+                label: const Text('Álbum'),
               ),
             IconButton(
               tooltip: 'Cerrar',
@@ -102,8 +99,8 @@ class StatsPanel extends ConsumerWidget {
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         d.episodes == 0
-                            ? '🛡️ Sin distracciones en el enfoque de hoy'
-                            : '👀 ${d.episodes} '
+                            ? 'Sin distracciones en el enfoque de hoy'
+                            : '${d.episodes} '
                                 '${d.episodes == 1 ? 'distracción' : 'distracciones'}'
                                 ' en el enfoque · ${formatSpent(d.time)}',
                         key: const ValueKey('distractions-today'),
@@ -121,10 +118,11 @@ class StatsPanel extends ConsumerWidget {
                 ],
                 if (onShowWeekly != null) ...[
                   const SizedBox(height: 8),
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     key: const ValueKey('open-weekly'),
                     onPressed: onShowWeekly,
-                    child: const Text('📅 Resumen de la semana'),
+                    icon: const Icon(Icons.insights_rounded, size: 16),
+                    label: const Text('Resumen de la semana'),
                   ),
                 ],
                 const SizedBox(height: 6),
@@ -183,7 +181,7 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = stats.isEmpty
-        ? 'Aún no hay sesiones. ¡Cuando quieras empezamos! 🐾'
+        ? 'Aún no hay sesiones. ¡Cuando quieras empezamos!'
         : stats.period == StatsPeriod.today
             ? '${stats.sessions.length} ${stats.sessions.length == 1 ? 'sesión' : 'sesiones'}'
             : '${stats.activeDays} ${stats.activeDays == 1 ? 'día activo' : 'días activos'}';

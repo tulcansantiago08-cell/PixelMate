@@ -34,11 +34,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
   Widget build(BuildContext context) {
     final store = ref.watch(personalStoreProvider);
     return Container(
-      decoration: BoxDecoration(
-        color: StatsStyle.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: StatsStyle.accent, width: 2),
-      ),
+      decoration: StatsStyle.panel(),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       child: ListenableBuilder(
         listenable: store,
@@ -52,7 +48,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
             children: [
               Row(children: [
                 const Expanded(
-                  child: Text('📝 Pendientes',
+                  child: Text('Pendientes',
                       style: TextStyle(
                           color: StatsStyle.textPrimary,
                           fontSize: 15,
@@ -73,7 +69,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                            '🎉 Nada pendiente. Escribe abajo o dímelo en el '
+                            'Nada pendiente. Escribe abajo o dímelo en el '
                             'chat: «apunta comprar pan», «recuérdame en 20 '
                             'minutos…».',
                             style: TextStyle(
@@ -88,11 +84,16 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         onDelete: () => store.removeTask(pending[i].id),
                       ),
                     if (reminders.isNotEmpty) ...[
-                      const _Header('⏰ Recordatorios y alarmas'),
+                      const _Header('Recordatorios y alarmas'),
                       for (final r in reminders)
                         _Row(
                           key: ValueKey('reminder-${r.id}'),
-                          leading: Text(r.alarm ? '🔔' : '⏰'),
+                          leading: Icon(
+                              r.alarm
+                                  ? Icons.notifications_active_outlined
+                                  : Icons.schedule_rounded,
+                              size: 16,
+                              color: StatsStyle.accentLight),
                           text: '${describeWhen(r.due, now)}'
                               '${r.repeat == AlarmRepeat.none ? '' : ' (${r.repeat.label})'}'
                               ': ${r.text}',
@@ -100,7 +101,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         ),
                     ],
                     if (done.isNotEmpty) ...[
-                      const _Header('✅ Hechas'),
+                      const _Header('Hechas'),
                       for (final t in done)
                         _TaskRow(
                           key: ValueKey('task-${t.id}'),
