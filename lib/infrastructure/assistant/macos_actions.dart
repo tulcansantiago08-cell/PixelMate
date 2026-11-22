@@ -193,4 +193,13 @@ class MacosActions implements MacActions {
       return 'failed';
     }
   }
+
+  @override
+  Future<bool> audioPlaying() async {
+    try {
+      return await _channel.invokeMethod<bool>('audioPlaying') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
 }

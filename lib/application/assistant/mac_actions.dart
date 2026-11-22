@@ -74,6 +74,9 @@ abstract class MacActions {
   /// Si están hechos, de los que siguen existiendo.
   Future<Map<String, bool>> appleRemindersDone(List<String> ids);
 
+  /// Si algo está sonando ahora en la salida de sonido del Mac.
+  Future<bool> audioPlaying();
+
   /// Ejecuta un atajo de la app Atajos: "ok", "missing" (no existe),
   /// "denied" (sin permiso) o "failed".
   Future<String> runShortcut(String name);
@@ -258,6 +261,12 @@ class FakeMacActions implements MacActions {
     calendar.removeWhere((e) => e.id == id);
     return calendar.length < before;
   }
+
+  /// Lo que responde [audioPlaying].
+  bool soundPlaying = false;
+
+  @override
+  Future<bool> audioPlaying() async => soundPlaying;
 
   @override
   Future<String> runShortcut(String name) async {

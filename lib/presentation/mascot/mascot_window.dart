@@ -188,6 +188,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
 
   @override
   void dispose() {
+    _keys.dispose();
     _eventsSub?.cancel();
     _reactionTimer?.cancel();
     _idleTimer?.cancel();
@@ -296,7 +297,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     if (!mounted) return;
     _react(
         MascotReaction(
-            '¡Encantado de conocerte! Soy '
+            'Hola. Soy '
             '${ref.read(petNameProvider)} 🐾',
             MascotState.celebrating),
         replace: true);
@@ -374,9 +375,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     if (typed == null) return;
     final name = await settings.setName(typed);
     if (name == null || !mounted) return;
-    _react(
-        MascotReaction(
-            '¡Me encanta! Desde ahora soy $name.', MascotState.celebrating),
+    _react(MascotReaction('Ahora me llamo $name.', MascotState.celebrating),
         replace: true);
   }
 
@@ -387,6 +386,13 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     await _openPanel(MascotPanel.none);
     await ref.read(mascotWindowProvider).hide();
   }
+
+  /// Recibe Esc y ⌘W cuando ningún campo de texto tiene el cursor.
+  final _keys = FocusNode(debugLabel: 'mascota');
+
+  /// La estás usando (no se esconde sola mientras tanto).
+  void _touched() =>
+      ref.read(lastInteractionProvider.notifier).state = DateTime.now();
 
   /// Esc o ⌘W: cierra el panel abierto.
   void _closePanel() {
@@ -427,6 +433,16 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     final ringing = ref.watch(alarmProvider).active;
     final pet = ref.watch(loadedPetProvider).valueOrNull;
     _listenForReactions();
+    // Al abrirse un panel (desde donde sea): para que Esc funcione aunque
+    // no tenga dónde escribir (si lo tiene, el cursor se queda ahí).
+    ref.listen(mascotPanelProvider, (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final focused = FocusManager.instance.primaryFocus;
+        if (mounted && (focused == null || focused is FocusScopeNode)) {
+          _keys.requestFocus();
+        }
+      });
+    });
     final walking = _walker.walking;
     // Baila con la música si no está ocupada en otra cosa (ni en el
     // enfoque). El chat abierto no la para: se ve bailar debajo. El modo
@@ -448,165 +464,180 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
         const SingleActivator(LogicalKeyboardKey.keyW, meta: true): _closePanel,
       },
       child: Focus(
-        autofocus: true,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(
-            // Ancho completo para que la mascota quede pegada a la derecha.
-            child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                // La mascota vive en la esquina inferior derecha de la ventana.
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // El panel abierto ocupa el espacio disponible arriba.
-                  if (panel == MascotPanel.none)
-                    const Spacer()
-                  else
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                        child: _panelFor(panel),
-                      ),
-                    ),
-
-                  // Una alarma sonando, con un panel abierto: encima de la
-                  // mascota.
-                  if (ringing && panel != MascotPanel.none)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 8),
-                      child: AlarmCard(),
-                    ),
-                  if (panel == MascotPanel.none)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ringing
-                          ? const AlarmCard()
-                          : suggestion != null
-                              ? SuggestionBubble(
-                                  suggestion: suggestion,
-                                  onChoose: (action) => ref
-                                      .read(activityDetectionProvider.notifier)
-                                      .choose(action),
-                                )
-                              // Capa propia: el contador cambia cada segundo sin
-                              // redibujar a la mascota.
-                              : RepaintBoundary(
-                                  child: WorkdayBadge(
-                                  view: view,
-                                  speech: _speech,
-                                  // En un descanso con XP por ganar, invita a jugar.
-                                  onPlay: ref
-                                          .watch(gameStoreProvider)
-                                          .canEarnIn(currentBreakKey(view))
-                                      ? () {
-                                          _wake(animate: false);
-                                          _openPanel(MascotPanel.game);
-                                        }
-                                      : null,
-                                )),
-                    ),
-
-                  // Mascota fija abajo, con accesos rápidos a su izquierda.
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MascotQuickActions(
-                        statsOpen: panel == MascotPanel.stats,
-                        onStats: () {
-                          _wake();
-                          _openPanel(panel == MascotPanel.stats
-                              ? MascotPanel.none
-                              : MascotPanel.stats);
-                        },
-                        gameOpen: panel == MascotPanel.game,
-                        dailyOpen: panel == MascotPanel.daily,
-                        onDaily: () {
-                          _wake();
-                          _openPanel(panel == MascotPanel.daily
-                              ? MascotPanel.none
-                              : MascotPanel.daily);
-                        },
-                        onGame: () {
-                          _wake();
-                          _openPanel(panel == MascotPanel.game
-                              ? MascotPanel.none
-                              : MascotPanel.game);
-                        },
-                        onMenu: (position) {
-                          _wake();
-                          _showMenu(context, position);
-                        },
-                        onHide: _hide,
-                      ),
-                      Semantics(
-                        button: true,
-                        label: '${ref.watch(petNameProvider)}: toca para '
-                            'charlar, arrastra para moverla',
-                        child: GestureDetector(
-                          key: mascotKey,
-                          behavior: HitTestBehavior.opaque,
-                          onPanStart: (_) async {
-                            _wake(
-                                animate: false); // arrastrarla detiene el paseo
-                            await windowManager.startDragging();
-                          },
-                          onTap: _onMascotTap,
-                          onSecondaryTapDown: (details) {
-                            _wake();
-                            _showMenu(context, details.globalPosition);
-                          },
-                          child: pet == null
-                              ? const SizedBox.square(dimension: 160)
-                              : MusicDance(
-                                  dancing: dancing,
-                                  builder: (context, armsUp) => Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            SpriteMascot(
-                                              pet: pet,
-                                              animation: walking
-                                                  ? PetAnimation.walk
-                                                  : dancing
-                                                      ? (armsUp
-                                                          ? PetAnimation
-                                                              .celebrate
-                                                          : PetAnimation.happy)
-                                                      : animationFor(
-                                                          _mascotState(
-                                                              view, panel)),
-                                              // El gato mira a la izquierda (cola a la derecha):
-                                              // se voltea al caminar hacia la derecha.
-                                              flipped: walking &&
-                                                  !_walker.facingLeft,
-                                              oneShot:
-                                                  walking ? null : _oneShot,
-                                              paused: !ref
-                                                  .read(mascotWindowProvider)
-                                                  .visible
-                                                  .value,
-                                              accessory: pet.accessories[
-                                                  ref.watch(
-                                                      equippedAccessoryProvider)],
-                                              onOneShotDone: () {
-                                                if (mounted) {
-                                                  setState(
-                                                      () => _oneShot = null);
-                                                }
-                                              },
-                                            ),
-                                            // Nivel 20: chispitas alrededor.
-                                            if (ref.watch(auraActiveProvider))
-                                              const AuraSparkles(),
-                                          ])),
+        focusNode: _keys,
+        // Sin autofocus: si no, le quitaría el cursor a los campos de texto
+        // de los paneles al abrirse.
+        // Cualquier tecla cuenta como que la estás usando.
+        onKeyEvent: (_, __) {
+          _touched();
+          return KeyEventResult.ignored;
+        },
+        child: Listener(
+          // Y cualquier clic o desplazamiento.
+          onPointerDown: (_) => _touched(),
+          onPointerSignal: (_) => _touched(),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              // Ancho completo para que la mascota quede pegada a la derecha.
+              child: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  // La mascota vive en la esquina inferior derecha de la ventana.
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // El panel abierto ocupa el espacio disponible arriba.
+                    if (panel == MascotPanel.none)
+                      const Spacer()
+                    else
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                          child: _panelFor(panel),
                         ),
                       ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 8),
-                ],
+                    // Una alarma sonando, con un panel abierto: encima de la
+                    // mascota.
+                    if (ringing && panel != MascotPanel.none)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: AlarmCard(),
+                      ),
+                    if (panel == MascotPanel.none)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ringing
+                            ? const AlarmCard()
+                            : suggestion != null
+                                ? SuggestionBubble(
+                                    suggestion: suggestion,
+                                    onChoose: (action) => ref
+                                        .read(
+                                            activityDetectionProvider.notifier)
+                                        .choose(action),
+                                  )
+                                // Capa propia: el contador cambia cada segundo sin
+                                // redibujar a la mascota.
+                                : RepaintBoundary(
+                                    child: WorkdayBadge(
+                                    view: view,
+                                    speech: _speech,
+                                    // En un descanso con XP por ganar, invita a jugar.
+                                    onPlay: ref
+                                            .watch(gameStoreProvider)
+                                            .canEarnIn(currentBreakKey(view))
+                                        ? () {
+                                            _wake(animate: false);
+                                            _openPanel(MascotPanel.game);
+                                          }
+                                        : null,
+                                  )),
+                      ),
+
+                    // Mascota fija abajo, con accesos rápidos a su izquierda.
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MascotQuickActions(
+                          statsOpen: panel == MascotPanel.stats,
+                          onStats: () {
+                            _wake();
+                            _openPanel(panel == MascotPanel.stats
+                                ? MascotPanel.none
+                                : MascotPanel.stats);
+                          },
+                          gameOpen: panel == MascotPanel.game,
+                          dailyOpen: panel == MascotPanel.daily,
+                          onDaily: () {
+                            _wake();
+                            _openPanel(panel == MascotPanel.daily
+                                ? MascotPanel.none
+                                : MascotPanel.daily);
+                          },
+                          onGame: () {
+                            _wake();
+                            _openPanel(panel == MascotPanel.game
+                                ? MascotPanel.none
+                                : MascotPanel.game);
+                          },
+                          onMenu: (position) {
+                            _wake();
+                            _showMenu(context, position);
+                          },
+                          onHide: _hide,
+                        ),
+                        Semantics(
+                          button: true,
+                          label: '${ref.watch(petNameProvider)}: toca para '
+                              'charlar, arrastra para moverla',
+                          child: GestureDetector(
+                            key: mascotKey,
+                            behavior: HitTestBehavior.opaque,
+                            onPanStart: (_) async {
+                              _wake(
+                                  animate:
+                                      false); // arrastrarla detiene el paseo
+                              await windowManager.startDragging();
+                            },
+                            onTap: _onMascotTap,
+                            onSecondaryTapDown: (details) {
+                              _wake();
+                              _showMenu(context, details.globalPosition);
+                            },
+                            child: pet == null
+                                ? const SizedBox.square(dimension: 160)
+                                : MusicDance(
+                                    dancing: dancing,
+                                    builder: (context, armsUp) => Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              SpriteMascot(
+                                                pet: pet,
+                                                animation: walking
+                                                    ? PetAnimation.walk
+                                                    : dancing
+                                                        ? (armsUp
+                                                            ? PetAnimation
+                                                                .celebrate
+                                                            : PetAnimation
+                                                                .happy)
+                                                        : animationFor(
+                                                            _mascotState(
+                                                                view, panel)),
+                                                // El gato mira a la izquierda (cola a la derecha):
+                                                // se voltea al caminar hacia la derecha.
+                                                flipped: walking &&
+                                                    !_walker.facingLeft,
+                                                oneShot:
+                                                    walking ? null : _oneShot,
+                                                paused: !ref
+                                                    .read(mascotWindowProvider)
+                                                    .visible
+                                                    .value,
+                                                accessory: pet.accessories[
+                                                    ref.watch(
+                                                        equippedAccessoryProvider)],
+                                                onOneShotDone: () {
+                                                  if (mounted) {
+                                                    setState(
+                                                        () => _oneShot = null);
+                                                  }
+                                                },
+                                              ),
+                                              // Nivel 20: chispitas alrededor.
+                                              if (ref.watch(auraActiveProvider))
+                                                const AuraSparkles(),
+                                            ])),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
           ),

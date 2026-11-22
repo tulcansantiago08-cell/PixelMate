@@ -53,10 +53,10 @@ void main() {
             userName: 'Santi',
             items: const [AgendaItem('9:00 a. m.', 'Reunión', 540)],
             pending: 2),
-        '☀️ ¡Buenos días, Santi! Hoy tienes:\n• 9:00 a. m. · Reunión\n'
+        '☀️ Buenos días, Santi. Hoy tienes:\n• 9:00 a. m. · Reunión\n'
         '📝 Tienes 2 tareas pendientes.');
     expect(briefingMessage(items: const []),
-        '☀️ ¡Buenos días! Hoy no tienes nada anotado. ¿Qué te gustaría lograr?');
+        '☀️ Buenos días. Hoy no tienes nada anotado. ¿Qué te gustaría lograr?');
   });
 
   test('una vez al día, desde las 6 y si está activado', () async {

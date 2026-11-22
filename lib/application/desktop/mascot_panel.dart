@@ -35,3 +35,7 @@ Future<void> setMascotPanel({
     await window.setExpanded(false);
   }
 }
+
+/// La última vez que tocaste o escribiste en la ventana de la mascota (para
+/// no esconderla mientras la usas).
+final lastInteractionProvider = StateProvider<DateTime?>((_) => null);

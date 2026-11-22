@@ -109,9 +109,7 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                   ? [
                       const Padding(
                         padding: EdgeInsets.only(top: 12),
-                        child: Text(
-                            'Esta semana no hubo sesiones. ¡La próxima la '
-                            'empezamos juntos!',
+                        child: Text('Esta semana no hubo sesiones.',
                             style: TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 12)),
                       ),

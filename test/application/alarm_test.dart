@@ -425,7 +425,7 @@ void main() {
       container: container,
       child: MaterialApp(home: Scaffold(body: DailyTasksPanel(onClose: () {}))),
     ));
-    expect(find.textContaining('Aún no tienes tareas diarias'), findsOneWidget);
+    expect(find.textContaining('Sin alarmas'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('daily-add')));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -460,7 +460,7 @@ void main() {
       calendarStoreProvider.overrideWith((_) => notes),
     ]);
     addTearDown(container.dispose);
-    await tester.binding.setSurfaceSize(const Size(284, 700));
+    await tester.binding.setSurfaceSize(const Size(300, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,

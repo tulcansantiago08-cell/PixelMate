@@ -93,7 +93,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
               key: const ValueKey('welcome-next'),
               onPressed: _next,
               style: _compact,
-              child: Text(_step == _steps - 1 ? '¡Empecemos!' : 'Siguiente'),
+              child: Text(_step == _steps - 1 ? 'Empezar' : 'Siguiente'),
             ),
           ]),
         ],
@@ -132,7 +132,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
   Widget _nameStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title('¡Hola!'),
+          _title('Hola'),
           _body('Soy tu nueva mascota. Vivo en tu escritorio y te acompaño '
               'mientras trabajas, estudias o juegas.\n\n¿Cómo quieres '
               'llamarme?'),
@@ -229,7 +229,7 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _title('¡Listo! Así me usas'),
+            _title('Así me usas'),
             _tip(
                 Icons.chat_bubble_outline_rounded,
                 'Haz clic en mí para charlar o pedirme cosas: «abre Notas», '

@@ -181,7 +181,7 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = stats.isEmpty
-        ? 'Aún no hay sesiones. ¡Cuando quieras empezamos!'
+        ? 'Aún no hay sesiones.'
         : stats.period == StatsPeriod.today
             ? '${stats.sessions.length} ${stats.sessions.length == 1 ? 'sesión' : 'sesiones'}'
             : '${stats.activeDays} ${stats.activeDays == 1 ? 'día activo' : 'días activos'}';

@@ -56,7 +56,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       : super([
           ChatMessage(
             text:
-                '¡Hola${_greetName(_ref)}! Soy ${_ref.read(petNameProvider)} 🐾\n'
+                'Hola${_greetName(_ref)}. Soy ${_ref.read(petNameProvider)}.\n'
                 '¿En qué te ayudo hoy?\n\n'
                 'Puedo decirte cuánto te falta, empezar o pausar tu jornada '
                 'y cambiar tu meta. Pídemelo con tus palabras.',
@@ -243,7 +243,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       _add(ChatMessage(text: e.message, isUser: false));
     } catch (e) {
       debugPrint('Chat: $e');
-      _add(ChatMessage(text: '¡Ups! Algo falló 😵. $e', isUser: false));
+      _add(ChatMessage(text: 'Algo falló: $e', isUser: false));
     } finally {
       isLoading = false;
       state = [...state];

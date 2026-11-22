@@ -68,7 +68,7 @@ void main() {
     test('sin enfoque profundo, se celebra al momento', () {
       c.read(workdayControllerProvider.notifier).start(const WorkdayConfig());
       levelUp();
-      expect(seen.map((s) => s.title), contains('¡Nivel 5!'));
+      expect(seen.map((s) => s.title), contains('Nivel 5'));
       expect(seen.first.message, isNot(startsWith('Mientras')));
       c.read(workdayControllerProvider.notifier).finish();
     });
@@ -104,7 +104,7 @@ void main() {
     test('sin jornada no hay nada que esperar', () async {
       await settings.setDeepFocus(true);
       levelUp();
-      expect(seen.map((s) => s.title), contains('¡Nivel 5!'));
+      expect(seen.map((s) => s.title), contains('Nivel 5'));
     });
   });
 }

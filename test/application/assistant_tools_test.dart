@@ -82,7 +82,7 @@ void main() {
     test('recordatorios: se guardan con su hora; sin hora se pregunta',
         () async {
       expect(await say('recuérdame en 20 minutos llamar a mamá'),
-          '⏰ Listo: te recuerdo «llamar a mamá» hoy a las 8:15.');
+          '⏰ Recordatorio: «llamar a mamá», hoy a las 8:15.');
       expect(await say('recuérdame mañana a las 9 tomar la pastilla'),
           contains('mañana a las 9:00'));
       expect(store.reminders.map((r) => r.text),
@@ -93,18 +93,18 @@ void main() {
 
     test('tareas: apuntar, ver, tachar', () async {
       expect(await say('apunta comprar leche'),
-          '📝 Apunté «comprar leche». Tienes 1 tarea pendiente.');
+          '📝 Apuntado: «comprar leche». 1 pendiente.');
       await say('añade a mis tareas pagar la luz');
       final list = await say('¿qué tengo pendiente?');
       expect(list, contains('1. comprar leche'));
       expect(list, contains('2. pagar la luz'));
       expect(await say('marca la 2 como hecha'),
-          '✅ ¡Hecho! Taché «pagar la luz». Te quedan 1.');
+          '✅ Tachada: «pagar la luz». Te quedan 1.');
       expect(await say('ya terminé la 5'), contains('No encuentro la tarea 5'));
       expect(await say('marca la 1 como hecha'),
-          contains('¡No te queda nada pendiente!'));
+          contains('No te queda nada pendiente'));
       expect(
-          await say('¿qué tengo pendiente?'), '🎉 No tienes nada pendiente.');
+          await say('¿qué tengo pendiente?'), '✅ Nada pendiente.');
     });
 
     test('abrir: app instalada, web conocida o aviso', () async {
@@ -162,7 +162,7 @@ void main() {
           await say(
               'abre visual studio code y haz un script de python para sumar'),
           '💻 Escribí «sumar.py» (Python) y lo abrí en Visual Studio Code. '
-          '¡Revísalo antes de ejecutarlo!');
+          'Revísalo antes de ejecutarlo.');
       expect(coder.asked.single, 'python: sumar');
       expect(mac.saved['sumar.py'], contains('def sumar'));
 
@@ -245,7 +245,7 @@ void main() {
 
       now = t0.add(const Duration(minutes: 20));
       await c.check();
-      expect(c.state!.message, '⏰ ¡Recuerda: llamar a mamá!');
+      expect(c.state!.message, '⏰ Recuerda: llamar a mamá.');
       expect(store.reminders, isEmpty);
     });
 
@@ -284,7 +284,7 @@ void main() {
       expect(store.pending.single.text, 'comprar leche');
       final m = c.read(chatProvider);
       expect(m.last.isNote, isTrue);
-      expect(m.last.text, contains('Apunté «comprar leche»'));
+      expect(m.last.text, contains('Apuntado: «comprar leche»'));
     });
 
     test('lo que no entienden las reglas lo decide la IA', () async {
@@ -297,7 +297,7 @@ void main() {
           .send('oye, no se me puede olvidar: tarea de llamar al banco');
       expect(ai.calls, 1);
       expect(store.pending.single.text, 'llamar al banco');
-      expect(c.read(chatProvider).last.text, contains('Apunté'),
+      expect(c.read(chatProvider).last.text, contains('Apuntado'),
           reason: 'se muestra lo que pasó, no la respuesta de la IA');
     });
 

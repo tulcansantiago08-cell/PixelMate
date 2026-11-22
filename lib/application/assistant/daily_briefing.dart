@@ -65,8 +65,8 @@ List<AgendaItem> agendaFor(
 String briefingMessage(
     {String? userName, required List<AgendaItem> items, int pending = 0}) {
   final hi = userName == null || userName.isEmpty
-      ? '☀️ ¡Buenos días!'
-      : '☀️ ¡Buenos días, $userName!';
+      ? '☀️ Buenos días.'
+      : '☀️ Buenos días, $userName.';
   final tasks = pending == 0
       ? ''
       : pending == 1

@@ -84,7 +84,7 @@ void main() {
       addTearDown(scheduler.dispose);
       await scheduler.check();
       expect(alarms.state.text, 'Reunión');
-      expect(scheduler.state!.message, '⏰ ¡Recuerda: hoy es «Cumple»!');
+      expect(scheduler.state!.message, '⏰ Recuerda: hoy es «Cumple».');
     });
 
     test('se copia al Calendario del Mac y se borra de los dos', () async {
@@ -269,9 +269,9 @@ void main() {
           .run(p('anota en mi calendario el viernes cumpleaños de mamá')!);
       expect(
           reply,
-          '📅 Anotado en tu calendario: «Cumpleaños de mamá» el viernes 20 de '
-          'noviembre (todo el día; ese día te aviso a las 8:00 a. m.), y se '
-          'repite cada año. También está en el Calendario del Mac.');
+          '📅 Anotado: «Cumpleaños de mamá», el viernes 20 de noviembre (todo '
+          'el día, aviso a las 8:00 a. m.), cada año. Copiado al Calendario '
+          'del Mac.');
       expect(notes.notes.single.color, 1);
       expect(mac.calendar.single.title, 'Cumpleaños de mamá');
     });

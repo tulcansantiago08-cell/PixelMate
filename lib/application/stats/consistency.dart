@@ -56,9 +56,9 @@ String? consistencyMilestone(Consistency? before, Consistency after) {
   if (before == null || before.today != after.today) return null;
   if (after.active <= before.active) return null;
   return switch (after.active) {
-    7 => '🌱 ¡7 de los últimos 7 días! Constancia total. Recuerda que '
+    7 => '7 de los últimos 7 días. Recuerda que '
         'descansar también cuenta 😌',
-    5 => '🌱 ¡5 de los últimos 7 días! Qué buen ritmo llevas.',
+    5 => '5 de los últimos 7 días.',
     _ => null,
   };
 }

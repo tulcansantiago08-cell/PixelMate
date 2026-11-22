@@ -175,7 +175,14 @@ ParsedCommand? _openCommand(String what,
     // cambia la longitud, así que las posiciones valen para el original).
     final q = search.group(1)!;
     final end = _siteSuffix.firstMatch(folded)!.start;
-    final query = cleanText(original.substring(end - q.length, end));
+    var query = cleanText(original.substring(end - q.length, end));
+    // "Pon música en YouTube" sin decir cuál: una mezcla de música.
+    if (play &&
+        RegExp(r'^(?:(?:una?|la|el|algo de|alguna|unas?)\s+)?'
+                r'(?:musica|cancion|canciones|tema|temas|video musical)$')
+            .hasMatch(folded.substring(0, end).trim())) {
+      query = 'música mix';
+    }
     // "abre youtube" o "una canción en YouTube" sin nada que buscar: el sitio.
     return ParsedCommand(AssistantIntent.open,
         text: query.isEmpty ? site : query,

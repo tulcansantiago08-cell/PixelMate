@@ -42,7 +42,7 @@ class Suggestion {
   static Suggestion? forApp(ForegroundApp app, DetectableApp rule) =>
       switch (rule.category) {
         AppCategory.development => Suggestion(
-            message: '¡Veo que vamos a programar en ${rule.name}! '
+            message: 'Abriste ${rule.name}. '
                 '¿Iniciamos una jornada?',
             options: [
               const SuggestionOption(
@@ -57,7 +57,7 @@ class Suggestion {
             category: rule.category,
           ),
         AppCategory.gaming => Suggestion(
-            message: '¡Veo que vamos a jugar ${rule.name}! '
+            message: 'Abriste ${rule.name}. '
                 '¿Activamos el modo gamer?',
             options: [
               const SuggestionOption(
@@ -75,9 +75,9 @@ class Suggestion {
   /// Pregunta al abrir PixelMate.
   static Suggestion welcome(DateTime localNow) {
     final message = switch (DayPart.of(localNow)) {
-      DayPart.morning => '¡Buenos días! ☀️ ¿Qué aventuras tenemos hoy?',
-      DayPart.afternoon => '¡Buenas tardes! ¿Qué hacemos?',
-      DayPart.evening => '¡Buenas noches! ¿Un rato más o algo tranquilo?',
+      DayPart.morning => 'Buenos días. ¿Qué toca hoy?',
+      DayPart.afternoon => 'Buenas tardes. ¿Qué hacemos?',
+      DayPart.evening => 'Buenas noches. ¿Un rato más o algo tranquilo?',
       DayPart.night => 'Es muy tarde 🌙 ¿Algo rápido, o mejor descansamos?',
     };
     return Suggestion(

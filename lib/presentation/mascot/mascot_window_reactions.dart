@@ -19,6 +19,20 @@ extension _Reactions on _MascotWindowState {
     // Música: al empezar una canción, la dice (no durante el enfoque).
     ref.listen(musicProvider, (before, now) {
       final song = now.now;
+      // El video que puso no llegó a sonar: el navegador no lo reprodujo.
+      if ((before?.playing ?? false) &&
+          before?.now?.source == 'youtube' &&
+          song?.source == 'youtube' &&
+          !now.playing &&
+          ref.read(musicProvider.notifier).videoDidNotStart) {
+        _react(
+            const MascotReaction(
+                'Abrí el video, pero no empezó a sonar: dale play en el '
+                'navegador.',
+                MascotState.alert),
+            duration: const Duration(seconds: 10));
+        return;
+      }
       if (song == null ||
           (song.source != 'disco' &&
               !ref.read(mascotSettingsProvider).musicReactions)) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/assistant/alarm.dart';
+import '../../application/assistant/alarm_settings.dart';
 import '../../application/assistant/daily_tasks.dart';
 import '../../application/assistant/personal_store.dart';
 import '../../infrastructure/desktop/native_effects.dart';
@@ -31,20 +32,57 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
 
   @override
   void dispose() {
+    _textFocus.dispose();
     _text.dispose();
     super.dispose();
   }
 
+  /// Por qué no se guardó (se muestra encima de «Guardar»).
+  String? _problem;
+  final _textFocus = FocusNode();
+
   Future<void> _save() async {
-    final added = await ref
-        .read(dailyTaskStoreProvider)
-        .add(_text.text, _hour, _minute, days: _days, now: DateTime.now());
-    if (added == null) return;
+    final text = _text.text.trim();
+    appLog('diarias: guardar «$text» a las $_hour:$_minute, '
+        '${_days.length} días');
+    if (text.isEmpty) {
+      setState(() => _problem = 'Escribe qué tienes que hacer.');
+      _textFocus.requestFocus();
+      return;
+    }
+    if (_days.isEmpty) {
+      setState(() => _problem = 'Elige al menos un día.');
+      return;
+    }
+    final DailyTask? added;
+    try {
+      added = await ref
+          .read(dailyTaskStoreProvider)
+          .add(text, _hour, _minute, days: _days, now: DateTime.now());
+    } catch (e) {
+      appLog('diarias: error al guardar: $e');
+      if (mounted) setState(() => _problem = 'No pude guardarla: $e');
+      return;
+    }
+    appLog('diarias: guardada ${added?.id}');
+    if (added == null || !mounted) return;
     _text.clear();
     setState(() {
       _adding = false;
+      _problem = null;
       _days = {...allDays};
     });
+  }
+
+  /// Abre el formulario con el cursor ya en el texto.
+  void _openForm() {
+    focusApp();
+    setState(() {
+      _adding = true;
+      _problem = null;
+    });
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _textFocus.requestFocus());
   }
 
   void _testSound() => _ring();
@@ -139,10 +177,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                   child: FilledButton.icon(
                     key: const ValueKey('daily-add'),
                     icon: const Icon(Icons.add_rounded, size: 16),
-                    onPressed: () {
-                      focusApp();
-                      setState(() => _adding = true);
-                    },
+                    onPressed: _openForm,
                     style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         visualDensity: VisualDensity.compact),
@@ -162,96 +197,21 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text(
-            'Aún no tienes tareas diarias. Pulsa «Añadir» y elige la hora '
-            'y los días: a esa hora sonará una alarma y te diré qué toca.\n\n'
-            'También puedes decírmelo: «tarea diaria a las 8 am reunión '
-            'virtual» o «alarma de lunes a viernes a las 7 gimnasio».',
+            'Sin alarmas.\n'
+            'Añade una o dímelo: «alarma de lunes a viernes a las 7 '
+            'gimnasio».',
             style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
       );
     }
-    return ListView(
-      padding: const EdgeInsets.only(right: 4),
+    final sound = alarmSounds[ref.watch(alarmSettingsProvider).sound] ?? '';
+    return GridView.count(
+      crossAxisCount: 2,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 0.86,
+      padding: const EdgeInsets.only(right: 4, bottom: 4),
       children: [
-        for (final t in tasks)
-          Padding(
-            key: ValueKey('daily-${t.id}'),
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 28,
-                  child: t.isToday(now) && t.enabled
-                      ? Checkbox(
-                          key: ValueKey('daily-done-${t.id}'),
-                          value: t.doneToday(now),
-                          visualDensity: VisualDensity.compact,
-                          onChanged: (v) =>
-                              store.setDone(t.id, v ?? false, now),
-                        )
-                      : const SizedBox(),
-                ),
-                SizedBox(
-                  width: 58,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(t.time12,
-                        style: TextStyle(
-                            color: t.enabled
-                                ? StatsStyle.textPrimary
-                                : StatsStyle.textMuted,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.text,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: t.enabled
-                                ? StatsStyle.textPrimary
-                                : StatsStyle.textMuted,
-                            fontSize: 12,
-                            decoration: t.doneToday(now)
-                                ? TextDecoration.lineThrough
-                                : null,
-                          )),
-                      Text(t.daysLabel,
-                          style: const TextStyle(
-                              color: StatsStyle.textMuted, fontSize: 10)),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  key: ValueKey('daily-bell-${t.id}'),
-                  tooltip: t.enabled ? 'Silenciar' : 'Activar',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => store.setEnabled(t.id, !t.enabled),
-                  icon: Icon(
-                      t.enabled
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_off_outlined,
-                      size: 17,
-                      color: t.enabled
-                          ? StatsStyle.accentLight
-                          : StatsStyle.textMuted),
-                ),
-                IconButton(
-                  key: ValueKey('daily-delete-${t.id}'),
-                  tooltip: 'Borrar',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => store.remove(t.id),
-                  icon: const Icon(Icons.delete_outline,
-                      size: 16, color: StatsStyle.textMuted),
-                ),
-              ],
-            ),
-          ),
+        for (final t in tasks) _AlarmTile(task: t, now: now, sound: sound),
       ],
     );
   }
@@ -263,11 +223,12 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
         TextField(
           key: const ValueKey('daily-text'),
           controller: _text,
+          focusNode: _textFocus,
           autofocus: true,
           onTap: focusApp,
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: const InputDecoration(
-            hintText: '¿Qué tienes que hacer? (ej. Reunión virtual)',
+            hintText: 'Nombre (ej. Reunión)',
             hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
             isDense: true,
           ),
@@ -312,6 +273,13 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
               child: const Text('L a V', style: TextStyle(fontSize: 11))),
         ]),
         const SizedBox(height: 6),
+        if (_problem != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(_problem!,
+                key: const ValueKey('daily-problem'),
+                style: const TextStyle(color: Colors.amber, fontSize: 11)),
+          ),
         Row(children: [
           TextButton(
             onPressed: () => setState(() => _adding = false),
@@ -325,6 +293,119 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
           ),
         ]),
       ],
+    );
+  }
+}
+
+/// Una tarea diaria como tarjeta de alarma: la hora grande, qué es, cuándo
+/// se repite, el sonido y el interruptor.
+class _AlarmTile extends ConsumerWidget {
+  final DailyTask task;
+  final DateTime now;
+  final String sound;
+  const _AlarmTile(
+      {required this.task, required this.now, required this.sound});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final store = ref.read(dailyTaskStoreProvider);
+    final t = task;
+    final on = t.enabled;
+    final done = t.doneToday(now);
+    final dim = on ? 1.0 : 0.45;
+    final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
+    const muted = TextStyle(color: StatsStyle.textMuted, fontSize: 10.5);
+    return Opacity(
+      key: ValueKey('daily-${t.id}'),
+      opacity: dim,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 6, 6),
+        decoration: StatsStyle.card(radius: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text.rich(TextSpan(children: [
+                TextSpan(
+                    text: '$h:${t.minute.toString().padLeft(2, '0')}',
+                    style: const TextStyle(
+                        color: StatsStyle.textPrimary,
+                        fontSize: 32,
+                        height: 1.1,
+                        fontWeight: FontWeight.w300)),
+                TextSpan(
+                    text: t.hour < 12 ? ' a. m.' : ' p. m.',
+                    style: const TextStyle(
+                        color: StatsStyle.textSecondary, fontSize: 12)),
+              ])),
+            ),
+            const SizedBox(height: 2),
+            Text(t.text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: StatsStyle.textPrimary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  decoration: done ? TextDecoration.lineThrough : null,
+                )),
+            Text(
+                'Repetir: ${t.daysLabel == 'De lunes a viernes' ? 'Lun a vie' : t.daysLabel}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: muted),
+            Text('Sonido: $sound',
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+            const Spacer(),
+            Row(children: [
+              SizedBox(
+                width: 42,
+                height: 26,
+                child: FittedBox(
+                  child: Switch(
+                    key: ValueKey('daily-bell-${t.id}'),
+                    value: on,
+                    activeTrackColor: StatsStyle.accent,
+                    onChanged: (v) => store.setEnabled(t.id, v),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (on && t.isToday(now))
+                IconButton(
+                  key: ValueKey('daily-done-${t.id}'),
+                  tooltip: done ? 'Desmarcar' : 'Hecha hoy',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 30, minHeight: 30),
+                  iconSize: 18,
+                  onPressed: () => store.setDone(t.id, !done, now),
+                  icon: Icon(
+                      done
+                          ? Icons.check_circle_rounded
+                          : Icons.check_circle_outline_rounded,
+                      color: done
+                          ? const Color(0xFF34D399)
+                          : StatsStyle.textMuted),
+                ),
+              IconButton(
+                key: ValueKey('daily-delete-${t.id}'),
+                tooltip: 'Borrar',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                iconSize: 17,
+                onPressed: () => store.remove(t.id),
+                icon: const Icon(Icons.delete_outline,
+                    color: StatsStyle.textMuted),
+              ),
+            ]),
+          ],
+        ),
+      ),
     );
   }
 }

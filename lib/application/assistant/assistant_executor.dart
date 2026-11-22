@@ -138,17 +138,17 @@ class AssistantExecutor {
         if (when == null) return '⏰ Te lo recuerdo. $_askWhen';
         if (!when.isAfter(t)) return '⏰ Esa hora ya pasó. $_askWhen';
         await store.addReminder(c.text, when);
-        return '⏰ Listo: te recuerdo «${c.text}» ${describeWhen(when, t)}.';
+        return '⏰ Recordatorio: «${c.text}», ${describeWhen(when, t)}.';
 
       case AssistantIntent.note:
         await store.addNote(c.text);
-        return '📝 Guardé tu nota. La tienes en Pendientes, en «Notas».';
+        return '📝 Nota guardada en Pendientes › Notas.';
 
       case AssistantIntent.addTask:
         await store.addTask(c.text);
         final n = store.pending.length;
-        return '📝 Apunté «${c.text}». '
-            '${n == 1 ? 'Tienes 1 tarea pendiente.' : 'Tienes $n tareas pendientes.'}';
+        return '📝 Apuntado: «${c.text}». '
+            '${n == 1 ? '1 pendiente.' : '$n pendientes.'}';
 
       case AssistantIntent.completeTask:
         final number = c.number ?? _matchTask(c.text);
@@ -161,8 +161,8 @@ class AssistantExecutor {
           return 'No encuentro la tarea $number. ${_pendingText()}';
         }
         final left = store.pending.length;
-        return '✅ ¡Hecho! Taché «${done.text}». '
-            '${left == 0 ? '¡No te queda nada pendiente! 🎉' : 'Te quedan $left.'}';
+        return '✅ Tachada: «${done.text}». '
+            '${left == 0 ? 'No te queda nada pendiente.' : 'Te quedan $left.'}';
 
       case AssistantIntent.showPending:
         return _pendingText();
@@ -175,10 +175,10 @@ class AssistantExecutor {
 
       case AssistantIntent.danceStart:
         if (onDance == null) {
-          return '💃 ¡Me encantaría bailar, pero ahora no puedo!';
+          return '💃 Ahora no puedo bailar.';
         }
         onDance!(true);
-        return '🪩 ¡Modo discoteca! Bailo un minuto 💃🕺 '
+        return '🪩 Modo discoteca: bailo un minuto. '
             '(dime «para de bailar» si quieres que pare).';
 
       case AssistantIntent.alarm:
@@ -248,14 +248,14 @@ class AssistantExecutor {
         final name = cleanUserName(c.text);
         if (name == null) return '🤔 ¿Cómo quieres que te llame?';
         await onUserName?.call(name);
-        return '😊 ¡Encantado, $name! Desde ahora te llamo así.';
+        return '😊 Hecho: te llamo $name.';
 
       case AssistantIntent.wakeWord:
         final on = c.text == 'on';
         final pet = await onWakeWord?.call(on);
         if (pet == null) return '🎙️ Eso no lo puedo hacer aquí.';
         return on
-            ? '👂 ¡Listo! Di «Oye $pet» o «Hola $pet» y te escucho, aunque '
+            ? '👂 Activado. Di «Oye $pet» y te escucho, aunque '
                 'esté cerrado el chat (verás el punto naranja del micrófono).'
             : '🔕 Ya no espero a que me llames. Para hablarme, toca 🎙️ o '
                 'pulsa ⌃⌥V.';
@@ -343,19 +343,15 @@ class AssistantExecutor {
     if (note == null) return '📅 ¿Qué anoto?';
     final when = describeDay(day, t);
     final at = note.allDay
-        ? 'todo el día; ese día te aviso a las '
-            '${clock12(CalendarNote.noticeHour, 0)}'
-        : 'a las ${note.timeLabel}${note.alarm ? ', con alarma' : ', te aviso a esa hora'}';
-    final every = note.repeat == NoteRepeat.none
-        ? ''
-        : ', y se repite ${note.repeat.label}';
-    var reply =
-        '📅 Anotado en tu calendario: «${note.text}» $when ($at)$every.';
+        ? 'todo el día, aviso a las ${clock12(CalendarNote.noticeHour, 0)}'
+        : 'a las ${note.timeLabel}${note.alarm ? ', con alarma' : ''}';
+    final every =
+        note.repeat == NoteRepeat.none ? '' : ', ${note.repeat.label}';
+    var reply = '📅 Anotado: «${note.text}», $when ($at)$every.';
     if (notes.toMac) {
       final problem = await copyToMacCalendar(notes, mac, note);
-      reply += problem == null
-          ? ' También está en el Calendario del Mac.'
-          : ' $problem';
+      reply +=
+          problem == null ? ' Copiado al Calendario del Mac.' : ' $problem';
     }
     return reply;
   }
@@ -372,8 +368,8 @@ class AssistantExecutor {
         editor: c.editor);
     if (saved == null) return '💻 No guardé el script (cancelaste).';
     final where = saved.editor.isEmpty ? '' : ' y lo abrí en ${saved.editor}';
-    return '💻 Escribí «${saved.fileName}» ($pretty)$where. ¡Revísalo antes de '
-        'ejecutarlo!';
+    return '💻 Escribí «${saved.fileName}» ($pretty)$where. Revísalo antes de '
+        'ejecutarlo.';
   }
 
   Future<String> _media(ParsedCommand c) async {
@@ -453,7 +449,7 @@ class AssistantExecutor {
       if (browser != null && await mac.openUrl(url)) {
         return '${notInstalled()}: busqué «${c.text}» en $siteName.$hint';
       }
-      return 'No pude abrir $siteName 😿.';
+      return 'No pude abrir $siteName.';
     }
 
     // Una web conocida o un dominio: "abre YouTube en Brave".
@@ -473,7 +469,7 @@ class AssistantExecutor {
     if (web != null && await mac.openUrl(web)) {
       return '🌐 Abrí ${web.host.replaceFirst('www.', '')}.';
     }
-    return 'No encontré «${c.text}» en tu Mac 🤔. ¿Cómo se llama la app?';
+    return 'No encontré «${c.text}» en tu Mac. ¿Cómo se llama la app?';
   }
 
   static const _calendarDenied =
@@ -484,7 +480,7 @@ class AssistantExecutor {
     final tasks = store.pending;
     final reminders = store.reminders;
     if (tasks.isEmpty && reminders.isEmpty) {
-      return '🎉 No tienes nada pendiente.';
+      return '✅ Nada pendiente.';
     }
     final t = now();
     return [

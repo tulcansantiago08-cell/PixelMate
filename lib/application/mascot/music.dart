@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../assistant/video_finder.dart';
 import 'mascot_settings.dart';
+import '../assistant/mac_actions.dart';
 
 /// Lo que suena en Spotify o Música.
 class NowPlaying {
@@ -48,6 +49,20 @@ class MusicController extends StateNotifier<MusicState> {
   StreamSubscription<NowPlaying>? _sub;
   String? _lastAnnounced;
   Timer? _videoEnds;
+  Timer? _listen;
+
+  /// Si algo suena ahora en el Mac (para saber si el video de verdad
+  /// suena: el navegador no avisa).
+  final Future<bool> Function()? audioPlaying;
+
+  /// Cada cuánto se mira si suena, cuánto se espera a que empiece y
+  /// cuánto silencio basta para dejar de bailar.
+  final Duration checkEvery;
+  final Duration startWithin;
+  final Duration stopAfterSilence;
+
+  /// Si el video no llegó a sonar (el navegador no lo reprodujo solo).
+  bool videoDidNotStart = false;
 
   /// Si YouTube no dio la duración, se baila este tiempo.
   static const defaultVideoLength = Duration(minutes: 4);
@@ -81,13 +96,15 @@ class MusicController extends StateNotifier<MusicState> {
   bool get disco => state.now?.source == 'disco' && state.playing;
 
   /// La mascota puso un video en el navegador: el navegador no avisa cuándo
-  /// suena ni cuándo termina, así que se baila lo que dura el video.
+  /// suena ni cuándo termina: se baila mientras el Mac saca sonido (como
+  /// mucho, lo que dura el video).
   void playedByAssistant(FoundVideo video) {
     var length = video.length ?? defaultVideoLength;
     if (length > maxVideoLength) length = maxVideoLength;
     final song = NowPlaying(
         source: 'youtube', playing: true, title: video.title, artist: '');
     onEvent(song);
+    _watchVideoSound();
     _videoEnds?.cancel();
     _videoEnds = Timer(length, () {
       final now = state.now;
@@ -100,8 +117,47 @@ class MusicController extends StateNotifier<MusicState> {
     });
   }
 
-  MusicController(Stream<NowPlaying> events) : super(const MusicState()) {
+  MusicController(Stream<NowPlaying> events,
+      {this.audioPlaying,
+      this.checkEvery = const Duration(seconds: 2),
+      this.startWithin = const Duration(seconds: 12),
+      this.stopAfterSilence = const Duration(seconds: 6)})
+      : super(const MusicState()) {
     _sub = events.listen(onEvent);
+  }
+
+  /// Mientras baila un video, mira si de verdad suena algo: si no empieza
+  /// a sonar en [startWithin] o se queda en silencio [stopAfterSilence],
+  /// deja de bailar.
+  void _watchVideoSound() {
+    _listen?.cancel();
+    final check = audioPlaying;
+    if (check == null) return;
+    var waited = Duration.zero;
+    var silent = Duration.zero;
+    var heard = false;
+    videoDidNotStart = false;
+    _listen = Timer.periodic(checkEvery, (timer) async {
+      final now = state.now;
+      if (now == null || now.source != 'youtube' || !now.playing) {
+        timer.cancel();
+        return;
+      }
+      final sounding = await check();
+      waited += checkEvery;
+      if (sounding) {
+        heard = true;
+        silent = Duration.zero;
+        return;
+      }
+      silent += checkEvery;
+      if ((!heard && waited >= startWithin) ||
+          (heard && silent >= stopAfterSilence)) {
+        timer.cancel();
+        videoDidNotStart = !heard;
+        stopDancing();
+      }
+    });
   }
 
   void onEvent(NowPlaying e) {
@@ -124,6 +180,7 @@ class MusicController extends StateNotifier<MusicState> {
   @override
   void dispose() {
     _videoEnds?.cancel();
+    _listen?.cancel();
     _sub?.cancel();
     super.dispose();
   }
@@ -134,7 +191,8 @@ final musicEventsProvider =
     Provider<Stream<NowPlaying>>((_) => const Stream.empty());
 
 final musicProvider = StateNotifierProvider<MusicController, MusicState>(
-    (ref) => MusicController(ref.watch(musicEventsProvider)));
+    (ref) => MusicController(ref.watch(musicEventsProvider),
+        audioPlaying: () => ref.read(macActionsProvider).audioPlaying()));
 
 /// `true` si hay música y la mascota tiene permiso para reaccionar.
 final musicPlayingProvider = Provider<bool>((ref) {
@@ -152,12 +210,12 @@ final discoModeProvider = Provider<bool>((ref) {
 });
 
 const _openers = [
-  '¡Temazo! 🎶',
-  '¡A bailar! 💃',
+  'Suena',
+  'Suena',
   '🎵 Suena',
-  '¡Me encanta esta! 🎧',
-  '¡Qué ritmo! 🕺',
-  '🪩 ¡Modo discoteca!',
+  'Suena',
+  'Suena',
+  'Modo discoteca',
 ];
 
 /// Lo que dice la mascota al empezar una canción ([n] cambia la frase).

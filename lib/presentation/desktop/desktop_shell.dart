@@ -390,11 +390,17 @@ class DesktopShell {
   void _rehideLater(Duration after) {
     _rehide?.cancel();
     final messages = container.read(chatProvider).length;
+    final since = DateTime.now();
     _rehide = Timer(after, () async {
       if (!window.visible.value) return;
       if (container.read(voiceProvider).status != VoiceStatus.idle) return;
       if (container.read(alarmProvider).active) return;
       if (container.read(chatProvider).length != messages) return;
+      // Si la estás usando (otro panel, el juego, una alarma…), se queda.
+      final panel = container.read(mascotPanelProvider);
+      if (panel != MascotPanel.chat && panel != MascotPanel.none) return;
+      final touched = container.read(lastInteractionProvider);
+      if (touched != null && touched.isAfter(since)) return;
       await setMascotPanel(
         window: window,
         panel: container.read(mascotPanelProvider.notifier),

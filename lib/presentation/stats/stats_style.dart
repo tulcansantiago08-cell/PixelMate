@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/activity/activity_mode.dart';
 
@@ -8,8 +11,10 @@ import '../../domain/activity/activity_mode.dart';
 /// Colores de modo: espacios 1–3 de la paleta categórica oscura de
 /// referencia. Orden fijo: el color sigue al modo, nunca a su posición.
 class StatsStyle {
-  /// Letra de toda la app (geométrica, incluida en macOS).
-  static const fontFamily = 'Avenir Next';
+  /// Letra de toda la app: SF Rounded, la redondeada de macOS. Se carga al
+  /// abrir la app desde el sistema (ver [loadAppFont]); si no está, macOS
+  /// usa su letra de siempre.
+  static const fontFamily = 'PixelMate Rounded';
 
   static const surface = Color(0xFF111833);
   static const surfaceRaised = Color(0xFF1C2550);
@@ -140,4 +145,19 @@ String sessionWhen(DateTime startedAt, DateTime now) {
     return 'Ayer $hm';
   }
   return '${l.day} ${_months[l.month - 1]} $hm';
+}
+
+/// Carga SF Rounded desde las letras del sistema (no se incluye en la app).
+Future<void> loadAppFont() async {
+  const path = '/System/Library/Fonts/SFNSRounded.ttf';
+  try {
+    final file = File(path);
+    if (!await file.exists()) return;
+    final bytes = await file.readAsBytes();
+    final loader = FontLoader(StatsStyle.fontFamily)
+      ..addFont(Future.value(ByteData.sublistView(bytes)));
+    await loader.load();
+  } catch (_) {
+    // Sin la letra redondeada se usa la del sistema.
+  }
 }

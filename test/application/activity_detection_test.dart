@@ -95,7 +95,7 @@ void main() {
 
     test('sugiere jornada al detectar un IDE', () {
       final s = evaluate(vscode, t0)!;
-      expect(s.message, contains('programar'));
+      expect(s.message, contains('Abriste'));
       expect(s.options.map((o) => o.action), [
         SuggestionAction.startWork,
         SuggestionAction.startStudy,
@@ -244,7 +244,7 @@ void main() {
     test('al descanso: descansar la vista con un consejo', () {
       final event = PhaseStarted(timer.plan[1], timer.plan[0]);
       final r = reactionFor(event, mode: ActivityMode.gaming)!;
-      expect(r.message, contains('descansar la vista'));
+      expect(r.message, contains('Pausa para la vista'));
       expect(r.message, contains(eyeBreakTip(1)));
       expect(noticeFor(event, mode: ActivityMode.gaming)!.title,
           '👀 Descanso visual de 5 min');
@@ -254,7 +254,7 @@ void main() {
       final r = reactionFor(
           FocusEndingSoon(timer.plan[0], const Duration(minutes: 5)),
           mode: ActivityMode.gaming)!;
-      expect(r.message, contains('Ya casi terminamos esta sesión'));
+      expect(r.message, contains('Queda poco de esta sesión'));
     });
 
     test('el estudio tiene su propio saludo', () {

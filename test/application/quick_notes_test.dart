@@ -44,7 +44,7 @@ void main() {
     final store = PersonalStore(prefs);
     final ex = AssistantExecutor(store, FakeMacActions(), now: () => now);
     expect(await ex.run(p('toma nota: llevar la calculadora')!),
-        contains('Guardé tu nota'));
+        contains('Nota guardada'));
     final again = PersonalStore(prefs);
     expect(again.notes.single.text, 'Llevar la calculadora');
     await again.removeNote(again.notes.single.id);

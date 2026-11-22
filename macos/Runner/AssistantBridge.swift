@@ -121,6 +121,8 @@ enum AssistantBridge {
             result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
           }
         }
+      case "audioPlaying":
+        result(SystemVolume.isPlaying())
       case "runShortcut":
         // Atajos de la app Atajos (para el modo Concentración).
         let name = ((call.arguments as? String) ?? "")
@@ -541,6 +543,19 @@ enum SystemVolume {
     let status = AudioObjectGetPropertyData(
       AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &id)
     return status == noErr && id != 0 ? id : nil
+  }
+
+  /// Si alguna app está sacando sonido por la salida actual.
+  static func isPlaying() -> Bool {
+    guard let id = device() else { return false }
+    var running = UInt32(0)
+    var size = UInt32(MemoryLayout<UInt32>.size)
+    var address = AudioObjectPropertyAddress(
+      mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
+      mScope: kAudioObjectPropertyScopeGlobal,
+      mElement: kAudioObjectPropertyElementMain)
+    let status = AudioObjectGetPropertyData(id, &address, 0, nil, &size, &running)
+    return status == noErr && running != 0
   }
 
   private static var volumeAddress = AudioObjectPropertyAddress(

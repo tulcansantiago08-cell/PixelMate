@@ -269,10 +269,10 @@ List<ProgressEvent> progressEvents(
         :final aura
       ) =>
         (
-          title: '¡Nivel $level!',
+          title: 'Nivel $level',
           message: (newTitle
-                  ? '¡Subiste a nivel $level! Ahora eres «$title» 🎉'
-                  : '¡Subiste a nivel $level! Sigue así 🎉') +
+                  ? 'Subiste a nivel $level: ahora eres «$title».'
+                  : 'Subiste a nivel $level.') +
               _unlocks([
                 for (final k in species) '${k.emoji} ${k.label}',
                 for (final a in accessories) '${a.emoji} ${a.label}',
@@ -281,8 +281,7 @@ List<ProgressEvent> progressEvents(
         ),
       AchievementUnlocked(:final achievement) => (
           title: 'Logro desbloqueado',
-          message:
-              '¡Logro: ${achievement.emoji} ${achievement.title}! ${achievement.description}',
+          message: 'Logro: ${achievement.title}. ${achievement.description}',
         ),
     };
 

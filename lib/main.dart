@@ -62,6 +62,7 @@ import 'presentation/stats/stats_style.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await loadAppFont();
 
   // Base de datos local (jornada activa + historial).
   final dataDir = await getApplicationSupportDirectory();

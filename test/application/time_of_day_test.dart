@@ -28,11 +28,9 @@ void main() {
   });
 
   test('el saludo depende de la hora (y a las 2:00 no es "buenos días")', () {
-    expect(Suggestion.welcome(at(8, 9)).message, startsWith('¡Buenos días!'));
-    expect(
-        Suggestion.welcome(at(8, 15)).message, startsWith('¡Buenas tardes!'));
-    expect(
-        Suggestion.welcome(at(8, 21)).message, startsWith('¡Buenas noches!'));
+    expect(Suggestion.welcome(at(8, 9)).message, startsWith('Buenos días.'));
+    expect(Suggestion.welcome(at(8, 15)).message, startsWith('Buenas tardes.'));
+    expect(Suggestion.welcome(at(8, 21)).message, startsWith('Buenas noches.'));
     final late = Suggestion.welcome(at(8, 2)).message;
     expect(late, contains('Es muy tarde'));
     expect(late, isNot(contains('Buenos días')));

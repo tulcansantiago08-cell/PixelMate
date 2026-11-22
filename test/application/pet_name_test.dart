@@ -50,8 +50,7 @@ void main() {
       ]);
       addTearDown(c.dispose);
       expect(c.read(petNameProvider), 'Michi');
-      expect(
-          c.read(chatProvider).first.text, startsWith('¡Hola! Soy Michi 🐾'));
+      expect(c.read(chatProvider).first.text, startsWith('Hola. Soy Michi.'));
 
       await settings.setName('Nube');
       expect(c.read(petNameProvider), 'Nube');

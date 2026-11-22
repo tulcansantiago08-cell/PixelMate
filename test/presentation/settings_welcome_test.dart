@@ -222,7 +222,7 @@ void main() {
     var done = 0;
     await pumpPanel(tester, env, WelcomePanel(onDone: () => done++));
 
-    expect(find.text('¡Hola!'), findsOneWidget);
+    expect(find.text('Hola'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('welcome-name')), 'Nube');
     await tester.tap(find.byKey(const ValueKey('welcome-next')));
     await tester.pumpAndSettle();
@@ -242,9 +242,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('welcome-next')));
     await tester.pumpAndSettle();
 
-    expect(find.text('¡Listo! Así me usas'), findsOneWidget);
+    expect(find.text('Así me usas'), findsOneWidget);
     expect(find.byKey(const ValueKey('welcome-skip')), findsNothing);
-    await tester.tap(find.text('¡Empecemos!'));
+    await tester.tap(find.text('Empezar'));
     expect(done, 1);
   });
 
@@ -281,7 +281,7 @@ void main() {
     await frames(tester);
     expect(find.byType(WelcomePanel), findsNothing);
     expect(env.mascot.onboardingDone, isTrue);
-    expect(find.textContaining('Encantado de conocerte'), findsOneWidget);
+    expect(find.textContaining('Hola. Soy'), findsOneWidget);
     await tester.pump(const Duration(seconds: 10));
 
     await launch();

@@ -239,7 +239,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                           style: const TextStyle(
                               color: Colors.white, fontSize: 12),
                           decoration: InputDecoration(
-                            hintText: 'Pregúntame algo...',
+                            hintText: 'Escribe o pide algo',
                             hintStyle: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.35),
                                 fontSize: 12),
@@ -310,7 +310,7 @@ class _Listening extends StatelessWidget {
         border: Border.all(color: const Color(0xFFFF4F7B), width: 1),
       ),
       child: Text(
-        heard.isEmpty ? 'Te escucho… habla' : heard,
+        heard.isEmpty ? 'Escuchando…' : heard,
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(

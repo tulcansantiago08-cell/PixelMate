@@ -69,7 +69,7 @@ bool goalJustReached(DailyGoalStatus? before, DailyGoalStatus? after) =>
 String goalReachedMessage(Duration goal) {
   final h = goal.inMinutes ~/ 60, m = goal.inMinutes % 60;
   final text = h == 0 ? '$m min' : (m == 0 ? '$h h' : '$h h $m min');
-  return '¡Meta diaria cumplida! $text de enfoque hoy 🎯 Lo que sigue es extra.';
+  return 'Meta diaria cumplida: $text de enfoque hoy.';
 }
 
 /// Se sobrescribe en `main()` con las preferencias guardadas.

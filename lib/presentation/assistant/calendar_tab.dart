@@ -220,36 +220,54 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   Widget _header() {
     void move(int months) =>
         setState(() => _month = DateTime(_month.year, _month.month + months));
-    return Row(children: [
-      IconButton(
-        key: const ValueKey('cal-prev'),
-        tooltip: 'Mes anterior',
-        visualDensity: VisualDensity.compact,
-        onPressed: () => move(-1),
-        icon: const Icon(Icons.chevron_left,
-            color: StatsStyle.textSecondary, size: 20),
-      ),
-      Expanded(
-        child: Text(
-          '${monthNames[_month.month - 1][0].toUpperCase()}'
-          '${monthNames[_month.month - 1].substring(1)} ${_month.year}',
-          key: const ValueKey('cal-month'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-              color: StatsStyle.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600),
+    Widget arrow(String key, IconData icon, String tip, int delta) => Tooltip(
+          message: tip,
+          child: InkWell(
+            key: ValueKey(key),
+            customBorder: const CircleBorder(),
+            onTap: () => move(delta),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0x0DFFFFFF),
+                border: Border.all(color: StatsStyle.glassBorder),
+              ),
+              child: Icon(icon, size: 18, color: StatsStyle.textPrimary),
+            ),
+          ),
+        );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(2, 6, 2, 10),
+      // Un brillo del color de acento detrás del mes.
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0, -1.4),
+          radius: 1.1,
+          colors: [
+            StatsStyle.accent.withValues(alpha: 0.5),
+            StatsStyle.accent.withValues(alpha: 0),
+          ],
         ),
       ),
-      IconButton(
-        key: const ValueKey('cal-next'),
-        tooltip: 'Mes siguiente',
-        visualDensity: VisualDensity.compact,
-        onPressed: () => move(1),
-        icon: const Icon(Icons.chevron_right,
-            color: StatsStyle.textSecondary, size: 20),
-      ),
-    ]);
+      child: Row(children: [
+        arrow('cal-prev', Icons.chevron_left_rounded, 'Mes anterior', -1),
+        Expanded(
+          child: Text(
+            '${monthNames[_month.month - 1][0].toUpperCase()}'
+            '${monthNames[_month.month - 1].substring(1)} ${_month.year}',
+            key: const ValueKey('cal-month'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: StatsStyle.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w600),
+          ),
+        ),
+        arrow('cal-next', Icons.chevron_right_rounded, 'Mes siguiente', 1),
+      ]),
+    );
   }
 
   /// Los colores de lo anotado ese día (sin repetir, en orden).
@@ -262,17 +280,35 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
     return colors.toSet().toList();
   }
 
+  static const _weekdayShort = [
+    'LUN',
+    'MAR',
+    'MIÉ',
+    'JUE',
+    'VIE',
+    'SÁB',
+    'DOM'
+  ];
+
   Widget _grid(CalendarStore notes, List<ReminderItem> dated) {
     final first = DateTime(_month.year, _month.month);
     final days = DateTime(_month.year, _month.month + 1, 0).day;
     final blanks = first.weekday - 1; // la semana empieza en lunes
     final cells = <Widget>[
-      for (final l in dayLetters.values)
+      for (final l in _weekdayShort)
         Center(
             child: Text(l,
                 style: const TextStyle(
-                    color: StatsStyle.textMuted, fontSize: 10))),
-      for (var i = 0; i < blanks; i++) const SizedBox(),
+                    color: StatsStyle.textMuted,
+                    fontSize: 10,
+                    letterSpacing: 0.4,
+                    fontWeight: FontWeight.w600))),
+      // Los últimos días del mes anterior, apagados.
+      for (var i = blanks; i > 0; i--)
+        Center(
+          child: Text('${DateTime(_month.year, _month.month, 1 - i).day}',
+              style: const TextStyle(color: Color(0x33FFFFFF), fontSize: 14)),
+        ),
       for (var d = 1; d <= days; d++)
         _cell(DateTime(_month.year, _month.month, d),
             _colorsOn(DateTime(_month.year, _month.month, d), notes, dated)),
@@ -281,7 +317,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       crossAxisCount: 7,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.2,
+      childAspectRatio: 1.05,
       children: cells,
     );
   }
@@ -289,8 +325,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   Widget _cell(DateTime day, List<Color> colors) {
     final selected = _sameDay(day, _selected);
     final today = _sameDay(day, _now);
-    // El día se pinta del color de lo primero que anotaste.
-    final tint = colors.isEmpty ? null : colors.first;
+    final past = day.isBefore(DateTime(_now.year, _now.month, _now.day));
     return Semantics(
       button: true,
       selected: selected,
@@ -300,7 +335,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           '${colors.isEmpty ? '' : ', con cosas anotadas'}',
       child: InkWell(
         key: ValueKey('cal-day-${day.day}'),
-        borderRadius: BorderRadius.circular(6),
+        customBorder: const CircleBorder(),
         onTap: () {
           setState(() {
             _selected = day;
@@ -308,52 +343,64 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
             _notice = null;
           });
           // Elegir un día y escribir: el teclado va directo a su campo.
-          if (!day.isBefore(DateTime(_now.year, _now.month, _now.day))) {
+          if (!past) {
             focusApp();
             WidgetsBinding.instance
                 .addPostFrameCallback((_) => _quickFocus.requestFocus());
           }
         },
-        child: Container(
-          margin: const EdgeInsets.all(1.5),
-          decoration: BoxDecoration(
-            color: selected ? StatsStyle.accent : tint?.withValues(alpha: 0.28),
-            borderRadius: BorderRadius.circular(6),
-            border: today && !selected
-                ? Border.all(color: StatsStyle.accent, width: 1.5)
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('${day.day}',
-                  style: TextStyle(
-                      color: selected ? Colors.white : StatsStyle.textPrimary,
-                      fontSize: 11,
-                      fontWeight: today ? FontWeight.w700 : FontWeight.w400)),
-              const SizedBox(height: 1),
-              SizedBox(
-                height: 4,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+        child: Center(
+          child: SizedBox(
+            width: 34,
+            height: 38,
+            child: Stack(alignment: Alignment.center, children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected ? StatsStyle.accent : null,
+                  border: today && !selected
+                      ? Border.all(color: StatsStyle.accentLight, width: 1.5)
+                      : null,
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                              color: StatsStyle.accent.withValues(alpha: 0.6),
+                              blurRadius: 14,
+                              spreadRadius: 1),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text('${day.day}',
+                    style: TextStyle(
+                        color: selected
+                            ? Colors.white
+                            : past
+                                ? StatsStyle.textMuted
+                                : StatsStyle.textPrimary,
+                        fontSize: 14,
+                        fontWeight: selected || today
+                            ? FontWeight.w600
+                            : FontWeight.w400)),
+              ),
+              // Lo anotado ese día: un punto de cada color, debajo.
+              if (colors.isNotEmpty)
+                Positioned(
+                  bottom: 0,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
                     for (final c in colors.take(3))
                       Container(
                         width: 4,
                         height: 4,
-                        margin: const EdgeInsets.symmetric(horizontal: 0.75),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: c,
-                          border: selected
-                              ? Border.all(color: Colors.white, width: 0.5)
-                              : null,
-                        ),
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        decoration:
+                            BoxDecoration(shape: BoxShape.circle, color: c),
                       ),
-                  ],
+                  ]),
                 ),
-              ),
-            ],
+            ]),
           ),
         ),
       ),
@@ -495,7 +542,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               style: const TextStyle(color: Colors.white, fontSize: 13),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Escribe aquí y pulsa ↩ para anotar',
+                hintText: 'Anotar en este día',
                 hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
                 prefixIcon: Padding(
                   padding: const EdgeInsets.only(right: 6),

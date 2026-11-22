@@ -5,15 +5,14 @@ import '../../domain/session/session_phase.dart';
 
 /// Un consejo para aprovechar el descanso.
 enum WellnessTip {
-  water('💧', 'Toma un vaso de agua. ¡Yo me tomo mi café! ☕', PetAnimation.rest),
+  water('💧', 'Toma un vaso de agua.', PetAnimation.rest),
   stretch('🙆', 'Estírate conmigo: brazos arriba, hombros atrás.',
       PetAnimation.stretch),
   eyes('👀', 'Regla 20-20-20: mira algo lejano durante 20 segundos.', null),
   breathe('🌬️', 'Respira hondo 4 veces: inhala en 4, exhala en 6.', null),
   posture('🪑', 'Revisa tu postura: espalda apoyada y pies en el suelo.',
       PetAnimation.stretch),
-  walk('🚶', 'Levántate y camina un poco: ¡las piernas también trabajan!',
-      PetAnimation.walk),
+  walk('🚶', 'Levántate y camina un poco.', PetAnimation.walk),
   snack('🍎', 'Si tienes hambre, algo ligero: fruta o unos frutos secos.',
       PetAnimation.rest);
 

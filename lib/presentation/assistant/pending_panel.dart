@@ -74,10 +74,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         store.notes.isEmpty)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                            'Nada pendiente. Escribe abajo o dímelo en el '
-                            'chat: «apunta comprar pan», «recuérdame en 20 '
-                            'minutos…».',
+                        child: Text('Nada pendiente.',
                             style: TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 11)),
                       ),

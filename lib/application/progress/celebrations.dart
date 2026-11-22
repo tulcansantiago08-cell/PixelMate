@@ -92,7 +92,7 @@ final celebrationProvider =
   ref.listen<Consistency>(consistencyProvider, (before, after) {
     final message = consistencyMilestone(before, after);
     if (message != null) {
-      c.add(Celebration('¡Buen ritmo!', message, alwaysNotify: false));
+      c.add(Celebration('Buen ritmo', message, alwaysNotify: false));
     }
   });
   return c;

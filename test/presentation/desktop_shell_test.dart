@@ -295,6 +295,28 @@ void main() {
       expect(window.visible.value, isFalse);
     });
 
+    test('si abres otro panel (el juego, las alarmas…), no se esconde',
+        () async {
+      await window.hide();
+      voice.say(VoiceEventType.wake, 'apunta comprar pan');
+      voice.say(VoiceEventType.done, 'apunta comprar pan');
+      await pumpEventQueue();
+      container.read(mascotPanelProvider.notifier).state = MascotPanel.game;
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(window.visible.value, isTrue);
+    });
+
+    test('si la tocas o escribes, no se esconde', () async {
+      await window.hide();
+      voice.say(VoiceEventType.wake, 'apunta comprar pan');
+      voice.say(VoiceEventType.done, 'apunta comprar pan');
+      await pumpEventQueue();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      container.read(lastInteractionProvider.notifier).state = DateTime.now();
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(window.visible.value, isTrue);
+    });
+
     test('si estaba a la vista, se queda', () async {
       voice.say(VoiceEventType.wake, 'apunta comprar pan');
       voice.say(VoiceEventType.done, 'apunta comprar pan');

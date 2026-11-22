@@ -47,7 +47,7 @@ void main() {
 
     expect(find.textContaining('Enfoque'), findsOneWidget);
     expect(find.textContaining('50:00'), findsOneWidget);
-    expect(find.textContaining('¡A trabajar!'), findsOneWidget);
+    expect(find.textContaining('A trabajar.'), findsOneWidget);
     expect(store.loadActive(), isNotNull);
 
     // Con jornada activa el menú ofrece pausar y finalizar.
@@ -119,7 +119,7 @@ void main() {
     await settleMenu(tester);
 
     expect(settings.name, 'Michi');
-    expect(find.textContaining('Desde ahora soy Michi'), findsOneWidget);
+    expect(find.textContaining('Ahora me llamo Michi'), findsOneWidget);
     expect(window.expandedCalls, [true, false],
         reason: 'vuelve a su tamaño al terminar');
 

@@ -56,7 +56,7 @@ class ReminderAlert {
   final DateTime at;
   const ReminderAlert(this.items, this.at);
 
-  /// "⏰ ¡Recuerda: llamar a mamá!" (y si llegaron tarde, desde cuándo).
+  /// "⏰ Recuerda: llamar a mamá." (y si llegaron tarde, desde cuándo).
   String get message {
     String one(ReminderItem r) {
       final late = at.difference(r.due) > const Duration(minutes: 2);
@@ -64,7 +64,7 @@ class ReminderAlert {
     }
 
     return items.length == 1
-        ? '⏰ ¡Recuerda: ${one(items.single)}!'
+        ? '⏰ Recuerda: ${one(items.single)}.'
         : '⏰ Recordatorios: ${items.map(one).join(' · ')}';
   }
 }
