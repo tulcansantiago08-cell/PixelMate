@@ -140,6 +140,9 @@ class AssistantExecutor {
         await store.addReminder(c.text, when);
         return '⏰ Recordatorio: «${c.text}», ${describeWhen(when, t)}.';
 
+      case AssistantIntent.whatsapp:
+        return _whatsapp(c);
+
       case AssistantIntent.note:
         await store.addNote(c.text);
         return '📝 Nota guardada en Pendientes › Notas.';
@@ -354,6 +357,70 @@ class AssistantExecutor {
           problem == null ? ' Copiado al Calendario del Mac.' : ' $problem';
     }
     return reply;
+  }
+
+  /// Abre WhatsApp en el chat del contacto con el mensaje escrito: tú lo
+  /// revisas y pulsas Enter (no se envía solo).
+  Future<String> _whatsapp(ParsedCommand c) async {
+    final who = (c.app ?? '').trim();
+    if (who.isEmpty) return '💬 ¿A quién le escribo?';
+    final List<Contact> found;
+    try {
+      found = await mac.findContacts(who);
+    } on ContactsDenied {
+      return '🔒 Sin permiso para Contactos: Ajustes del Sistema › '
+          'Privacidad y seguridad › Contactos › activa PixelMate.';
+    }
+    final withPhone = [
+      for (final x in found)
+        if (x.phones.any((p) => RegExp(r'\d').hasMatch(p))) x
+    ];
+    if (withPhone.isEmpty) {
+      // Plan B: WhatsApp abierto y el mensaje copiado, para pegarlo.
+      final why = found.isEmpty
+          ? 'No tengo a «$who» en los Contactos del Mac'
+          : '${found.first.name} no tiene número en Contactos';
+      final copied = c.text.isNotEmpty && await mac.copyText(c.text);
+      final opened = await mac.openApp('WhatsApp') != null ||
+          await mac.openUrl(Uri.parse('https://web.whatsapp.com'));
+      if (!opened) {
+        return '💬 $why, y no pude abrir WhatsApp.'
+            '${copied ? ' Copié el mensaje para que lo pegues con ⌘V.' : ''}';
+      }
+      return copied
+          ? '💬 $why. Abrí WhatsApp y copié el mensaje: busca su chat y '
+              'pégalo con ⌘V.'
+          : '💬 $why. Abrí WhatsApp: busca su chat.';
+    }
+    // Igual que la búsqueda: sin tildes, mayúsculas ni emojis.
+    String plain(String x) =>
+        fold(x).replaceAll(RegExp(r'[^a-z0-9ñ ]'), '').trim();
+    final q = plain(who);
+    final exact = withPhone
+        .where((x) => plain(x.name) == q || plain(x.nickname) == q)
+        .toList();
+    final names = {for (final x in withPhone) x.name};
+    if (exact.isEmpty && names.length > 1) {
+      return '💬 ¿A cuál? ${names.take(4).join(', ')}. Dímelo con el '
+          'nombre completo.';
+    }
+    final person = exact.isNotEmpty ? exact.first : withPhone.first;
+    final number = whatsappNumber(
+        person.phones.firstWhere((p) => RegExp(r'\d').hasMatch(p)),
+        await mac.regionCode());
+    // Los espacios como %20 (con «+» WhatsApp los mostraría tal cual).
+    final encoded = Uri.encodeComponent(c.text);
+    final app = Uri.parse('whatsapp://send?phone=$number'
+        '${c.text.isEmpty ? '' : '&text=$encoded'}');
+    final web = Uri.parse('https://wa.me/$number'
+        '${c.text.isEmpty ? '' : '?text=$encoded'}');
+    if (!await mac.openUrl(app) && !await mac.openUrl(web)) {
+      return 'No pude abrir WhatsApp.';
+    }
+    return c.text.isEmpty
+        ? '💬 Abrí el chat de ${person.name} en WhatsApp.'
+        : '💬 Mensaje para ${person.name} listo en WhatsApp. Revísalo y '
+            'pulsa Enter para enviarlo.';
   }
 
   Future<String> _code(ParsedCommand c) async {
@@ -589,4 +656,45 @@ String? cleanUserName(String raw) {
   if (words.isEmpty) return null;
   final name = words.map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
   return name.length > 24 ? null : name;
+}
+
+/// Prefijos de país, para números guardados sin él.
+const _countryCodes = {
+  'EC': '593',
+  'CO': '57',
+  'MX': '52',
+  'PE': '51',
+  'AR': '54',
+  'CL': '56',
+  'VE': '58',
+  'BO': '591',
+  'UY': '598',
+  'PY': '595',
+  'ES': '34',
+  'US': '1',
+  'GT': '502',
+  'CR': '506',
+  'PA': '507',
+  'DO': '1',
+  'SV': '503',
+  'HN': '504',
+  'NI': '505',
+  'CU': '53',
+  'PR': '1',
+};
+
+/// El número como lo quiere WhatsApp: solo dígitos y con el prefijo del
+/// país ("+593 99 123 4567" → "593991234567"; "099 123 4567" en Ecuador →
+/// "593991234567").
+String whatsappNumber(String raw, String region) {
+  final plus = raw.trim().startsWith('+');
+  var digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (plus) return digits;
+  if (digits.startsWith('00')) return digits.substring(2);
+  final code = _countryCodes[region.toUpperCase()];
+  if (code == null || digits.startsWith(code) && digits.length > 10) {
+    return digits;
+  }
+  if (digits.startsWith('0')) digits = digits.substring(1);
+  return '$code$digits';
 }

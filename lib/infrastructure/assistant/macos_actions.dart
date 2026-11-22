@@ -202,4 +202,44 @@ class MacosActions implements MacActions {
       return false;
     }
   }
+
+  @override
+  Future<List<Contact>> findContacts(String name) async {
+    try {
+      final raw =
+          await _channel.invokeMethod<List<Object?>>('findContacts', name) ??
+              const [];
+      return [
+        for (final r in raw)
+          if (r is Map)
+            Contact(r['name'] as String? ?? '',
+                nickname: r['nickname'] as String? ?? '',
+                phones: [
+                  for (final p in (r['phones'] as List?) ?? const [])
+                    if (p is String) p
+                ])
+      ];
+    } on PlatformException catch (e) {
+      if (e.code == 'denied') throw const ContactsDenied();
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String> regionCode() async {
+    try {
+      return await _channel.invokeMethod<String>('regionCode') ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Future<bool> copyText(String text) async {
+    try {
+      return await _channel.invokeMethod<bool>('copyText', text) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
 }

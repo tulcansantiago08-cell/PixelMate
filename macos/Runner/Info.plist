@@ -14,6 +14,8 @@
 	<string>PixelMate guarda tus pendientes en Recordatorios para que te lleguen al iPhone, si lo activas.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>PixelMate guarda tus pendientes en Recordatorios para que te lleguen al iPhone, si lo activas.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>PixelMate busca el número de la persona a la que le quieres escribir por WhatsApp.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>PixelMate muestra tu agenda y crea eventos cuando se lo pides en el chat.</string>
 	<key>CFBundleDevelopmentRegion</key>

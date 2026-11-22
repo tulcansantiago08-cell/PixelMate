@@ -9,6 +9,7 @@ part 'parser/alarms.dart';
 part 'parser/mac_control.dart';
 part 'parser/calendar.dart';
 part 'parser/answers.dart';
+part 'parser/messages.dart';
 
 /// Qué pidió el usuario.
 enum AssistantIntent {
@@ -68,6 +69,10 @@ enum AssistantIntent {
 
   /// «Toma nota: …», «guarda esta idea: …» (el texto tal cual).
   note,
+
+  /// «Mándale a Mamá por WhatsApp que llego tarde»: [ParsedCommand.app] es
+  /// el contacto y [ParsedCommand.text] el mensaje.
+  whatsapp,
 
   /// «Anota en mi calendario el viernes cumpleaños de mamá» ([ParsedCommand.when]
   /// es el día, con hora si la dijo; [ParsedCommand.allDay] si no).
@@ -405,6 +410,10 @@ ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
   final dance = _danceCommand(m);
   if (dance != null) return dance;
 
+  // WhatsApp: "mándale a Mamá por WhatsApp que llego tarde".
+  final whatsapp = _whatsappCommand(original, m);
+  if (whatsapp != null) return whatsapp;
+
   // Anotar en el calendario (antes que tareas y alarmas): "anota en mi
   // calendario el viernes cumpleaños de mamá".
   final note = _calendarNote(original, m, now);
@@ -572,6 +581,18 @@ ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
     final n = int.tryParse(token) ?? _ordinals[token];
     if (n != null) {
       return ParsedCommand(AssistantIntent.completeTask, number: n);
+    }
+  }
+
+  // Solo "Blessd en YouTube": ponerlo.
+  final onlyYoutube = RegExp(
+          r'^(?!(?:abre|busca|que|como|cual|por que)\b)(.+?)\s+(?:en|de)\s+youtube$')
+      .firstMatch(m);
+  if (onlyYoutube != null) {
+    final what = cleanText(original.substring(0, onlyYoutube.group(1)!.length));
+    if (what.isNotEmpty) {
+      return ParsedCommand(AssistantIntent.open,
+          text: what, searchIn: 'youtube', play: true);
     }
   }
 

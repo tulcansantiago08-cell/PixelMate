@@ -14,6 +14,19 @@ class CalendarEvent {
       {this.allDay = false, this.id = ''});
 }
 
+/// Un contacto de la app Contactos.
+class Contact {
+  final String name;
+  final String nickname;
+  final List<String> phones;
+  const Contact(this.name, {this.nickname = '', this.phones = const []});
+}
+
+/// No hay permiso para Contactos.
+class ContactsDenied implements Exception {
+  const ContactsDenied();
+}
+
 /// No hay permiso para el calendario.
 class CalendarDenied implements Exception {
   const CalendarDenied();
@@ -73,6 +86,16 @@ abstract class MacActions {
 
   /// Si están hechos, de los que siguen existiendo.
   Future<Map<String, bool>> appleRemindersDone(List<String> ids);
+
+  /// Contactos cuyo nombre contiene [name]. Lanza [ContactsDenied] sin
+  /// permiso.
+  Future<List<Contact>> findContacts(String name);
+
+  /// Copia [text] al portapapeles.
+  Future<bool> copyText(String text);
+
+  /// País del Mac ("EC", "CO"…), para completar números sin prefijo.
+  Future<String> regionCode();
 
   /// Si algo está sonando ahora en la salida de sonido del Mac.
   Future<bool> audioPlaying();
@@ -260,6 +283,35 @@ class FakeMacActions implements MacActions {
     final before = calendar.length;
     calendar.removeWhere((e) => e.id == id);
     return calendar.length < before;
+  }
+
+  /// La agenda de prueba, si se permite, y el país.
+  final List<Contact> contacts = [];
+  bool contactsAllowed = true;
+  String region = 'EC';
+
+  @override
+  Future<List<Contact>> findContacts(String name) async {
+    if (!contactsAllowed) throw const ContactsDenied();
+    final q = name.toLowerCase();
+    return [
+      for (final c in contacts)
+        if (c.name.toLowerCase().contains(q) ||
+            c.nickname.toLowerCase().contains(q))
+          c
+    ];
+  }
+
+  @override
+  Future<String> regionCode() async => region;
+
+  /// Lo último copiado al portapapeles.
+  String? copied;
+
+  @override
+  Future<bool> copyText(String text) async {
+    copied = text;
+    return true;
   }
 
   /// Lo que responde [audioPlaying].

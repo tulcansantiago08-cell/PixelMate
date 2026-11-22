@@ -1,5 +1,6 @@
 import AudioToolbox
 import Cocoa
+import Contacts
 import CoreAudio
 import EventKit
 import FlutterMacOS
@@ -8,7 +9,7 @@ import FlutterMacOS
 ///
 /// Canal "com.pixelmate/assistant":
 ///   openApp(name) → nombre de la app abierta, o nil si no la encontró
-///   openUrl(url)  → Bool (solo http/https)
+///   openUrl(url)  → Bool (http/https, spotify y whatsapp)
 ///   events(dayOffset) → [{title, start, end, allDay}] (ms desde 1970)
 ///                       o FlutterError "denied" si no hay permiso
 ///   createEvent({title, start, minutes}) → Bool, o FlutterError "denied"
@@ -46,7 +47,7 @@ enum AssistantBridge {
       case "openUrl":
         let args = call.arguments as? [String: Any]
         guard let text = args?["url"] as? String, let url = URL(string: text),
-          ["https", "http", "spotify"].contains(url.scheme ?? "")
+          ["https", "http", "spotify", "whatsapp"].contains(url.scheme ?? "")
         else {
           result(false)
           return
@@ -121,6 +122,71 @@ enum AssistantBridge {
             result(FlutterError(code: "save", message: error.localizedDescription, details: nil))
           }
         }
+      case "findContacts":
+        // [{name, nickname, phones}] de los contactos que coinciden con el
+        // texto en el nombre, apellido, apodo o empresa (sin tildes,
+        // mayúsculas ni emojis).
+        let query = (call.arguments as? String) ?? ""
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { granted, _ in
+          DispatchQueue.global(qos: .userInitiated).async {
+            guard granted else {
+              DispatchQueue.main.async {
+                result(FlutterError(code: "denied", message: nil, details: nil))
+              }
+              return
+            }
+            func fold(_ s: String) -> String {
+              let plain = s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
+              return String(plain.unicodeScalars.filter {
+                CharacterSet.alphanumerics.contains($0) || $0 == " "
+              }.map(Character.init)).trimmingCharacters(in: .whitespaces)
+            }
+            let q = fold(query)
+            let words = q.split(separator: " ").map(String.init)
+            let keys: [CNKeyDescriptor] = [
+              CNContactGivenNameKey as CNKeyDescriptor,
+              CNContactFamilyNameKey as CNKeyDescriptor,
+              CNContactNicknameKey as CNKeyDescriptor,
+              CNContactOrganizationNameKey as CNKeyDescriptor,
+              CNContactPhoneNumbersKey as CNKeyDescriptor,
+            ]
+            var total = 0
+            var found: [[String: Any]] = []
+            let request = CNContactFetchRequest(keysToFetch: keys)
+            do {
+              try store.enumerateContacts(with: request) { c, _ in
+                total += 1
+                let full = fold("\(c.givenName) \(c.familyName)")
+                let fields = [full, fold(c.nickname), fold(c.organizationName)]
+                let hit =
+                  !words.isEmpty
+                  && fields.contains { field in words.allSatisfy { field.contains($0) } }
+                guard hit, found.count < 10 else { return }
+                let name = [c.givenName, c.familyName].filter { !$0.isEmpty }
+                  .joined(separator: " ")
+                found.append([
+                  "name": name.isEmpty ? (c.nickname.isEmpty ? c.organizationName : c.nickname) : name,
+                  "nickname": c.nickname,
+                  "phones": c.phoneNumbers.map { $0.value.stringValue },
+                ])
+              }
+              DispatchQueue.main.async {
+                SoundPlayer.log("contactos: \(total) en total, \(found.count) coinciden")
+                result(found)
+              }
+            } catch {
+              DispatchQueue.main.async {
+                result(FlutterError(code: "failed", message: error.localizedDescription, details: nil))
+              }
+            }
+          }
+        }
+      case "copyText":
+        NSPasteboard.general.clearContents()
+        result(NSPasteboard.general.setString((call.arguments as? String) ?? "", forType: .string))
+      case "regionCode":
+        result((Locale.current as NSLocale).countryCode ?? "")
       case "audioPlaying":
         result(SystemVolume.isPlaying())
       case "runShortcut":

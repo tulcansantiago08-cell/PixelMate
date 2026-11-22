@@ -43,8 +43,6 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
 
   Future<void> _save() async {
     final text = _text.text.trim();
-    appLog('diarias: guardar «$text» a las $_hour:$_minute, '
-        '${_days.length} días');
     if (text.isEmpty) {
       setState(() => _problem = 'Escribe qué tienes que hacer.');
       _textFocus.requestFocus();
@@ -64,7 +62,6 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
       if (mounted) setState(() => _problem = 'No pude guardarla: $e');
       return;
     }
-    appLog('diarias: guardada ${added?.id}');
     if (added == null || !mounted) return;
     _text.clear();
     setState(() {
