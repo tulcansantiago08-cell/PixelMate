@@ -16,6 +16,12 @@ class SystemNotifier {
       await _plugin.initialize(
         settings: const InitializationSettings(
           macOS: DarwinInitializationSettings(requestBadgePermission: false),
+          linux: LinuxInitializationSettings(defaultActionName: 'PixelMate'),
+          windows: WindowsInitializationSettings(
+            appName: 'PixelMate',
+            appUserModelId: 'com.pixelmate.app',
+            guid: '7b6f4c2a-5d1e-4a8b-9c3f-2e1d0a9b8c7d',
+          ),
         ),
       );
       _ready = true;

@@ -143,7 +143,7 @@ class _LevelCardState extends State<LevelCard> {
         if (onEquip != null) ...[
           const SizedBox(height: 8),
           Text(tr('Accesorios', 'Accessories'),
-              style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
+              style: const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
           const SizedBox(height: 4),
           AccessoryPicker(
             level: progress.level,

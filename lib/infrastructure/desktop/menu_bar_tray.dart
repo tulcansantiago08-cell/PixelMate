@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -32,7 +33,15 @@ class MenuBarTray with TrayListener {
 
   Future<void> init() async {
     trayManager.addListener(this);
-    await trayManager.setIcon('assets/tray/tray_icon.png', isTemplate: true);
+    // Mac: plantilla monocroma de la barra de menú. Windows pide .ico; en
+    // Linux va el ícono a color, que se ve en paneles claros y oscuros.
+    if (Platform.isWindows) {
+      await trayManager.setIcon('assets/tray/tray_icon.ico');
+    } else if (Platform.isLinux) {
+      await trayManager.setIcon('assets/tray/tray_icon_color.png');
+    } else {
+      await trayManager.setIcon('assets/tray/tray_icon.png', isTemplate: true);
+    }
     await trayManager.setToolTip('PixelMate');
   }
 

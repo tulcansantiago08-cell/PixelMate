@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -43,6 +44,9 @@ import 'application/stats/weekly_report.dart';
 import 'application/workday/workday_providers.dart';
 import 'infrastructure/activity/macos_app_activity.dart';
 import 'infrastructure/assistant/apple_assistant.dart';
+import 'infrastructure/portable/portable_actions.dart';
+import 'infrastructure/portable/portable_desktop.dart';
+import 'infrastructure/portable/portable_files.dart';
 import 'infrastructure/assistant/assistant_setup.dart';
 import 'infrastructure/assistant/macos_actions.dart';
 import 'infrastructure/assistant/youtube_video_finder.dart';
@@ -106,10 +110,12 @@ void main() async {
   final mascotSettings = MascotSettings(prefs);
   final dailyGoal = DailyGoalSettings(prefs);
   final focusGuard = FocusGuardSettings(prefs);
-  final launchAtLogin = LaunchAtLogin(MacosLoginItem());
+  // En el Mac, lo nativo; en Windows y Linux, lo multiplataforma.
+  final mac = Platform.isMacOS;
+  final launchAtLogin = LaunchAtLogin(mac ? MacosLoginItem() : NoLoginItem());
   final shortcutSettings = ShortcutSettings(prefs);
   final soundSettings = SoundSettings(prefs);
-  final sounds = MacosSoundPlayer();
+  final SoundPlayer sounds = mac ? MacosSoundPlayer() : PortableSoundPlayer();
   final weeklyStore = WeeklyReportStore(prefs);
   final personal = PersonalStore(prefs);
   final catalog = await loadAppCatalog(
@@ -128,33 +134,34 @@ void main() async {
     soundSettingsProvider.overrideWithValue(soundSettings),
     soundPlayerProvider.overrideWithValue(sounds),
     weeklyReportStoreProvider.overrideWithValue(weeklyStore),
-    fileSaverProvider.overrideWithValue(MacosFileSaver()),
-    appInfoProvider.overrideWithValue(MacosAppInfo()),
+    fileSaverProvider.overrideWithValue(mac ? MacosFileSaver() : PortableFileSaver()),
+    appInfoProvider.overrideWithValue(mac ? MacosAppInfo() : PortableAppInfo()),
     personalStoreProvider.overrideWithValue(personal),
-    macActionsProvider.overrideWithValue(MacosActions()),
+    macActionsProvider.overrideWithValue(mac ? MacosActions() : PortableActions()),
     videoFinderProvider.overrideWithValue(YouTubeVideoFinder()),
     codeWriterProvider.overrideWithValue(AppleCodeWriter()),
     updateCheckerProvider.overrideWithValue(GitHubUpdateChecker()),
     updateSettingsProvider.overrideWithValue(UpdateSettings(prefs)),
     updateScheduleProvider.overrideWithValue(true),
     gameStoreProvider.overrideWith((_) => GameStore(prefs)),
-    musicEventsProvider.overrideWithValue(MacosMusic().events),
-    voicePortProvider.overrideWithValue(MacosVoice()),
+    musicEventsProvider.overrideWithValue(mac ? MacosMusic().events : const Stream.empty()),
+    voicePortProvider.overrideWithValue(mac ? MacosVoice() : const NoVoice()),
     dailyTaskStoreProvider.overrideWith((_) => DailyTaskStore(prefs)),
     calendarStoreProvider.overrideWith((_) => CalendarStore(prefs)),
     briefingPrefsProvider.overrideWithValue(prefs),
     backupPrefsProvider.overrideWithValue(prefs),
     appleRemindersPrefsProvider.overrideWithValue(prefs),
     focusModeSettingsProvider.overrideWith((_) => FocusModeSettings(prefs)),
-    backupFilesProvider.overrideWithValue(MacosBackupFiles()),
+    backupFilesProvider.overrideWithValue(mac ? MacosBackupFiles() : PortableBackupFiles()),
     alarmSettingsProvider.overrideWith((_) => AlarmSettings(prefs)),
     // IA del chat: la de Apple si está disponible; si no, Claude.
     assistantChoiceProvider
         .overrideWith((_) => detectAssistant(claudeApiKey: claudeApiKey)),
     screenCaptureProvider.overrideWithValue(
-        () => captureScreenWithPermission(ScreenshotService())),
+        mac ? () => captureScreenWithPermission(ScreenshotService()) : null),
     appCatalogProvider.overrideWithValue(catalog),
-    foregroundAppsProvider.overrideWithValue(MacosAppActivity().foregroundApps),
+    foregroundAppsProvider.overrideWithValue(
+        mac ? MacosAppActivity().foregroundApps : const Stream.empty()),
   ]);
 
   final shell = DesktopShell(
@@ -165,7 +172,7 @@ void main() async {
     mascot: mascotSettings,
     launchAtLogin: launchAtLogin,
     focusGuard: focusGuard,
-    shortcut: MacosGlobalShortcut(),
+    shortcut: mac ? MacosGlobalShortcut() : NoGlobalShortcut(),
     shortcutSettings: shortcutSettings,
     sounds: sounds,
     soundSettings: soundSettings,

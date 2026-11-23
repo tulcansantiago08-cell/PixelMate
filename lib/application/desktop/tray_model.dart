@@ -1,3 +1,4 @@
+import '../../core/platform.dart';
 import '../../core/i18n/language.dart';
 import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_config.dart';
@@ -93,7 +94,8 @@ List<TrayEntry> trayEntries(
     final phase = status.phase;
     if (phase != null) {
       entries.add(TrayEntry(
-        tr('${phase.kind.displayName} · ciclo ${phase.cycle}', '${phase.kind.displayName} · cycle ${phase.cycle}'),
+        tr('${phase.kind.displayName} · ciclo ${phase.cycle}',
+            '${phase.kind.displayName} · cycle ${phase.cycle}'),
         enabled: false,
       ));
       entries.add(const TrayEntry.separator());
@@ -101,27 +103,41 @@ List<TrayEntry> trayEntries(
     entries.add(status.state == WorkdayRunState.paused
         ? TrayEntry(tr('Reanudar', 'Resume'), action: TrayAction.resume)
         : TrayEntry(tr('Pausar', 'Pause'), action: TrayAction.pause));
-    entries.add(TrayEntry(tr('Saltar fase', 'Skip phase'), action: TrayAction.skipPhase));
-    entries
-        .add(TrayEntry(tr('Finalizar jornada', 'End workday'), action: TrayAction.finish));
+    entries.add(TrayEntry(tr('Saltar fase', 'Skip phase'),
+        action: TrayAction.skipPhase));
+    entries.add(TrayEntry(tr('Finalizar jornada', 'End workday'),
+        action: TrayAction.finish));
   }
 
   entries
     ..add(const TrayEntry.separator())
     ..add(TrayEntry(tr('Estadísticas', 'Stats'), action: TrayAction.showStats))
     ..add(TrayEntry(tr('Pendientes', 'To-do'), action: TrayAction.showPending))
-    ..add(TrayEntry(tr('Ajustes…', 'Settings…'), action: TrayAction.showSettings))
-    ..add(TrayEntry(mascotVisible ? tr('Ocultar mascota', 'Hide pet') : tr('Mostrar mascota', 'Show pet'),
+    ..add(
+        TrayEntry(tr('Ajustes…', 'Settings…'), action: TrayAction.showSettings))
+    ..add(TrayEntry(
+        mascotVisible
+            ? tr('Ocultar mascota', 'Hide pet')
+            : tr('Mostrar mascota', 'Show pet'),
         action: TrayAction.toggleMascot))
-    ..add(TrayEntry(tr('Detectar apps y sugerir modo', 'Detect apps and suggest a mode'),
-        action: TrayAction.toggleDetection, checked: detectionEnabled))
     ..add(TrayEntry(tr('Pasear por el escritorio', 'Walk around the desktop'),
-        action: TrayAction.toggleWalk, checked: walkEnabled))
-    ..add(TrayEntry(tr('Guardián del enfoque', 'Focus guard'),
-        action: TrayAction.toggleFocusGuard, checked: focusGuardEnabled));
-  if (petName != null) {
-    entries.add(TrayEntry(tr('Escuchar «Oye $petName» (micrófono)', 'Listen for “Hey $petName” (microphone)'),
-        action: TrayAction.toggleWake, checked: wakeEnabled));
+        action: TrayAction.toggleWalk, checked: walkEnabled));
+  // Detectar apps, el guardián y «Oye…» usan funciones del Mac.
+  if (isMacDesktop) {
+    entries
+      ..add(TrayEntry(
+          tr('Detectar apps y sugerir modo', 'Detect apps and suggest a mode'),
+          action: TrayAction.toggleDetection,
+          checked: detectionEnabled))
+      ..add(TrayEntry(tr('Guardián del enfoque', 'Focus guard'),
+          action: TrayAction.toggleFocusGuard, checked: focusGuardEnabled));
+  }
+  if (petName != null && isMacDesktop) {
+    entries.add(TrayEntry(
+        tr('Escuchar «Oye $petName» (micrófono)',
+            'Listen for “Hey $petName” (microphone)'),
+        action: TrayAction.toggleWake,
+        checked: wakeEnabled));
   }
   if (launchAtLogin != null) {
     entries.add(TrayEntry(tr('Abrir al iniciar sesión', 'Open at login'),
@@ -129,6 +145,7 @@ List<TrayEntry> trayEntries(
   }
   entries
     ..add(const TrayEntry.separator())
-    ..add(TrayEntry(tr('Salir de PixelMate', 'Quit PixelMate'), action: TrayAction.quit));
+    ..add(TrayEntry(tr('Salir de PixelMate', 'Quit PixelMate'),
+        action: TrayAction.quit));
   return entries;
 }

@@ -29,7 +29,7 @@ class _FocusModeOptions extends ConsumerWidget {
             key: const ValueKey('focusmode-open'),
             onPressed: () => ref.read(macActionsProvider).openApp(tr('Atajos', 'Shortcuts')),
             icon: const Icon(Icons.open_in_new_rounded, size: 14),
-            label: Text(tr('Abrir Atajos', 'Open Shortcuts'), style: TextStyle(fontSize: 11)),
+            label: Text(tr('Abrir Atajos', 'Open Shortcuts'), style: const TextStyle(fontSize: 11)),
           ),
           OutlinedButton.icon(
             key: const ValueKey('focusmode-test'),
@@ -41,7 +41,7 @@ class _FocusModeOptions extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.play_arrow_rounded, size: 14),
-            label: Text(tr('Probar', 'Test'), style: TextStyle(fontSize: 11)),
+            label: Text(tr('Probar', 'Test'), style: const TextStyle(fontSize: 11)),
           ),
         ]),
         if (focus.problem != null)

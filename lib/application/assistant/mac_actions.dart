@@ -120,7 +120,7 @@ class SavedCode {
   final String editor;
   const SavedCode(this.path, this.editor);
 
-  String get fileName => path.split('/').last;
+  String get fileName => path.split(RegExp(r'[/\\]')).last;
 }
 
 /// Para pruebas.

@@ -72,13 +72,13 @@ class _CollectionPanelState extends ConsumerState<CollectionPanel> {
           Row(children: [
             Expanded(
               child: Row(children: [
-                Icon(Icons.collections_bookmark_outlined,
+                const Icon(Icons.collections_bookmark_outlined,
                     size: 18, color: StatsStyle.accentLight),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Flexible(
                     child: Text(tr('Álbum', 'Album'),
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: StatsStyle.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.w600))),
@@ -226,7 +226,7 @@ class _Detail extends StatelessWidget {
       ),
       child: item == null
           ? Text(tr('Toca una pieza para ver qué es y cómo conseguirla.', 'Tap a piece to see what it is and how to get it.'),
-              style: TextStyle(color: StatsStyle.textMuted, fontSize: 11))
+              style: const TextStyle(color: StatsStyle.textMuted, fontSize: 11))
           : Row(children: [
               Text(item.unlocked ? item.emoji : '🔒',
                   style: const TextStyle(fontSize: 22)),

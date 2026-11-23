@@ -71,14 +71,14 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
         children: [
           Text(
               tr('Guarda tus tareas, calendario, alarmas y ajustes en un archivo para no perderlos (por ejemplo, al cambiar de Mac).', "Save your tasks, calendar, alarms and settings to a file so you don't lose them (for example, when changing Macs)."),
-              style: TextStyle(color: StatsStyle.textMuted, fontSize: 10)),
+              style: const TextStyle(color: StatsStyle.textMuted, fontSize: 10)),
           const SizedBox(height: 6),
           Row(children: [
             Expanded(
               child: OutlinedButton(
                 key: const ValueKey('backup-export'),
                 onPressed: _export,
-                child: Text(tr('Guardar…', 'Save…'), style: TextStyle(fontSize: 12)),
+                child: Text(tr('Guardar…', 'Save…'), style: const TextStyle(fontSize: 12)),
               ),
             ),
             const SizedBox(width: 8),
@@ -86,7 +86,7 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
               child: OutlinedButton(
                 key: const ValueKey('backup-import'),
                 onPressed: _import,
-                child: Text(tr('Restaurar…', 'Restore…'), style: TextStyle(fontSize: 12)),
+                child: Text(tr('Restaurar…', 'Restore…'), style: const TextStyle(fontSize: 12)),
               ),
             ),
           ]),

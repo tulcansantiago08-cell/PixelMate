@@ -1,3 +1,4 @@
+import '../../core/platform.dart';
 import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,14 +88,16 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
                 onPressed: widget.onDone,
                 style: _compact,
                 child: Text(tr('Saltar', 'Skip'),
-                    style: TextStyle(color: StatsStyle.textMuted)),
+                    style: const TextStyle(color: StatsStyle.textMuted)),
               ),
             const SizedBox(width: 4),
             FilledButton(
               key: const ValueKey('welcome-next'),
               onPressed: _next,
               style: _compact,
-              child: Text(_step == _steps - 1 ? tr('Empezar', 'Start') : tr('Siguiente', 'Next')),
+              child: Text(_step == _steps - 1
+                  ? tr('Empezar', 'Start')
+                  : tr('Siguiente', 'Next')),
             ),
           ]),
         ],
@@ -134,7 +137,9 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _title(tr('Hola', 'Hi')),
-          _body(tr('Soy tu nueva mascota. Vivo en tu escritorio y te acompaño mientras trabajas, estudias o juegas.\n\n¿Cómo quieres llamarme?', "I'm your new pet. I live on your desktop and keep you company while you work, study or play.\n\nWhat do you want to call me?")),
+          _body(tr(
+              'Soy tu nueva mascota. Vivo en tu escritorio y te acompaño mientras trabajas, estudias o juegas.\n\n¿Cómo quieres llamarme?',
+              "I'm your new pet. I live on your desktop and keep you company while you work, study or play.\n\nWhat do you want to call me?")),
           TextField(
             key: const ValueKey('welcome-name'),
             controller: _name,
@@ -142,8 +147,8 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
             style: const TextStyle(color: StatsStyle.textPrimary),
             decoration: InputDecoration(
               hintText: tr('Michi, Luna, Nube…', 'Kitty, Luna, Cloud…'),
-              hintStyle: TextStyle(color: StatsStyle.textMuted),
-              counterStyle: TextStyle(color: StatsStyle.textMuted),
+              hintStyle: const TextStyle(color: StatsStyle.textMuted),
+              counterStyle: const TextStyle(color: StatsStyle.textMuted),
             ),
             onSubmitted: (_) => _next(),
           ),
@@ -158,7 +163,9 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _title(tr('Encantado, soy $name', "Nice to meet you, I'm $name")),
-          _body(tr('¿Cuánto quieres enfocarte al día? Te aviso cuando lo cumplas. Puedes cambiarlo cuando quieras.', "How long do you want to focus each day? I'll let you know when you reach it. You can change it anytime.")),
+          _body(tr(
+              '¿Cuánto quieres enfocarte al día? Te aviso cuando lo cumplas. Puedes cambiarlo cuando quieras.',
+              "How long do you want to focus each day? I'll let you know when you reach it. You can change it anytime.")),
           const SizedBox(height: 10),
           Wrap(
             spacing: 6,
@@ -167,8 +174,9 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
               for (final o in DailyGoalSettings.options)
                 ChoiceChip(
                   key: ValueKey('welcome-goal-${o.inHours}'),
-                  label:
-                      Text(o == Duration.zero ? tr('Sin meta', 'No goal') : '${o.inHours} h'),
+                  label: Text(o == Duration.zero
+                      ? tr('Sin meta', 'No goal')
+                      : '${o.inHours} h'),
                   selected: goal.goal == o,
                   selectedColor: StatsStyle.accent,
                   labelStyle: TextStyle(
@@ -199,7 +207,9 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
           _title(tr('Siempre a tu lado', 'Always by your side')),
           if (launch.supported) ...[
             Row(children: [
-              Expanded(child: _body(tr('Abrir PixelMate al encender tu Mac', 'Open PixelMate when your Mac starts'))),
+              Expanded(
+                  child: _body(tr('Abrir PixelMate al encender tu Mac',
+                      'Open PixelMate when your Mac starts'))),
               Switch(
                 key: const ValueKey('welcome-login'),
                 value: launch.enabled,
@@ -215,8 +225,11 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
                   : tr('Para charlar conmigo: ${ai.problem ?? ''}',
                       'To chat with me: ${ai.problem ?? ''}'))
               : assistant.onDevice
-                  ? tr('Puedo charlar contigo gratis y sin internet, con la IA de tu Mac. Pregúntame cuánto te falta o pídeme que empiece una jornada.', "I can chat with you for free and without internet, using your Mac's AI. Ask me how much you have left or ask me to start a workday.")
-                  : tr('Charlamos con ${assistant.label}.', 'We chat with ${assistant.label}.')),
+                  ? tr(
+                      'Puedo charlar contigo gratis y sin internet, con la IA de tu Mac. Pregúntame cuánto te falta o pídeme que empiece una jornada.',
+                      "I can chat with you for free and without internet, using your Mac's AI. Ask me how much you have left or ask me to start a workday.")
+                  : tr('Charlamos con ${assistant.label}.',
+                      'We chat with ${assistant.label}.')),
         ],
       ),
     );
@@ -229,23 +242,48 @@ class _WelcomePanelState extends ConsumerState<WelcomePanel> {
             _title(tr('Así me usas', 'How to use me')),
             _tip(
                 Icons.chat_bubble_outline_rounded,
-                tr('Haz clic en mí para charlar o pedirme cosas: «abre Notas», «sube el volumen», «¿qué tengo hoy?».', 'Click me to chat or ask for things: “open Notes”, “turn up the volume”, “what do I have today?”.')),
+                tr('Haz clic en mí para charlar o pedirme cosas: «abre Notas», «sube el volumen», «¿qué tengo hoy?».',
+                    'Click me to chat or ask for things: “open Notes”, “turn up the volume”, “what do I have today?”.')),
+            if (isMacDesktop)
+              _tip(
+                  Icons.mic_none_rounded,
+                  tr('Háblame con el micrófono, ⌃⌥V o diciendo «Oye $name» (actívalo en Ajustes).',
+                      'Talk to me with the microphone, ⌃⌥V or by saying “Hey $name” (turn it on in Settings).')),
             _tip(
-                Icons.mic_none_rounded,
-                tr('Háblame con el micrófono, ⌃⌥V o diciendo «Oye $name» (actívalo en Ajustes).', 'Talk to me with the microphone, ⌃⌥V or by saying “Hey $name” (turn it on in Settings).')),
-            _tip(Icons.alarm_rounded,
-                tr('Alarmas, tareas diarias y tu calendario con colores.', 'Alarms, daily tasks and your color calendar.')),
-            _tip(Icons.bar_chart_rounded, tr('Tus estadísticas, nivel y logros.', 'Your stats, level and achievements.')),
+                Icons.alarm_rounded,
+                tr('Alarmas, tareas diarias y tu calendario con colores.',
+                    'Alarms, daily tasks and your color calendar.')),
             _tip(
-                Icons.star_outline_rounded, tr('Un minijuego para los descansos.', 'A mini-game for breaks.')),
-            _tip(Icons.more_horiz_rounded,
-                tr('Jornadas de enfoque, pausa, paseo y mi nombre.', 'Focus workdays, pause, walk and my name.')),
-            _tip(Icons.visibility_off_outlined,
-                tr('Escóndeme cuando quieras: vuelvo con «Oye $name» o ⌃⌥P.', 'Hide me whenever you want: I come back with “Hey $name” or ⌃⌥P.')),
-            _tip(Icons.settings_outlined,
-                tr('Todo lo demás en Ajustes (barra de menú).', 'Everything else in Settings (menu bar).')),
+                Icons.bar_chart_rounded,
+                tr('Tus estadísticas, nivel y logros.',
+                    'Your stats, level and achievements.')),
+            _tip(
+                Icons.star_outline_rounded,
+                tr('Un minijuego para los descansos.',
+                    'A mini-game for breaks.')),
+            _tip(
+                Icons.more_horiz_rounded,
+                tr('Jornadas de enfoque, pausa, paseo y mi nombre.',
+                    'Focus workdays, pause, walk and my name.')),
+            _tip(
+                Icons.visibility_off_outlined,
+                isMacDesktop
+                    ? tr(
+                        'Escóndeme cuando quieras: vuelvo con «Oye $name» o ⌃⌥P.',
+                        'Hide me whenever you want: I come back with “Hey $name” or ⌃⌥P.')
+                    : tr(
+                        'Escóndeme cuando quieras: vuelvo desde el ícono de la bandeja.',
+                        'Hide me whenever you want: I come back from the tray icon.')),
+            _tip(
+                Icons.settings_outlined,
+                isMacDesktop
+                    ? tr('Todo lo demás en Ajustes (barra de menú).',
+                        'Everything else in Settings (menu bar).')
+                    : tr('Todo lo demás en Ajustes (ícono de la bandeja).',
+                        'Everything else in Settings (tray icon).')),
             const SizedBox(height: 6),
-            _body(tr('Cada mañana te cuento lo que tienes ese día.', 'Every morning I tell you what you have that day.')),
+            _body(tr('Cada mañana te cuento lo que tienes ese día.',
+                'Every morning I tell you what you have that day.')),
           ],
         ),
       );

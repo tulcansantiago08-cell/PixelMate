@@ -268,8 +268,7 @@ class PersonalStore extends ChangeNotifier {
     final p = pending;
     final tasks = p.isEmpty
         ? tr('Sin tareas pendientes.', 'No pending tasks.')
-        : tr('Tareas pendientes: ', 'Pending tasks: ') +
-            '${[
+        : '${tr('Tareas pendientes: ', 'Pending tasks: ')}${[
             for (var i = 0; i < p.length && i < 8; i++) '${i + 1}) ${p[i].text}'
           ].join('; ')}.';
     return tasks;

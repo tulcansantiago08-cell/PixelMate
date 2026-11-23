@@ -440,9 +440,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
             style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
             onPressed: _openForm,
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.schedule_rounded, size: 14),
-              SizedBox(width: 4),
-              Text(tr('Con hora', 'With time'), style: TextStyle(fontSize: 11)),
+              const Icon(Icons.schedule_rounded, size: 14),
+              const SizedBox(width: 4),
+              Text(tr('Con hora', 'With time'), style: const TextStyle(fontSize: 11)),
             ]),
           ),
       ]),
@@ -456,9 +456,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
         ),
       if (mine.isEmpty && items.isEmpty && routine.isEmpty && !notes.toMac)
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Text(tr('Nada para este día.', 'Nothing for this day.'),
-              style: TextStyle(color: StatsStyle.textMuted, fontSize: 11)),
+              style: const TextStyle(color: StatsStyle.textMuted, fontSize: 11)),
         ),
       for (final n in mine)
         _row(
@@ -664,7 +664,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             hintText: tr('¿Qué quieres anotar?', 'What do you want to note?'),
-            hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
+            hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
             isDense: true,
           ),
           onSubmitted: (_) => _save(),
@@ -740,13 +740,13 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               _adding = false;
               _resetForm();
             }),
-            child: Text(tr('Cancelar', 'Cancel'), style: TextStyle(fontSize: 12)),
+            child: Text(tr('Cancelar', 'Cancel'), style: const TextStyle(fontSize: 12)),
           ),
           const Spacer(),
           FilledButton(
             key: const ValueKey('cal-save'),
             onPressed: _save,
-            child: Text(tr('Guardar', 'Save'), style: TextStyle(fontSize: 12)),
+            child: Text(tr('Guardar', 'Save'), style: const TextStyle(fontSize: 12)),
           ),
         ]),
       ],

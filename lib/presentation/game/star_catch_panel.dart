@@ -25,22 +25,22 @@ class GameTheme {
   const GameTheme(this.name, this.top, this.bottom, this.accent, this.twinkle);
 
   static List<GameTheme> get all => [
-    GameTheme(tr('Cielo de la tarde 🌤️', 'Afternoon sky 🌤️'), Color(0xFF1B2A4A), Color(0xFF3E5C8A),
-        Color(0xFF64B5F6), Color(0x66FFFFFF)),
-    GameTheme(tr('Atardecer 🌇', 'Sunset 🌇'), Color(0xFF2B1B3D), Color(0xFF8A3B5C),
-        Color(0xFFFF8A65), Color(0x66FFE0B2)),
-    GameTheme(tr('Noche 🌙', 'Night 🌙'), Color(0xFF0B1026), Color(0xFF1F2A5A),
-        Color(0xFF9FA8DA), Color(0x99FFFFFF)),
-    GameTheme(tr('Aurora 🌌', 'Aurora 🌌'), Color(0xFF07202A), Color(0xFF1F6B5A),
-        Color(0xFF4DD0A1), Color(0x99B2FFD9)),
-    GameTheme(tr('Bosque mágico 🍄', 'Magic forest 🍄'), Color(0xFF0F1F14), Color(0xFF2F5A2A),
-        Color(0xFFAED581), Color(0x99F0F4C3)),
-    GameTheme(tr('Nebulosa 🔮', 'Nebula 🔮'), Color(0xFF1A0B2E), Color(0xFF6A2C8A),
-        Color(0xFFCE93D8), Color(0x99F8BBD0)),
-    GameTheme(tr('Volcán 🌋', 'Volcano 🌋'), Color(0xFF1F0A0A), Color(0xFF8A2E14),
-        Color(0xFFFF7043), Color(0x99FFCC80)),
-    GameTheme(tr('Galaxia 🪐', 'Galaxy 🪐'), Color(0xFF05030F), Color(0xFF2A1458),
-        Color(0xFFFFD54F), Color(0xCCFFFFFF)),
+    GameTheme(tr('Cielo de la tarde 🌤️', 'Afternoon sky 🌤️'), const Color(0xFF1B2A4A), const Color(0xFF3E5C8A),
+        const Color(0xFF64B5F6), const Color(0x66FFFFFF)),
+    GameTheme(tr('Atardecer 🌇', 'Sunset 🌇'), const Color(0xFF2B1B3D), const Color(0xFF8A3B5C),
+        const Color(0xFFFF8A65), const Color(0x66FFE0B2)),
+    GameTheme(tr('Noche 🌙', 'Night 🌙'), const Color(0xFF0B1026), const Color(0xFF1F2A5A),
+        const Color(0xFF9FA8DA), const Color(0x99FFFFFF)),
+    GameTheme(tr('Aurora 🌌', 'Aurora 🌌'), const Color(0xFF07202A), const Color(0xFF1F6B5A),
+        const Color(0xFF4DD0A1), const Color(0x99B2FFD9)),
+    GameTheme(tr('Bosque mágico 🍄', 'Magic forest 🍄'), const Color(0xFF0F1F14), const Color(0xFF2F5A2A),
+        const Color(0xFFAED581), const Color(0x99F0F4C3)),
+    GameTheme(tr('Nebulosa 🔮', 'Nebula 🔮'), const Color(0xFF1A0B2E), const Color(0xFF6A2C8A),
+        const Color(0xFFCE93D8), const Color(0x99F8BBD0)),
+    GameTheme(tr('Volcán 🌋', 'Volcano 🌋'), const Color(0xFF1F0A0A), const Color(0xFF8A2E14),
+        const Color(0xFFFF7043), const Color(0x99FFCC80)),
+    GameTheme(tr('Galaxia 🪐', 'Galaxy 🪐'), const Color(0xFF05030F), const Color(0xFF2A1458),
+        const Color(0xFFFFD54F), const Color(0xCCFFFFFF)),
   ];
 
   static GameTheme forLevel(int level) => all[(level - 1) % all.length];
@@ -203,13 +203,13 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
                           fontSize: 15,
                           fontWeight: FontWeight.w700))
                   : Row(children: [
-                      Icon(Icons.star_outline_rounded,
+                      const Icon(Icons.star_outline_rounded,
                           size: 18, color: StatsStyle.accentLight),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Flexible(
                           child: Text(tr('Atrapa estrellas', 'Catch the stars'),
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: StatsStyle.textPrimary,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600))),
@@ -284,7 +284,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
       const SizedBox(height: 6),
       Text(
           tr('Trampas: ⛈️ 💣 💀 quitan vida · 🧊 congela · 🌀 invierte · 🍄 encoge\nAyudas: 💖 vida · 🧲 imán · 🛡️ escudo', 'Traps: ⛈️ 💣 💀 take a life · 🧊 freezes · 🌀 reverses · 🍄 shrinks\nHelps: 💖 life · 🧲 magnet · 🛡️ shield'),
-          key: ValueKey('game-legend'),
+          key: const ValueKey('game-legend'),
           textAlign: TextAlign.center,
           style: _body),
       const SizedBox(height: 6),
@@ -405,12 +405,9 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     final done = store.dailyDone;
     final streak = store.streak;
     final text = done
-        ? tr('🎯 Reto de hoy cumplido ✅', "🎯 Today's challenge done ✅") +
-            (streak > 1
+        ? '${tr('🎯 Reto de hoy cumplido ✅', "🎯 Today's challenge done ✅")}${streak > 1
                 ? tr(' · racha de $streak días 🔥', ' · $streak-day streak 🔥')
-                : '') +
-            '\n' +
-            tr('Vuelve mañana por otro.', 'Come back tomorrow for another.')
+                : ''}\n${tr('Vuelve mañana por otro.', 'Come back tomorrow for another.')}'
         : tr('🎯 Reto de hoy: ${store.daily.text}\n+${dailyXp(streak + 1)} XP', "🎯 Today's challenge: ${store.daily.text}\n+${dailyXp(streak + 1)} XP") +
             (streak > 0
                 ? tr(' · racha de $streak 🔥 (no la pierdas)',
@@ -462,7 +459,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
           child: ListView(
             children: [
               Text(tr('Cestas (toca una para usarla)', 'Baskets (tap one to use it)'),
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600)),
@@ -474,7 +471,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
               Text('${store.skin.emoji} ${store.skin.perk}', style: _body),
               const SizedBox(height: 10),
               Text(tr('Medallas', 'Medals'),
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600)),

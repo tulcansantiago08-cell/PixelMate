@@ -75,7 +75,7 @@ class MusicController extends StateNotifier<MusicState> {
   /// (también durante el enfoque, porque se pidió).
   void startDisco(Duration length) {
     state = MusicState(
-        now: NowPlaying(source: 'disco', playing: true),
+        now: const NowPlaying(source: 'disco', playing: true),
         announce: state.announce);
     _videoEnds?.cancel();
     _videoEnds = Timer(length, () {
@@ -123,7 +123,7 @@ class MusicController extends StateNotifier<MusicState> {
       this.checkEvery = const Duration(seconds: 2),
       this.startWithin = const Duration(seconds: 12),
       this.stopAfterSilence = const Duration(seconds: 6)})
-      : super(MusicState()) {
+      : super(const MusicState()) {
     _sub = events.listen(onEvent);
   }
 
@@ -189,7 +189,7 @@ class MusicController extends StateNotifier<MusicState> {
 
 /// Se sobrescribe en `main()` con los avisos de macOS.
 final musicEventsProvider =
-    Provider<Stream<NowPlaying>>((_) => Stream.empty());
+    Provider<Stream<NowPlaying>>((_) => const Stream.empty());
 
 final musicProvider = StateNotifierProvider<MusicController, MusicState>(
     (ref) => MusicController(ref.watch(musicEventsProvider),

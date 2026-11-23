@@ -1,3 +1,4 @@
+import '../../core/platform.dart';
 import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,15 +136,16 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                       children: [
                         if (msg.hasImage)
                           Padding(
-                            padding: EdgeInsets.only(bottom: 4),
+                            padding: const EdgeInsets.only(bottom: 4),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.screenshot,
+                                const Icon(Icons.screenshot,
                                     color: Colors.white70, size: 12),
-                                SizedBox(width: 4),
-                                Text(tr('Pantalla capturada', 'Screen captured'),
-                                    style: TextStyle(
+                                const SizedBox(width: 4),
+                                Text(
+                                    tr('Pantalla capturada', 'Screen captured'),
+                                    style: const TextStyle(
                                         color: Colors.white70, fontSize: 10)),
                               ],
                             ),
@@ -184,11 +186,11 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
           // Loading
           if (notifier.isLoading)
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
@@ -196,9 +198,9 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                       color: StatsStyle.accent,
                     ),
                   ),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(tr('Pensando...', 'Thinking...'),
-                      style: TextStyle(color: Colors.white38, fontSize: 11)),
+                      style: const TextStyle(color: Colors.white38, fontSize: 11)),
                 ],
               ),
             ),
@@ -240,7 +242,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                           style: const TextStyle(
                               color: Colors.white, fontSize: 12),
                           decoration: InputDecoration(
-                            hintText: tr('Escribe o pide algo', 'Type or ask for something'),
+                            hintText: tr('Escribe o pide algo',
+                                'Type or ask for something'),
                             hintStyle: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.35),
                                 fontSize: 12),
@@ -257,17 +260,20 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                 ),
                 const SizedBox(width: 6),
 
-                // Micrófono: hablarle (otra vez para terminar la frase).
-                Tooltip(
-                  message: voice.listening
-                      ? tr('Terminar', 'Stop')
-                      : tr('Hablarle (también con ⌃⌥V)', 'Talk to it (also with ⌃⌥V)'),
-                  child: GestureDetector(
-                    key: const ValueKey('voice-button'),
-                    onTap: _voice.toggle,
-                    child: _MicButton(listening: voice.listening),
+                // Micrófono: hablarle (otra vez para terminar la frase). Solo
+                // en el Mac, que es donde está el reconocimiento de voz.
+                if (isMacDesktop)
+                  Tooltip(
+                    message: voice.listening
+                        ? tr('Terminar', 'Stop')
+                        : tr('Hablarle (también con ⌃⌥V)',
+                            'Talk to it (also with ⌃⌥V)'),
+                    child: GestureDetector(
+                      key: const ValueKey('voice-button'),
+                      onTap: _voice.toggle,
+                      child: _MicButton(listening: voice.listening),
+                    ),
                   ),
-                ),
                 const SizedBox(width: 6),
 
                 // Botón enviar

@@ -53,7 +53,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
               Row(children: [
                 Expanded(
                   child: Text(tr('Pendientes', 'To-do'),
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: StatsStyle.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.w600)),
@@ -74,9 +74,9 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         reminders.isEmpty &&
                         store.notes.isEmpty)
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(tr('Nada pendiente.', 'Nothing pending.'),
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 11)),
                       ),
                     for (var i = 0; i < pending.length; i++)
@@ -289,7 +289,7 @@ class _AppleRemindersRowState extends ConsumerState<_AppleRemindersRow> {
             Expanded(
               child: Text(tr('También en Recordatorios (iPhone)', 'Also in Reminders (iPhone)'),
                   style:
-                      TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
+                      const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
             ),
             Transform.scale(
               scale: 0.7,

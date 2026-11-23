@@ -63,9 +63,10 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
           .add(text, _hour, _minute, days: _days, now: DateTime.now());
     } catch (e) {
       appLog('diarias: error al guardar: $e');
-      if (mounted)
+      if (mounted) {
         setState(() =>
             _problem = tr('No pude guardarla: $e', "I couldn't save it: $e"));
+      }
       return;
     }
     if (added == null || !mounted) return;
@@ -111,7 +112,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
           Row(children: [
             Expanded(
               child: SegmentedButton<int>(
-                key: ValueKey('tasks-tabs'),
+                key: const ValueKey('tasks-tabs'),
                 showSelectedIcon: false,
                 style: SegmentedButton.styleFrom(
                   visualDensity: VisualDensity.compact,
@@ -123,11 +124,11 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                   ButtonSegment(
                       value: 0,
                       label: Text(tr('Diarias', 'Daily'),
-                          style: TextStyle(fontSize: 11))),
+                          style: const TextStyle(fontSize: 11))),
                   ButtonSegment(
                       value: 1,
                       label: Text(tr('Calendario', 'Calendar'),
-                          style: TextStyle(fontSize: 11))),
+                          style: const TextStyle(fontSize: 11))),
                 ],
                 selected: {_tab},
                 onSelectionChanged: (v) => setState(() {
@@ -178,7 +179,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                         visualDensity: VisualDensity.compact),
                     icon: const Icon(Icons.volume_up_outlined, size: 16),
                     label: Text(tr('Probar sonido', 'Test sound'),
-                        style: TextStyle(fontSize: 11)),
+                        style: const TextStyle(fontSize: 11)),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -191,7 +192,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         visualDensity: VisualDensity.compact),
                     label: Text(tr('Añadir', 'Add'),
-                        style: TextStyle(fontSize: 12)),
+                        style: const TextStyle(fontSize: 12)),
                   ),
                 ),
               ]),
@@ -205,11 +206,11 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
     final tasks = store.tasks;
     if (tasks.isEmpty) {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
             tr('Sin alarmas.\nAñade una o dímelo: «alarma de lunes a viernes a las 7 gimnasio».',
                 'No alarms.\nAdd one or tell me: “alarm Monday to Friday at 7 gym”.'),
-            style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
+            style: const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
       );
     }
     final sound = alarmSounds[ref.watch(alarmSettingsProvider).sound] ?? '';
@@ -238,7 +239,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             hintText: tr('Nombre (ej. Reunión)', 'Name (e.g. Meeting)'),
-            hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
+            hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
             isDense: true,
           ),
           onSubmitted: (_) => _save(),
@@ -276,7 +277,7 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
         Wrap(spacing: 6, children: [
           TextButton(
               onPressed: () => setState(() => _days = {...allDays}),
-              child: Text(tr('Todos', 'All'), style: TextStyle(fontSize: 11))),
+              child: Text(tr('Todos', 'All'), style: const TextStyle(fontSize: 11))),
           TextButton(
               onPressed: () => setState(() => _days = {...weekdays}),
               child: const Text('L a V', style: TextStyle(fontSize: 11))),
@@ -293,13 +294,13 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
           TextButton(
             onPressed: () => setState(() => _adding = false),
             child:
-                Text(tr('Cancelar', 'Cancel'), style: TextStyle(fontSize: 12)),
+                Text(tr('Cancelar', 'Cancel'), style: const TextStyle(fontSize: 12)),
           ),
           const Spacer(),
           FilledButton(
             key: const ValueKey('daily-save'),
             onPressed: _save,
-            child: Text(tr('Guardar', 'Save'), style: TextStyle(fontSize: 12)),
+            child: Text(tr('Guardar', 'Save'), style: const TextStyle(fontSize: 12)),
           ),
         ]),
       ],

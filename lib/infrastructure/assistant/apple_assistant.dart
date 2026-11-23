@@ -1,3 +1,4 @@
+import '../../core/platform.dart';
 import '../../core/i18n/language.dart';
 import 'package:flutter/services.dart';
 
@@ -24,7 +25,10 @@ enum AppleAiAvailability {
         modelNotReady => tr('Apple Intelligence aún está descargando su modelo. Vuelve a intentarlo en un rato ⏳', 'Apple Intelligence is still downloading its model. Try again in a while ⏳'),
         deviceNotEligible =>
           tr('Este Mac no es compatible con Apple Intelligence.', "This Mac isn't compatible with Apple Intelligence."),
-        unsupported => tr('La IA de Apple necesita macOS 26 o posterior.', "Apple's AI needs macOS 26 or later."),
+        unsupported => isMacDesktop
+            ? tr('La IA de Apple necesita macOS 26 o posterior.', "Apple's AI needs macOS 26 or later.")
+            : tr('Para charlar conmigo en este sistema hace falta una API key de Claude (ANTHROPIC_API_KEY).',
+                'To chat with me on this system you need a Claude API key (ANTHROPIC_API_KEY).'),
       };
 }
 

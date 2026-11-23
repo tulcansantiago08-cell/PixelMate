@@ -1,0 +1,92 @@
+name: Compilar
+
+# Arma PixelMate para Windows, Linux y macOS. Cada uno queda como artefacto
+# descargable en la pestaña Actions (y en el release, si se sube una etiqueta v*).
+on:
+  push:
+    branches: [main, 'feat/**']
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: 3.47.9
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Empaquetar
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath PixelMate-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PixelMate-windows
+          path: PixelMate-windows.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev \
+            liblzma-dev libstdc++-12-dev libayatana-appindicator3-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Empaquetar
+        run: tar -czf PixelMate-linux-x64.tar.gz -C build/linux/x64/release/bundle .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PixelMate-linux
+          path: PixelMate-linux-x64.tar.gz
+
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - name: Empaquetar
+        run: ditto -c -k --keepParent build/macos/Build/Products/Release/PixelMate.app PixelMate-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PixelMate-macos
+          path: PixelMate-macos.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

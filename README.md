@@ -107,6 +107,25 @@
 **Requisitos:** macOS 12 o posterior. El chat gratis necesita macOS 26 o
 posterior con Apple Intelligence activado.
 
+### Windows y Linux
+
+1. Descarga `PixelMate-windows.zip` o `PixelMate-linux-x64.tar.gz` desde
+   [Releases](https://github.com/tulcansantiago08-cell/PixelMate/releases)
+   (o, de una rama, desde la pestaña *Actions* → *Compilar* → *Artifacts*).
+2. **Windows:** descomprime la carpeta y abre `pixelmate.exe`. Si SmartScreen
+   avisa, *Más información → Ejecutar de todas formas* (la app no está firmada).
+3. **Linux:** descomprime y abre `./pixelmate`. Necesita GTK 3 y, para el ícono
+   de la bandeja, `libayatana-appindicator3` (en Ubuntu:
+   `sudo apt install libayatana-appindicator3-1`).
+
+En Windows y Linux están la mascota, las jornadas, estadísticas, logros, el
+juego, tareas diarias, alarmas, calendario propio, recordatorios, sonidos,
+avisos, el menú de la bandeja, los dos idiomas y abrir webs y apps desde el
+chat. El chat con IA usa Claude (con API key). Lo que depende del Mac no
+aparece: la IA de Apple, la voz y «Oye …», detectar apps y el guardián del
+enfoque, controlar música y volumen, el Calendario, Contactos y Recordatorios
+de Apple, Concentración, los atajos globales y abrir al iniciar sesión.
+
 ## Privacidad
 
 Todo se guarda solo en tu Mac (SQLite y preferencias locales). La IA de
@@ -126,10 +145,15 @@ pulsas el botón de la cámara.
 ```bash
 flutter pub get
 flutter test
-flutter build macos --release
+flutter build macos --release     # en un Mac
+flutter build windows --release   # en Windows
+flutter build linux --release     # en Linux
 ```
 
-La app queda en `build/macos/Build/Products/Release/PixelMate.app`.
+En macOS la app queda en `build/macos/Build/Products/Release/PixelMate.app`.
+Cada sistema solo compila su propia versión; el workflow *Compilar*
+(`.github/workflows/build.yml`) arma las tres en GitHub en cada push y las
+publica en el release al subir una etiqueta `v*`.
 
 Para Claude (opcional):
 

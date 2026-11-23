@@ -1,3 +1,4 @@
+import '../../core/platform.dart';
 import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,7 +73,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
           Row(children: [
             Expanded(
               child: Text(tr('Ajustes', 'Settings'),
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
@@ -119,18 +120,21 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       onPressed: () async {
                         final typed = await showRenameDialog(
                             context, mascot.userName ?? '',
-                            title: tr('¿Cómo te llamo?', 'What should I call you?'),
-                            hint: tr('Tu nombre o apodo', 'Your name or nickname'),
+                            title: tr(
+                                '¿Cómo te llamo?', 'What should I call you?'),
+                            hint: tr(
+                                'Tu nombre o apodo', 'Your name or nickname'),
                             fieldKey: 'user-name');
                         if (typed != null) await mascot.setUserName(typed);
                       },
-                      child: _Editable(mascot.userName ?? tr('Dímelo', 'Tell me')),
+                      child:
+                          _Editable(mascot.userName ?? tr('Dímelo', 'Tell me')),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top: 2, bottom: 4),
+                    padding: const EdgeInsets.only(top: 2, bottom: 4),
                     child: Text(tr('Especie', 'Species'),
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: StatsStyle.textPrimary, fontSize: 12)),
                   ),
                   _SpeciesPicker(
@@ -139,9 +143,9 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     onChoose: mascot.setSpecies,
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top: 8, bottom: 4),
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
                     child: Text(tr('Accesorio', 'Accessory'),
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: StatsStyle.textPrimary, fontSize: 12)),
                   ),
                   AccessoryPicker(
@@ -153,14 +157,17 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     keyName: 'aura',
                     label: tr('Aura brillante', 'Shiny aura'),
                     help: level >= auraUnlockLevel
-                        ? tr('Chispitas alrededor de ${mascot.name}.', 'Sparkles around ${mascot.name}.')
-                        : tr('🔒 Se desbloquea en el nivel $auraUnlockLevel.', '🔒 Unlocks at level $auraUnlockLevel.'),
+                        ? tr('Chispitas alrededor de ${mascot.name}.',
+                            'Sparkles around ${mascot.name}.')
+                        : tr('🔒 Se desbloquea en el nivel $auraUnlockLevel.',
+                            '🔒 Unlocks at level $auraUnlockLevel.'),
                     value: level >= auraUnlockLevel && mascot.aura,
                     onChanged: level >= auraUnlockLevel ? mascot.setAura : null,
                   ),
                   _Switch(
                     keyName: 'walk',
-                    label: tr('Pasear por el escritorio', 'Walk around the desktop'),
+                    label: tr(
+                        'Pasear por el escritorio', 'Walk around the desktop'),
                     value: mascot.walkEnabled,
                     onChanged: mascot.setWalkEnabled,
                   ),
@@ -169,7 +176,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     label: tr('Meta diaria', 'Daily goal'),
                     trailing: PopupMenuButton<Duration>(
                       key: const ValueKey('settings-goal'),
-                      tooltip: tr('Cambiar la meta diaria', 'Change the daily goal'),
+                      tooltip:
+                          tr('Cambiar la meta diaria', 'Change the daily goal'),
                       initialValue: goal.goal,
                       onSelected: goal.setGoal,
                       color: StatsStyle.surfaceRaised,
@@ -181,7 +189,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                             child: Text(
                                 o == Duration.zero
                                     ? tr('Sin meta', 'No goal')
-                                    : tr('${formatSpent(o)} al día', '${formatSpent(o)} a day'),
+                                    : tr('${formatSpent(o)} al día',
+                                        '${formatSpent(o)} a day'),
                                 style: const TextStyle(
                                     color: StatsStyle.textPrimary,
                                     fontSize: 12)),
@@ -191,99 +200,134 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                         padding: const EdgeInsets.all(6),
                         child: Text(
                             goal.enabled
-                                ? tr('${formatSpent(goal.goal)} ▾', '${formatSpent(goal.goal)} ▾')
+                                ? tr('${formatSpent(goal.goal)} ▾',
+                                    '${formatSpent(goal.goal)} ▾')
                                 : tr('Sin meta ▾', 'No goal ▾'),
                             style: const TextStyle(
                                 color: StatsStyle.textPrimary, fontSize: 12)),
                       ),
                     ),
                   ),
-                  _Switch(
-                    keyName: 'guard',
-                    label: tr('Guardián del enfoque', 'Focus guard'),
-                    help: tr('Avisa si WhatsApp, Mensajes, juegos… siguen al frente durante el enfoque.', 'Warns you if WhatsApp, Messages, games… stay in front during focus.'),
-                    value: guard.enabled,
-                    onChanged: guard.setEnabled,
-                  ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'guard',
+                      label: tr('Guardián del enfoque', 'Focus guard'),
+                      help: tr(
+                          'Avisa si WhatsApp, Mensajes, juegos… siguen al frente durante el enfoque.',
+                          'Warns you if WhatsApp, Messages, games… stay in front during focus.'),
+                      value: guard.enabled,
+                      onChanged: guard.setEnabled,
+                    ),
                   _Switch(
                     keyName: 'deepfocus',
                     label: tr('Enfoque profundo', 'Deep focus'),
-                    help: tr('Durante el enfoque, los festejos (nivel, logros, racha) esperan al descanso.', 'During focus, celebrations (level, achievements, streak) wait for the break.'),
+                    help: tr(
+                        'Durante el enfoque, los festejos (nivel, logros, racha) esperan al descanso.',
+                        'During focus, celebrations (level, achievements, streak) wait for the break.'),
                     value: mascot.deepFocus,
                     onChanged: mascot.setDeepFocus,
                   ),
                   _Switch(
                     keyName: 'wellness',
-                    label: tr('Consejos de bienestar en los descansos', 'Wellbeing tips during breaks'),
-                    help: tr('Agua, estirarse, descansar la vista…', 'Water, stretching, resting your eyes…'),
+                    label: tr('Consejos de bienestar en los descansos',
+                        'Wellbeing tips during breaks'),
+                    help: tr('Agua, estirarse, descansar la vista…',
+                        'Water, stretching, resting your eyes…'),
                     value: mascot.wellnessTips,
                     onChanged: mascot.setWellnessTips,
                   ),
-                  _Switch(
-                    keyName: 'music',
-                    label: tr('Bailar con la música', 'Dance to the music'),
-                    help: tr('Cuando suena Spotify o Música, baila y dice la canción (no durante el enfoque). Solo escucha el aviso de cambio de canción.', 'When Spotify or Music is playing, it dances and says the song (not during focus). It only listens for the song-change notice.'),
-                    value: mascot.musicReactions,
-                    onChanged: mascot.setMusicReactions,
-                  ),
-                  _Switch(
-                    keyName: 'voice',
-                    label: tr('Responder en voz alta', 'Answer out loud'),
-                    help:
-                        tr('Cuando le hablas con el micrófono o $voiceShortcutLabel, lee su respuesta con la voz del Mac.', "When you talk to it with the microphone or $voiceShortcutLabel, it reads its answer with the Mac's voice."),
-                    value: mascot.voiceReplies,
-                    onChanged: mascot.setVoiceReplies,
-                  ),
-                  _Switch(
-                    keyName: 'wake',
-                    label: tr('Despertarla con «Oye ${mascot.name}»', 'Wake it with “Hey ${mascot.name}”'),
-                    help: tr('Di «oye ${mascot.name}» o «hola ${mascot.name}» y te escucha. Entiende la voz en tu Mac, sin internet; mientras está activo verás el punto naranja del micrófono.', "Say “hey ${mascot.name}” or “hi ${mascot.name}” and it listens. It understands speech on your Mac, without internet; while it's on you'll see the orange microphone dot."),
-                    value: mascot.wakeWord,
-                    onChanged: mascot.setWakeWord,
-                  ),
-                  _Switch(
-                    keyName: 'wakestrict',
-                    label: tr('Modo estricto', 'Strict mode'),
-                    help: tr('Solo despierta con «Oye ${mascot.name}» al empezar a hablar (no con «hola» ni en medio de una frase): menos falsas alarmas.', 'It only wakes with “Hey ${mascot.name}” at the start of what you say (not with “hi” or mid-sentence): fewer false alarms.'),
-                    value: mascot.wakeStrict,
-                    onChanged: mascot.wakeWord ? mascot.setWakeStrict : null,
-                  ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'music',
+                      label: tr('Bailar con la música', 'Dance to the music'),
+                      help: tr(
+                          'Cuando suena Spotify o Música, baila y dice la canción (no durante el enfoque). Solo escucha el aviso de cambio de canción.',
+                          'When Spotify or Music is playing, it dances and says the song (not during focus). It only listens for the song-change notice.'),
+                      value: mascot.musicReactions,
+                      onChanged: mascot.setMusicReactions,
+                    ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'voice',
+                      label: tr('Responder en voz alta', 'Answer out loud'),
+                      help: tr(
+                          'Cuando le hablas con el micrófono o $voiceShortcutLabel, lee su respuesta con la voz del Mac.',
+                          "When you talk to it with the microphone or $voiceShortcutLabel, it reads its answer with the Mac's voice."),
+                      value: mascot.voiceReplies,
+                      onChanged: mascot.setVoiceReplies,
+                    ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'wake',
+                      label: tr('Despertarla con «Oye ${mascot.name}»',
+                          'Wake it with “Hey ${mascot.name}”'),
+                      help: tr(
+                          'Di «oye ${mascot.name}» o «hola ${mascot.name}» y te escucha. Entiende la voz en tu Mac, sin internet; mientras está activo verás el punto naranja del micrófono.',
+                          "Say “hey ${mascot.name}” or “hi ${mascot.name}” and it listens. It understands speech on your Mac, without internet; while it's on you'll see the orange microphone dot."),
+                      value: mascot.wakeWord,
+                      onChanged: mascot.setWakeWord,
+                    ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'wakestrict',
+                      label: tr('Modo estricto', 'Strict mode'),
+                      help: tr(
+                          'Solo despierta con «Oye ${mascot.name}» al empezar a hablar (no con «hola» ni en medio de una frase): menos falsas alarmas.',
+                          'It only wakes with “Hey ${mascot.name}” at the start of what you say (not with “hi” or mid-sentence): fewer false alarms.'),
+                      value: mascot.wakeStrict,
+                      onChanged: mascot.wakeWord ? mascot.setWakeStrict : null,
+                    ),
                   _Switch(
                     keyName: 'briefing',
                     label: tr('Resumen del día', 'Daily summary'),
-                    help: tr('Por la mañana te cuenta lo que tienes hoy: calendario, tareas diarias y recordatorios.', 'In the morning it tells you what you have today: calendar, daily tasks and reminders.'),
+                    help: tr(
+                        'Por la mañana te cuenta lo que tienes hoy: calendario, tareas diarias y recordatorios.',
+                        'In the morning it tells you what you have today: calendar, daily tasks and reminders.'),
                     value: mascot.morningBriefing,
                     onChanged: mascot.setMorningBriefing,
                   ),
                   const _AlarmOptions(),
                   _Switch(
                     keyName: 'night',
-                    label: tr('Recordarme descansar de noche', 'Remind me to rest at night'),
-                    help: tr('Desde las 22:00, si sigue una jornada.', 'From 22:00, if a workday is still running.'),
+                    label: tr('Recordarme descansar de noche',
+                        'Remind me to rest at night'),
+                    help: tr('Desde las 22:00, si sigue una jornada.',
+                        'From 22:00, if a workday is still running.'),
                     value: mascot.nightReminders,
                     onChanged: mascot.setNightReminders,
                   ),
-                  _Switch(
-                    keyName: 'detection',
-                    label: tr('Detectar apps y sugerir modo', 'Detect apps and suggest a mode'),
-                    help: tr('Al abrir tu editor o un juego, te propone empezar una jornada.', 'When you open your editor or a game, it suggests starting a workday.'),
-                    value: detection.enabled,
-                    onChanged: detection.setEnabled,
-                  ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'detection',
+                      label: tr('Detectar apps y sugerir modo',
+                          'Detect apps and suggest a mode'),
+                      help: tr(
+                          'Al abrir tu editor o un juego, te propone empezar una jornada.',
+                          'When you open your editor or a game, it suggests starting a workday.'),
+                      value: detection.enabled,
+                      onChanged: detection.setEnabled,
+                    ),
                   _Section(tr('Extras', 'Extras')),
-                  _Switch(
-                    keyName: 'shortcut',
-                    label: tr('Atajos $shortcutLabel (chat) y $voiceShortcutLabel (hablarle)', 'Shortcuts $shortcutLabel (chat) and $voiceShortcutLabel (talk to it)'),
-                    help: shortcut.enabled && !shortcut.working
-                        ? tr('⚠️ Otra app ya usa $shortcutLabel.', '⚠️ Another app already uses $shortcutLabel.')
-                        : tr('Funcionan desde cualquier app.', 'They work from any app.'),
-                    value: shortcut.enabled,
-                    onChanged: shortcut.setEnabled,
-                  ),
+                  if (isMacDesktop)
+                    _Switch(
+                      keyName: 'shortcut',
+                      label: tr(
+                          'Atajos $shortcutLabel (chat) y $voiceShortcutLabel (hablarle)',
+                          'Shortcuts $shortcutLabel (chat) and $voiceShortcutLabel (talk to it)'),
+                      help: shortcut.enabled && !shortcut.working
+                          ? tr('⚠️ Otra app ya usa $shortcutLabel.',
+                              '⚠️ Another app already uses $shortcutLabel.')
+                          : tr('Funcionan desde cualquier app.',
+                              'They work from any app.'),
+                      value: shortcut.enabled,
+                      onChanged: shortcut.setEnabled,
+                    ),
                   _Switch(
                     keyName: 'sound',
                     label: tr('Sonidos 8-bit', '8-bit sounds'),
-                    help: tr('Al empezar el enfoque, descansar, cumplir la meta y subir de nivel.', 'When focus starts, on breaks, on reaching the goal and on leveling up.'),
+                    help: tr(
+                        'Al empezar el enfoque, descansar, cumplir la meta y subir de nivel.',
+                        'When focus starts, on breaks, on reaching the goal and on leveling up.'),
                     value: sound.enabled,
                     onChanged: sound.setEnabled,
                   ),
@@ -297,7 +341,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                         child: Text(tr('▶️ Probar sonido', '▶️ Test sound')),
                       ),
                     ),
-                  if (launch.supported) ...[
+                  // El idioma va siempre; abrir al iniciar sesión, solo si se puede.
+                  ...[
                     _Section(tr('Sistema', 'System')),
                     // Idioma de toda la app: español (predeterminado) o inglés.
                     _Row(
@@ -325,28 +370,34 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                         ],
                       ),
                     ),
-                    _Switch(
-                      keyName: 'login',
-                      label: tr('Abrir al iniciar sesión', 'Open at login'),
-                      value: launch.enabled,
-                      onChanged: (v) async {
-                        final ok = await launch.setEnabled(v);
-                        if (mounted) setState(() => _needsApproval = !ok);
-                      },
-                    ),
+                    if (launch.supported)
+                      _Switch(
+                        keyName: 'login',
+                        label: tr('Abrir al iniciar sesión', 'Open at login'),
+                        value: launch.enabled,
+                        onChanged: (v) async {
+                          final ok = await launch.setEnabled(v);
+                          if (mounted) setState(() => _needsApproval = !ok);
+                        },
+                      ),
                     if (_needsApproval)
                       Text(launchAtLoginApprovalHint,
                           style: const TextStyle(
                               color: StatsStyle.textSecondary, fontSize: 10)),
                   ],
-                  _Section(tr('Inteligencia artificial', 'Artificial intelligence')),
+                  _Section(
+                      tr('Inteligencia artificial', 'Artificial intelligence')),
                   PlainText(
                     ai == null
                         ? tr('Comprobando…', 'Checking…')
                         : ai.assistant != null
                             ? (ai.assistant!.onDevice
-                                ? tr('✅ ${ai.assistant!.label}: gratis, sin conexión y privada.', '✅ ${ai.assistant!.label}: free, offline and private.')
-                                : tr('✅ ${ai.assistant!.label} (usa tu API key).', '✅ ${ai.assistant!.label} (uses your API key).'))
+                                ? tr(
+                                    '✅ ${ai.assistant!.label}: gratis, sin conexión y privada.',
+                                    '✅ ${ai.assistant!.label}: free, offline and private.')
+                                : tr(
+                                    '✅ ${ai.assistant!.label} (usa tu API key).',
+                                    '✅ ${ai.assistant!.label} (uses your API key).'))
                             : '⚠️ ${ai.problem ?? tr('Sin IA disponible.', 'No AI available.')}',
                     key: const ValueKey('settings-ai'),
                     style: const TextStyle(
@@ -356,10 +407,13 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   OutlinedButton(
                     key: const ValueKey('settings-welcome'),
                     onPressed: widget.onShowWelcome,
-                    child: Text(tr('Ver la bienvenida otra vez', 'See the welcome again')),
+                    child: Text(tr(
+                        'Ver la bienvenida otra vez', 'See the welcome again')),
                   ),
-                  _Section(tr('Modo Concentración', 'Focus mode')),
-                  const _FocusModeOptions(),
+                  if (isMacDesktop) ...[
+                    _Section(tr('Modo Concentración', 'Focus mode')),
+                    const _FocusModeOptions(),
+                  ],
                   _Section(tr('Copia de seguridad', 'Backup')),
                   const _BackupButtons(),
                   _Section(tr('Acerca de', 'About')),
@@ -373,8 +427,9 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                         fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    tr('Tu compañero pixel art para enfocarte, descansar y jugar. Tus datos se quedan en este Mac.', 'Your pixel art companion to focus, rest and play. Your data stays on this Mac.'),
-                    style: TextStyle(
+                    tr('Tu compañero pixel art para enfocarte, descansar y jugar. Tus datos se quedan en este Mac.',
+                        'Your pixel art companion to focus, rest and play. Your data stays on this Mac.'),
+                    style: const TextStyle(
                         color: StatsStyle.textSecondary, fontSize: 11),
                   ),
                   _UpdateRow(
@@ -386,8 +441,11 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   ),
                   _Switch(
                     keyName: 'updates',
-                    label: tr('Buscar actualizaciones solo', 'Check for updates automatically'),
-                    help: tr('Una vez al día pregunta a GitHub por la última versión (no envía datos tuyos).', 'Once a day it asks GitHub for the latest version (it sends none of your data).'),
+                    label: tr('Buscar actualizaciones solo',
+                        'Check for updates automatically'),
+                    help: tr(
+                        'Una vez al día pregunta a GitHub por la última versión (no envía datos tuyos).',
+                        'Once a day it asks GitHub for the latest version (it sends none of your data).'),
                     value: updates.enabled,
                     onChanged: updates.setEnabled,
                   ),
@@ -397,7 +455,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       key: const ValueKey('settings-github'),
                       onPressed: () =>
                           ref.read(appInfoProvider).openRepository(),
-                      child: Text(tr('Ver el proyecto en GitHub ↗', 'See the project on GitHub ↗')),
+                      child: Text(tr('Ver el proyecto en GitHub ↗',
+                          'See the project on GitHub ↗')),
                     ),
                   ),
                 ],

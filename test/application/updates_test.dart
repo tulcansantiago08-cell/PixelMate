@@ -90,7 +90,7 @@ void main() {
 
   testWidgets('Acerca de: muestra la versión nueva y la descarga',
       (tester) async {
-    tester.view.physicalSize = const Size(320, 2600);
+    tester.view.physicalSize = const Size(320, 3200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     SharedPreferences.setMockInitialValues({'onboarding.done': true});

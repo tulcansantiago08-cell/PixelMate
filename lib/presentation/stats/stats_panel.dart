@@ -49,7 +49,7 @@ class StatsPanel extends ConsumerWidget {
           Row(children: [
             Expanded(
               child: Text(tr('Estadísticas', 'Stats'),
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
@@ -262,7 +262,7 @@ class _RecentSessions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(tr('Últimas sesiones', 'Latest sessions'),
-            style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
+            style: const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
         const SizedBox(height: 4),
         for (final s in sessions.take(5))
           Padding(

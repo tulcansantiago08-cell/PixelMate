@@ -71,13 +71,13 @@ class WorkdayBadge extends StatelessWidget {
               onTap: onPlay,
               borderRadius: BorderRadius.circular(6),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.sports_esports_outlined,
+                  const Icon(Icons.sports_esports_outlined,
                       size: 14, color: StatsStyle.accentLight),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(tr('¿Jugamos? +XP', 'Shall we play? +XP'),
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: StatsStyle.accentLight,
                           fontSize: 12,
                           fontWeight: FontWeight.w600)),

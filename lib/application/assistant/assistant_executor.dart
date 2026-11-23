@@ -204,7 +204,7 @@ class AssistantExecutor {
           final task = await dailyStore.add(c.text, when.hour, when.minute,
               days: repeat == AlarmRepeat.weekdays ? weekdays : allDays,
               now: t);
-          return tr('📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} a las ${task.time12}, «${task.text}». Sonará como alarma; la ves con el botón ⏰ junto a mí.', '📅 Daily task saved: ${task!.daysLabel.toLowerCase()} at ${task.time12}, “${task.text}”. It will ring like an alarm; you can see it with the ⏰ button next to me.');
+          return tr('📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} a las ${task.time12}, «${task.text}». Sonará como alarma; la ves con el botón ⏰ junto a mí.', '📅 Daily task saved: ${task.daysLabel.toLowerCase()} at ${task.time12}, “${task.text}”. It will ring like an alarm; you can see it with the ⏰ button next to me.');
         }
         await store.addReminder(c.text, when, alarm: true, repeat: repeat);
         final then = repeat == AlarmRepeat.none

@@ -116,9 +116,9 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
               children: report.isEmpty
                   ? [
                       Padding(
-                        padding: EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.only(top: 12),
                         child: Text(tr('Esta semana no hubo sesiones.', 'There were no sessions this week.'),
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 12)),
                       ),
                     ]
@@ -271,7 +271,7 @@ class _GoalSuggestion extends ConsumerWidget {
                 foregroundColor: Colors.white,
                 visualDensity: VisualDensity.compact),
             onPressed: () => ref.read(dailyGoalSettingsProvider).setGoal(next),
-            child: Text(tr('Usarla', 'Use it'), style: TextStyle(fontSize: 12)),
+            child: Text(tr('Usarla', 'Use it'), style: const TextStyle(fontSize: 12)),
           ),
       ]),
     );
