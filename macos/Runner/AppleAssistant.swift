@@ -209,17 +209,22 @@ enum AppleAssistant {
     }
 
     static func classify(_ error: Error) -> String {
-      if #available(macOS 27.0, *) {
-        if let e = error as? LanguageModelError {
-          switch e {
-          case .contextSizeExceeded: return "context"
-          case .guardrailViolation, .refusal: return "guardrail"
-          case .unsupportedLanguageOrLocale: return "language"
-          case .rateLimited: return "busy"
-          default: return "other"
+      // LanguageModelError llegó con el SDK de macOS 27 (Xcode 27, Swift 6.3).
+      // Con un Xcode anterior (p. ej. el de GitHub Actions) ese tipo no existe:
+      // se compila sin este bloque y se usan los errores de abajo.
+      #if compiler(>=6.3)
+        if #available(macOS 27.0, *) {
+          if let e = error as? LanguageModelError {
+            switch e {
+            case .contextSizeExceeded: return "context"
+            case .guardrailViolation, .refusal: return "guardrail"
+            case .unsupportedLanguageOrLocale: return "language"
+            case .rateLimited: return "busy"
+            default: return "other"
+            }
           }
         }
-      }
+      #endif
       if let e = error as? LanguageModelSession.GenerationError {
         switch e {
         case .exceededContextWindowSize: return "context"
