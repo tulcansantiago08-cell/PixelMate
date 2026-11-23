@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,9 +53,9 @@ class LateNightReminder {
   static String message(int index, DateTime local) {
     final time = '${local.hour}:${local.minute.toString().padLeft(2, '0')}';
     return switch (index) {
-      0 => '🌙 Ya son las $time. ¿Cerramos por hoy? Descansar también es avanzar.',
-      1 => '🌙 Son las $time y seguimos aquí. Tu yo de mañana te lo agradecerá: ¿lo dejamos?',
-      _ => '😴 Ya es la $time… De verdad, a dormir. Mañana seguimos.',
+      0 => tr('🌙 Ya son las $time. ¿Cerramos por hoy? Descansar también es avanzar.', "🌙 It's already $time. Shall we call it a day? Resting is progress too."),
+      1 => tr('🌙 Son las $time y seguimos aquí. Tu yo de mañana te lo agradecerá: ¿lo dejamos?', "🌙 It's $time and we're still here. Tomorrow's you will thank you: shall we stop?"),
+      _ => tr('😴 Ya es la $time… De verdad, a dormir. Mañana seguimos.', "😴 It's already $time… Really, time to sleep. We'll continue tomorrow."),
     };
   }
 }

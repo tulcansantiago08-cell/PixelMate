@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -44,9 +45,9 @@ class FocusModeSettings extends ChangeNotifier {
 /// Qué decir si un atajo no funcionó.
 String? focusModeProblem(String status, String shortcut) => switch (status) {
       'ok' => null,
-      'missing' => 'No encuentro el atajo «$shortcut». Créalo en la app Atajos (mira cómo, arriba).',
-      'denied' => 'Sin permiso para usar Atajos: Ajustes del Sistema › Privacidad y seguridad › Automatización › PixelMate.',
-      _ => 'No pude ejecutar el atajo «$shortcut».',
+      'missing' => tr('No encuentro el atajo «$shortcut». Créalo en la app Atajos (mira cómo, arriba).', "I can't find the “$shortcut” shortcut. Create it in the Shortcuts app (see how, above)."),
+      'denied' => tr('Sin permiso para usar Atajos: Ajustes del Sistema › Privacidad y seguridad › Automatización › PixelMate.', 'No permission to use Shortcuts: System Settings › Privacy & Security › Automation › PixelMate.'),
+      _ => tr('No pude ejecutar el atajo «$shortcut».', "I couldn't run the “$shortcut” shortcut."),
     };
 
 /// Escucha la jornada y ejecuta los atajos: enfoque → Concentración;

@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/detectable_app.dart';
 import '../../domain/time/day_part.dart';
 
@@ -42,27 +43,27 @@ class Suggestion {
   static Suggestion? forApp(ForegroundApp app, DetectableApp rule) =>
       switch (rule.category) {
         AppCategory.development => Suggestion(
-            message: 'Abriste ${rule.name}. ¿Iniciamos una jornada?',
+            message: tr('Abriste ${rule.name}. ¿Iniciamos una jornada?', 'You opened ${rule.name}. Shall we start a workday?'),
             options: [
-              const SuggestionOption(
-                  '💼 Jornada laboral', SuggestionAction.startWork),
-              const SuggestionOption(
-                  '📚 Sesión de estudio', SuggestionAction.startStudy),
-              const SuggestionOption('Ahora no', SuggestionAction.dismiss),
               SuggestionOption(
-                  'Nunca con ${rule.name}', SuggestionAction.neverForApp),
+                  tr('💼 Jornada laboral', '💼 Workday'), SuggestionAction.startWork),
+              SuggestionOption(
+                  tr('📚 Sesión de estudio', '📚 Study session'), SuggestionAction.startStudy),
+              SuggestionOption(tr('Ahora no', 'Not now'), SuggestionAction.dismiss),
+              SuggestionOption(
+                  tr('Nunca con ${rule.name}', 'Never with ${rule.name}'), SuggestionAction.neverForApp),
             ],
             app: app,
             category: rule.category,
           ),
         AppCategory.gaming => Suggestion(
-            message: 'Abriste ${rule.name}. ¿Activamos el modo gamer?',
+            message: tr('Abriste ${rule.name}. ¿Activamos el modo gamer?', 'You opened ${rule.name}. Shall we turn on gamer mode?'),
             options: [
-              const SuggestionOption(
-                  '🎮 Sí, vamos a jugar', SuggestionAction.startGaming),
-              const SuggestionOption('Ahora no', SuggestionAction.dismiss),
               SuggestionOption(
-                  'Nunca con ${rule.name}', SuggestionAction.neverForApp),
+                  tr('🎮 Sí, vamos a jugar', "🎮 Yes, let's play"), SuggestionAction.startGaming),
+              SuggestionOption(tr('Ahora no', 'Not now'), SuggestionAction.dismiss),
+              SuggestionOption(
+                  tr('Nunca con ${rule.name}', 'Never with ${rule.name}'), SuggestionAction.neverForApp),
             ],
             app: app,
             category: rule.category,
@@ -73,18 +74,18 @@ class Suggestion {
   /// Pregunta al abrir PixelMate.
   static Suggestion welcome(DateTime localNow) {
     final message = switch (DayPart.of(localNow)) {
-      DayPart.morning => 'Buenos días. ¿Qué toca hoy?',
-      DayPart.afternoon => 'Buenas tardes. ¿Qué hacemos?',
-      DayPart.evening => 'Buenas noches. ¿Un rato más o algo tranquilo?',
-      DayPart.night => 'Es muy tarde 🌙 ¿Algo rápido, o mejor descansamos?',
+      DayPart.morning => tr('Buenos días. ¿Qué toca hoy?', "Good morning. What's on today?"),
+      DayPart.afternoon => tr('Buenas tardes. ¿Qué hacemos?', 'Good afternoon. What shall we do?'),
+      DayPart.evening => tr('Buenas noches. ¿Un rato más o algo tranquilo?', 'Good evening. A bit more, or something calm?'),
+      DayPart.night => tr('Es muy tarde 🌙 ¿Algo rápido, o mejor descansamos?', "It's very late 🌙 Something quick, or should we rest?"),
     };
     return Suggestion(
       message: message,
-      options: const [
-        SuggestionOption('💼 Trabajar', SuggestionAction.startWork),
-        SuggestionOption('📚 Estudiar', SuggestionAction.startStudy),
-        SuggestionOption('🎮 Jugar', SuggestionAction.startGaming),
-        SuggestionOption('🌿 Solo acompáñame', SuggestionAction.freeMode),
+      options: [
+        SuggestionOption(tr('💼 Trabajar', '💼 Work'), SuggestionAction.startWork),
+        SuggestionOption(tr('📚 Estudiar', '📚 Study'), SuggestionAction.startStudy),
+        SuggestionOption(tr('🎮 Jugar', '🎮 Play'), SuggestionAction.startGaming),
+        SuggestionOption(tr('🌿 Solo acompáñame', '🌿 Just keep me company'), SuggestionAction.freeMode),
       ],
     );
   }

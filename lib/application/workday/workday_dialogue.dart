@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../../domain/mascot/mascot_state.dart';
 import '../../domain/session/session_phase.dart';
@@ -19,13 +20,13 @@ MascotState focusMood(ActivityMode mode) => switch (mode) {
     };
 
 /// Consejos de descanso visual, rotando por fase.
-const eyeBreakTips = [
-  'Mira algo a más de 6 metros durante 20 segundos.',
-  'Parpadea despacio 10 veces.',
-  'Levántate de la silla y camina un poco.',
-  'Cierra los ojos y relájalos un momento.',
-  'Estira el cuello, los hombros y las muñecas.',
-];
+List<String> get eyeBreakTips => [
+      tr('Mira algo a más de 6 metros durante 20 segundos.', 'Look at something more than 20 feet away for 20 seconds.'),
+      tr('Parpadea despacio 10 veces.', 'Blink slowly 10 times.'),
+      tr('Levántate de la silla y camina un poco.', 'Get up from your chair and walk a bit.'),
+      tr('Cierra los ojos y relájalos un momento.', 'Close your eyes and relax them for a moment.'),
+      tr('Estira el cuello, los hombros y las muñecas.', 'Stretch your neck, shoulders and wrists.'),
+    ];
 
 String eyeBreakTip(int phaseIndex) =>
     eyeBreakTips[(phaseIndex ~/ 2) % eyeBreakTips.length];
@@ -38,49 +39,49 @@ MascotReaction? reactionFor(WorkdayEvent event,
 
 MascotReaction? _work(WorkdayEvent event, ActivityMode mode) => switch (event) {
       WorkdayStarted() => MascotReaction(mode == ActivityMode.study
-          ? 'A estudiar. Te aviso del descanso.'
-          : 'A trabajar. Te aviso del descanso.'),
+          ? tr('A estudiar. Te aviso del descanso.', "Study time. I'll let you know when it's break time.")
+          : tr('A trabajar. Te aviso del descanso.', "Work time. I'll let you know when it's break time.")),
       PhaseStarted(phase: final p, previous: final prev) => switch (p.kind) {
-          SessionPhase.shortBreak => const MascotReaction(
-              'Buen bloque. Toca descansar.', MascotState.resting),
-          SessionPhase.longBreak => const MascotReaction(
-              'Ciclo completo. Descanso largo.', MascotState.celebrating),
+          SessionPhase.shortBreak => MascotReaction(
+              tr('Buen bloque. Toca descansar.', 'Good block. Time to rest.'), MascotState.resting),
+          SessionPhase.longBreak => MascotReaction(
+              tr('Ciclo completo. Descanso largo.', 'Cycle complete. Long break.'), MascotState.celebrating),
           SessionPhase.focus when prev != null =>
-            MascotReaction('Descanso terminado. Seguimos.', focusMood(mode)),
+            MascotReaction(tr('Descanso terminado. Seguimos.', "Break over. Let's keep going."), focusMood(mode)),
           _ => null,
         },
       FocusEndingSoon(threshold: final t) => t.inMinutes >= 1
-          ? const MascotReaction('Último tramo del bloque.', MascotState.alert)
-          : const MascotReaction('Casi.', MascotState.alert),
+          ? MascotReaction(tr('Último tramo del bloque.', 'Last stretch of the block.'), MascotState.alert)
+          : MascotReaction(tr('Casi.', 'Almost.'), MascotState.alert),
       WorkdayEndingSoon(threshold: final t) => t.inMinutes >= 30
-          ? const MascotReaction(
-              'Queda poco para terminar la jornada.', MascotState.tired)
-          : const MascotReaction('Casi terminas por hoy.', MascotState.tired),
-      WorkdayPaused() => const MascotReaction('En pausa.'),
-      WorkdayResumed() => const MascotReaction('Seguimos.'),
+          ? MascotReaction(
+              tr('Queda poco para terminar la jornada.', 'The workday is almost over.'), MascotState.tired)
+          : MascotReaction(tr('Casi terminas por hoy.', "You're almost done for today."), MascotState.tired),
+      WorkdayPaused() => MascotReaction(tr('En pausa.', 'Paused.')),
+      WorkdayResumed() => MascotReaction(tr('Seguimos.', "Let's keep going.")),
       WorkdayFinished(status: final s) => s.completedNaturally
-          ? const MascotReaction(
-              'Jornada completa. Buen trabajo.', MascotState.celebrating)
-          : const MascotReaction('Jornada terminada.', MascotState.idle),
+          ? MascotReaction(
+              tr('Jornada completa. Buen trabajo.', 'Workday complete. Good job.'), MascotState.celebrating)
+          : MascotReaction(tr('Jornada terminada.', 'Workday over.'), MascotState.idle),
     };
 
 MascotReaction? _gaming(WorkdayEvent event) => switch (event) {
-      WorkdayStarted() => const MascotReaction(
-          'Modo juego. Te aviso para descansar la vista.', MascotState.gaming),
+      WorkdayStarted() => MascotReaction(
+          tr('Modo juego. Te aviso para descansar la vista.', "Game mode. I'll remind you to rest your eyes."), MascotState.gaming),
       PhaseStarted(phase: final p, previous: final prev) => p.kind.isBreak
-          ? MascotReaction('Pausa para la vista. ${eyeBreakTip(p.index)}',
+          ? MascotReaction(tr('Pausa para la vista. ${eyeBreakTip(p.index)}', 'Eye break. ${eyeBreakTip(p.index)}'),
               MascotState.resting)
           : prev != null
-              ? const MascotReaction(
-                  'Vista descansada. A jugar.', MascotState.gaming)
+              ? MascotReaction(
+                  tr('Vista descansada. A jugar.', "Eyes rested. Let's play."), MascotState.gaming)
               : null,
       FocusEndingSoon(threshold: final t) => t.inMinutes >= 1
-          ? const MascotReaction(
-              'Queda poco de esta sesión.', MascotState.alert)
-          : const MascotReaction('Última jugada.', MascotState.alert),
+          ? MascotReaction(
+              tr('Queda poco de esta sesión.', 'This session is almost over.'), MascotState.alert)
+          : MascotReaction(tr('Última jugada.', 'Last round.'), MascotState.alert),
       WorkdayEndingSoon() => null,
-      WorkdayPaused() => const MascotReaction('Partida en pausa.'),
-      WorkdayResumed() => const MascotReaction('De vuelta al juego.'),
-      WorkdayFinished() => const MascotReaction(
-          'Buena sesión. Descansa la vista.', MascotState.celebrating),
+      WorkdayPaused() => MascotReaction(tr('Partida en pausa.', 'Game paused.')),
+      WorkdayResumed() => MascotReaction(tr('De vuelta al juego.', 'Back to the game.')),
+      WorkdayFinished() => MascotReaction(
+          tr('Buena sesión. Descansa la vista.', 'Good session. Rest your eyes.'), MascotState.celebrating),
     };

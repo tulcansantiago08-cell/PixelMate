@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../workday/workday_providers.dart';
@@ -56,8 +57,8 @@ String? consistencyMilestone(Consistency? before, Consistency after) {
   if (before == null || before.today != after.today) return null;
   if (after.active <= before.active) return null;
   return switch (after.active) {
-    7 => '7 de los últimos 7 días. Recuerda que descansar también cuenta 😌',
-    5 => '5 de los últimos 7 días.',
+    7 => tr('7 de los últimos 7 días. Recuerda que descansar también cuenta 😌', '7 of the last 7 days. Remember that resting counts too 😌'),
+    5 => tr('5 de los últimos 7 días.', '5 of the last 7 days.'),
     _ => null,
   };
 }

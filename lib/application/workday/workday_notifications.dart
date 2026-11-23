@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../../domain/session/session_phase.dart';
 import 'workday_dialogue.dart';
@@ -21,21 +22,21 @@ WorkdayNotice? noticeFor(WorkdayEvent event,
   return switch (event) {
     PhaseStarted(phase: final p, previous: final prev) => switch (p.kind) {
         _ when gaming && p.kind.isBreak => WorkdayNotice(
-            '👀 Descanso visual de ${p.duration.inMinutes} min', body),
+            tr('👀 Descanso visual de ${p.duration.inMinutes} min', '👀 ${p.duration.inMinutes}-min eye break'), body),
         SessionPhase.shortBreak => WorkdayNotice(
-            '☕ Descanso de ${p.duration.inMinutes} min',
+            tr('☕ Descanso de ${p.duration.inMinutes} min', '☕ ${p.duration.inMinutes}-min break'),
             '$body ${eyeBreakTip(p.index)}'),
         SessionPhase.longBreak => WorkdayNotice(
-            '🌿 Descanso largo de ${p.duration.inMinutes} min', body),
+            tr('🌿 Descanso largo de ${p.duration.inMinutes} min', '🌿 ${p.duration.inMinutes}-min long break'), body),
         SessionPhase.focus when prev != null => WorkdayNotice(
             gaming
-                ? '🎮 A jugar: ${p.duration.inMinutes} min'
-                : '🎯 Enfoque de ${p.duration.inMinutes} min',
+                ? tr('🎮 A jugar: ${p.duration.inMinutes} min', '🎮 Play time: ${p.duration.inMinutes} min')
+                : tr('🎯 Enfoque de ${p.duration.inMinutes} min', '🎯 ${p.duration.inMinutes}-min focus'),
             body),
         _ => null,
       },
     WorkdayFinished() => WorkdayNotice(
-        gaming ? '🎮 Sesión terminada' : '🌙 Jornada terminada', body),
+        gaming ? tr('🎮 Sesión terminada', '🎮 Session over') : tr('🌙 Jornada terminada', '🌙 Workday over'), body),
     _ => null,
   };
 }

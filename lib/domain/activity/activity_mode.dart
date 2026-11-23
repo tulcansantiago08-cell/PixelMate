@@ -1,3 +1,5 @@
+import '../../core/i18n/language.dart';
+
 /// Modos de actividad disponibles en PixelMate.
 enum ActivityMode {
   work,
@@ -9,10 +11,10 @@ enum ActivityMode {
 extension ActivityModeX on ActivityMode {
   String get displayName {
     switch (this) {
-      case ActivityMode.work:   return 'Trabajo';
-      case ActivityMode.study:  return 'Estudio';
-      case ActivityMode.gaming: return 'Videojuegos';
-      case ActivityMode.free:   return 'Libre';
+      case ActivityMode.work:   return tr('Trabajo', 'Work');
+      case ActivityMode.study:  return tr('Estudio', 'Study');
+      case ActivityMode.gaming: return tr('Videojuegos', 'Video games');
+      case ActivityMode.free:   return tr('Libre', 'Free');
     }
   }
 

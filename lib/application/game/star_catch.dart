@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -63,18 +64,20 @@ enum GameEffect {
 
 /// Cestas que se desbloquean con medallas. Cada una tiene un truco.
 enum BasketSkin {
-  basket('🧺', 'Cesta', 'Sin trucos: pura habilidad'),
-  bucket('🪣', 'Cubo', 'Un 15 % más ancho', widthFactor: 1.15),
-  hat('🎩', 'Sombrero mágico', 'Empieza con 🧲 imán', startMagnet: true),
-  honey('🍯', 'Tarro de miel', 'Cada 🌟 da un punto más', bigStarBonus: 1),
-  ufo('🛸', 'OVNI', 'Se mueve un 20 % más rápido', speedFactor: 1.2),
-  rainbow('🌈', 'Arcoíris', '🧊 🌀 🍄 duran la mitad', trapFactor: 0.5),
-  crown('👑', 'Corona', 'Empieza con un 🛡️ escudo', startShield: true),
-  dragon('🐉', 'Dragón', 'Caen el doble de 🌟', bigStarChance: 2);
+  basket('🧺', ('Cesta', 'Basket'), ('Sin trucos: pura habilidad', 'No tricks: pure skill')),
+  bucket('🪣', ('Cubo', 'Bucket'), ('Un 15 % más ancho', '15% wider'), widthFactor: 1.15),
+  hat('🎩', ('Sombrero mágico', 'Magic hat'), ('Empieza con 🧲 imán', 'Starts with a 🧲 magnet'), startMagnet: true),
+  honey('🍯', ('Tarro de miel', 'Honey jar'), ('Cada 🌟 da un punto más', 'Each 🌟 gives one more point'), bigStarBonus: 1),
+  ufo('🛸', ('OVNI', 'UFO'), ('Se mueve un 20 % más rápido', 'Moves 20% faster'), speedFactor: 1.2),
+  rainbow('🌈', ('Arcoíris', 'Rainbow'), ('🧊 🌀 🍄 duran la mitad', '🧊 🌀 🍄 last half as long'), trapFactor: 0.5),
+  crown('👑', ('Corona', 'Crown'), ('Empieza con un 🛡️ escudo', 'Starts with a 🛡️ shield'), startShield: true),
+  dragon('🐉', ('Dragón', 'Dragon'), ('Caen el doble de 🌟', 'Twice as many 🌟 fall'), bigStarChance: 2);
 
   final String emoji;
-  final String label;
-  final String perk;
+
+  /// (español, inglés).
+  final (String, String) _label;
+  final (String, String) _perk;
   final double widthFactor;
   final double speedFactor;
   final double trapFactor;
@@ -83,7 +86,7 @@ enum BasketSkin {
   final bool startShield;
   final double bigStarChance;
 
-  const BasketSkin(this.emoji, this.label, this.perk,
+  const BasketSkin(this.emoji, this._label, this._perk,
       {this.bigStarChance = 1,
       this.widthFactor = 1,
       this.speedFactor = 1,
@@ -91,6 +94,9 @@ enum BasketSkin {
       this.bigStarBonus = 0,
       this.startMagnet = false,
       this.startShield = false});
+
+  String get label => tr(_label.$1, _label.$2);
+  String get perk => tr(_perk.$1, _perk.$2);
 
   static BasketSkin byName(String? name) =>
       values.firstWhere((s) => s.name == name, orElse: () => BasketSkin.basket);
@@ -304,12 +310,12 @@ class StarCatchGame {
 
   /// Lo nuevo de cada nivel (para el cartel), o `null`.
   static String? challengeFor(int level) => switch (level) {
-        2 => '¡Cuidado con las 💣! Atrapa los 🧲',
-        3 => 'Zigzag y 🧊 hielo que congela la cesta',
-        4 => '🌀 Remolinos: invierten los controles',
-        5 => '🍄 Hongos que encogen la cesta',
-        6 => '💀 ¡Estrellas falsas! Mira bien',
-        7 => '¡Lluvia: a veces caen de a dos!',
+        2 => tr('¡Cuidado con las 💣! Atrapa los 🧲', 'Watch out for the 💣! Catch the 🧲'),
+        3 => tr('Zigzag y 🧊 hielo que congela la cesta', 'Zigzag and 🧊 ice that freezes the basket'),
+        4 => tr('🌀 Remolinos: invierten los controles', '🌀 Whirlpools: they reverse the controls'),
+        5 => tr('🍄 Hongos que encogen la cesta', '🍄 Mushrooms that shrink the basket'),
+        6 => tr('💀 ¡Estrellas falsas! Mira bien', '💀 Fake stars! Look closely'),
+        7 => tr('¡Lluvia: a veces caen de a dos!', 'Rain: sometimes they fall two at a time!'),
         _ => null,
       };
 
@@ -370,7 +376,7 @@ class StarCatchGame {
   CatchEvent _hurt(FallingItem item) {
     if (shields > 0) {
       shields--;
-      return CatchEvent(item.kind, item.x, label: '🛡️ ¡Salvado!');
+      return CatchEvent(item.kind, item.x, label: tr('🛡️ ¡Salvado!', '🛡️ Saved!'));
     }
     combo = 0;
     if (mode == GameMode.timeAttack) {
@@ -400,7 +406,7 @@ class StarCatchGame {
       starsCaught++;
       // Al subir el multiplicador, se celebra.
       final label = combo % comboStep == 0 && multiplier > 1
-          ? '🔥 ¡Combo x$multiplier!'
+          ? tr('🔥 ¡Combo x$multiplier!', '🔥 Combo x$multiplier!')
           : '+$points';
       return CatchEvent(kind, item.x, label: label);
     }
@@ -412,22 +418,22 @@ class StarCatchGame {
       case FallingKind.ice:
         trapsHit++;
         _addEffect(GameEffect.frozen);
-        return CatchEvent(kind, item.x, label: '🧊 ¡Congelada!');
+        return CatchEvent(kind, item.x, label: tr('🧊 ¡Congelada!', '🧊 Frozen!'));
       case FallingKind.swirl:
         trapsHit++;
         _addEffect(GameEffect.inverted);
         _target = 1 - _target;
-        return CatchEvent(kind, item.x, label: '🌀 ¡Al revés!');
+        return CatchEvent(kind, item.x, label: tr('🌀 ¡Al revés!', '🌀 Reversed!'));
       case FallingKind.mushroom:
         trapsHit++;
         _addEffect(GameEffect.shrunk);
-        return CatchEvent(kind, item.x, label: '🍄 ¡Mini cesta!');
+        return CatchEvent(kind, item.x, label: tr('🍄 ¡Mini cesta!', '🍄 Mini basket!'));
       case FallingKind.magnet:
         _addEffect(GameEffect.magnet);
-        return CatchEvent(kind, item.x, label: '🧲 ¡Imán!');
+        return CatchEvent(kind, item.x, label: tr('🧲 ¡Imán!', '🧲 Magnet!'));
       case FallingKind.shield:
         shields = min(shields + 1, 2);
-        return CatchEvent(kind, item.x, label: '🛡️ ¡Escudo!');
+        return CatchEvent(kind, item.x, label: tr('🛡️ ¡Escudo!', '🛡️ Shield!'));
       case FallingKind.heart:
         if (mode == GameMode.timeAttack) {
           _penalty -= timePenalty;
@@ -587,20 +593,20 @@ class DailyChallenge {
     switch (pick) {
       case 0:
         final n = step(4, 6, 1);
-        return DailyChallenge._('Llega al nivel $n', n, (r) => r.level);
+        return DailyChallenge._(tr('Llega al nivel $n', 'Reach level $n'), n, (r) => r.level);
       case 1:
         final n = step(60, 150, 10);
-        return DailyChallenge._('Haz $n puntos', n, (r) => r.score);
+        return DailyChallenge._(tr('Haz $n puntos', 'Score $n points'), n, (r) => r.score);
       case 2:
         final n = step(10, 20, 2);
         return DailyChallenge._(
-            'Atrapa $n estrellas seguidas', n, (r) => r.maxCombo);
+            tr('Atrapa $n estrellas seguidas', 'Catch $n stars in a row'), n, (r) => r.maxCombo);
       case 3:
         final n = step(90, 150, 15);
-        return DailyChallenge._('Aguanta $n segundos', n, (r) => r.seconds);
+        return DailyChallenge._(tr('Aguanta $n segundos', 'Last $n seconds'), n, (r) => r.seconds);
       default:
         final n = step(40, 70, 5);
-        return DailyChallenge._('Atrapa $n estrellas', n, (r) => r.stars);
+        return DailyChallenge._(tr('Atrapa $n estrellas', 'Catch $n stars'), n, (r) => r.stars);
     }
   }
 }
@@ -634,51 +640,55 @@ class GameStats {
 class GameMedal {
   final String id;
   final String emoji;
-  final String title;
-  final String description;
+  /// (español, inglés).
+  final (String, String) _title;
+  final (String, String) _description;
   final int goal;
   final int Function(GameStats s) _value;
   final BasketSkin reward;
 
-  const GameMedal._(this.id, this.emoji, this.title, this.description,
+  const GameMedal._(this.id, this.emoji, this._title, this._description,
       this.goal, this._value, this.reward);
+
+  String get title => tr(_title.$1, _title.$2);
+  String get description => tr(_description.$1, _description.$2);
 
   int progress(GameStats s) => min(_value(s), goal);
   bool done(GameStats s) => _value(s) >= goal;
 }
 
 final gameMedals = <GameMedal>[
-  GameMedal._('level3', '🚀', 'Despegue', 'Llega al nivel 3.', 3,
+  GameMedal._('level3', '🚀', ('Despegue', 'Liftoff'), ('Llega al nivel 3.', 'Reach level 3.'), 3,
       (s) => s.bestLevel, BasketSkin.bucket),
   GameMedal._(
       'combo16',
       '🔥',
-      'Racha de fuego',
-      'Atrapa 16 estrellas seguidas (combo x3).',
+      ('Racha de fuego', 'Fire streak'),
+      ('Atrapa 16 estrellas seguidas (combo x3).', 'Catch 16 stars in a row (x3 combo).'),
       16,
       (s) => s.bestCombo,
       BasketSkin.hat),
   GameMedal._(
       'stars300',
       '✨',
-      'Coleccionista',
-      'Atrapa 300 estrellas entre todas tus partidas.',
+      ('Coleccionista', 'Collector'),
+      ('Atrapa 300 estrellas entre todas tus partidas.', 'Catch 300 stars across all your games.'),
       300,
       (s) => s.totalStars,
       BasketSkin.honey),
-  GameMedal._('level6', '🪐', 'Explorador', 'Llega al nivel 6.', 6,
+  GameMedal._('level6', '🪐', ('Explorador', 'Explorer'), ('Llega al nivel 6.', 'Reach level 6.'), 6,
       (s) => s.bestLevel, BasketSkin.ufo),
   GameMedal._(
       'survive180',
       '⏱️',
-      'Superviviente',
-      'Aguanta 3 minutos en una partida.',
+      ('Superviviente', 'Survivor'),
+      ('Aguanta 3 minutos en una partida.', 'Last 3 minutes in one game.'),
       180,
       (s) => s.longestSeconds,
       BasketSkin.rainbow),
-  GameMedal._('level8', '👑', 'Leyenda estelar', 'Llega al nivel 8.', 8,
+  GameMedal._('level8', '👑', ('Leyenda estelar', 'Star legend'), ('Llega al nivel 8.', 'Reach level 8.'), 8,
       (s) => s.bestLevel, BasketSkin.crown),
-  GameMedal._('daily7', '🎯', 'Constante', 'Cumple 7 retos del día.', 7,
+  GameMedal._('daily7', '🎯', ('Constante', 'Consistent'), ('Cumple 7 retos del día.', 'Complete 7 daily challenges.'), 7,
       (s) => s.dailies, BasketSkin.dragon),
 ];
 
@@ -867,9 +877,9 @@ class GameStore extends ChangeNotifier {
     var xp = 0;
     String? reason;
     if (breakKey == null) {
-      reason = 'Fuera de los descansos se juega solo por el récord.';
+      reason = tr('Fuera de los descansos se juega solo por el récord.', 'Outside breaks you only play for the record.');
     } else if (!canEarnIn(breakKey)) {
-      reason = 'La XP de este descanso ya la ganaste.';
+      reason = tr('La XP de este descanso ya la ganaste.', "You already earned this break's XP.");
     } else {
       xp = xpForScore(score);
       _lastBreak = breakKey;
@@ -897,9 +907,9 @@ final gameXpProvider =
 /// Lo que dice la mascota al terminar.
 String gameOverMessage(GameResult r) {
   final buffer = StringBuffer(r.score == 0
-      ? '¡Uy, ninguna estrella! La próxima seguro 💪'
-      : '¡${r.score} puntos!');
-  if (r.newBest && r.score > 0) buffer.write(' ¡Nuevo récord! 🏆');
+      ? tr('¡Uy, ninguna estrella! La próxima seguro 💪', 'Oops, no stars! Next time for sure 💪')
+      : tr('¡${r.score} puntos!', '${r.score} points!'));
+  if (r.newBest && r.score > 0) buffer.write(tr(' ¡Nuevo récord! 🏆', 'New record! 🏆'));
   if (r.xp > 0) buffer.write(' +${r.xp} XP ✨');
   return buffer.toString();
 }

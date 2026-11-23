@@ -22,9 +22,9 @@ class GameTheme {
   final Color bottom;
   final Color accent;
   final Color twinkle;
-  GameTheme(this.name, this.top, this.bottom, this.accent, this.twinkle);
+  const GameTheme(this.name, this.top, this.bottom, this.accent, this.twinkle);
 
-  static final all = [
+  static List<GameTheme> get all => [
     GameTheme(tr('Cielo de la tarde 🌤️', 'Afternoon sky 🌤️'), Color(0xFF1B2A4A), Color(0xFF3E5C8A),
         Color(0xFF64B5F6), Color(0x66FFFFFF)),
     GameTheme(tr('Atardecer 🌇', 'Sunset 🌇'), Color(0xFF2B1B3D), Color(0xFF8A3B5C),

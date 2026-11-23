@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -68,5 +69,5 @@ final launchAtLoginProvider =
     Provider<LaunchAtLogin>((_) => LaunchAtLogin(NoopLoginItem()));
 
 /// Explicación cuando macOS pide aprobarlo.
-const launchAtLoginApprovalHint =
-    'Para abrir PixelMate al iniciar sesión, actívala en Configuración del Sistema → General → Ítems de inicio.';
+String get launchAtLoginApprovalHint =>
+    tr('Para abrir PixelMate al iniciar sesión, actívala en Configuración del Sistema → General → Ítems de inicio.', 'To open PixelMate at login, turn it on in System Settings → General → Login Items.');

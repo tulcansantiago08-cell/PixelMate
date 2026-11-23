@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/mascot/pet_accessory.dart';
 import '../../domain/mascot/pet_kind.dart';
 import '../game/star_catch.dart';
@@ -92,30 +93,31 @@ Collection buildCollection({
 }) {
   final level = progress.level;
   String byLevel(int n) =>
-      'Se desbloquea en el nivel $n (te ${n - level == 1 ? 'falta 1 nivel' : 'faltan ${n - level} niveles'}).';
+      tr('Se desbloquea en el nivel $n (te ${n - level == 1 ? 'falta 1 nivel' : 'faltan ${n - level} niveles'}).',
+          'Unlocks at level $n (${n - level == 1 ? '1 level' : '${n - level} levels'} to go).');
   return Collection([
-    CollectionSection('Mascotas', [
+    CollectionSection(tr('Mascotas', 'Pets'), [
       for (final k in PetKind.values)
         CollectionItem(
           id: 'species.${k.name}',
           emoji: k.emoji,
           name: k.label,
           unlocked: k.unlockedAt(level),
-          detail: 'Mascota del nivel ${k.unlockLevel}.',
+          detail: tr('Mascota del nivel ${k.unlockLevel}.', 'Level ${k.unlockLevel} pet.'),
           hint: byLevel(k.unlockLevel),
           inUse: k == species,
           action: CollectionAction.species,
           value: k,
         ),
     ]),
-    CollectionSection('Accesorios', [
+    CollectionSection(tr('Accesorios', 'Accessories'), [
       for (final a in PetAccessory.values)
         CollectionItem(
           id: 'accessory.${a.name}',
           emoji: a.emoji,
           name: a.label,
           unlocked: a.unlockedAt(level),
-          detail: 'Accesorio del nivel ${a.unlockLevel}.',
+          detail: tr('Accesorio del nivel ${a.unlockLevel}.', 'Level ${a.unlockLevel} accessory.'),
           hint: byLevel(a.unlockLevel),
           inUse: a == accessory,
           action: CollectionAction.accessory,
@@ -124,15 +126,15 @@ Collection buildCollection({
       CollectionItem(
         id: 'aura',
         emoji: '✨',
-        name: 'Aura brillante',
+        name: tr('Aura brillante', 'Shiny aura'),
         unlocked: level >= auraUnlockLevel,
-        detail: 'Chispitas alrededor de tu mascota.',
+        detail: tr('Chispitas alrededor de tu mascota.', 'Sparkles around your pet.'),
         hint: byLevel(auraUnlockLevel),
         inUse: auraOn,
         action: CollectionAction.aura,
       ),
     ]),
-    CollectionSection('Logros', [
+    CollectionSection(tr('Logros', 'Achievements'), [
       for (final a in achievements)
         CollectionItem(
           id: 'achievement.${a.id}',
@@ -143,7 +145,7 @@ Collection buildCollection({
           hint: a.description,
         ),
     ]),
-    CollectionSection('Medallas del juego', [
+    CollectionSection(tr('Medallas del juego', 'Game medals'), [
       for (final m in gameMedals)
         CollectionItem(
           id: 'medal.${m.id}',
@@ -151,11 +153,11 @@ Collection buildCollection({
           name: m.title,
           unlocked: m.done(game.stats),
           detail:
-              '${m.description} Te dio ${m.reward.emoji} ${m.reward.label}.',
+              tr('${m.description} Te dio ${m.reward.emoji} ${m.reward.label}.', '${m.description} It gave you ${m.reward.emoji} ${m.reward.label}.'),
           hint: '${m.description} (${m.progress(game.stats)}/${m.goal})',
         ),
     ]),
-    CollectionSection('Cestas del juego', [
+    CollectionSection(tr('Cestas del juego', 'Game baskets'), [
       for (final s in BasketSkin.values)
         CollectionItem(
           id: 'basket.${s.name}',
@@ -163,9 +165,8 @@ Collection buildCollection({
           name: s.label,
           unlocked: game.isUnlocked(s),
           detail: s.perk,
-          hint: 'Se gana con la medalla '
-              '«${gameMedals.where((m) => m.reward == s).map((m) => m.title).firstOrNull ?? '—'}». '
-              'Truco: ${s.perk}.',
+          hint: tr('Se gana con la medalla «${_medalFor(s)}». Truco: ${s.perk}.',
+              'Earned with the “${_medalFor(s)}” medal. Trick: ${s.perk}.'),
           inUse: game.skin == s,
           action: CollectionAction.basket,
           value: s,
@@ -173,3 +174,7 @@ Collection buildCollection({
     ]),
   ]);
 }
+
+/// La medalla que regala una cesta, o "—" si ninguna.
+String _medalFor(BasketSkin s) =>
+    gameMedals.where((m) => m.reward == s).map((m) => m.title).firstOrNull ?? '—';

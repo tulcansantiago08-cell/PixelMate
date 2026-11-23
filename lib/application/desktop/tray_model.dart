@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/session/session_phase.dart';
 import '../../domain/session/workday_config.dart';
 import '../../domain/session/workday_timer.dart';
@@ -83,51 +84,51 @@ List<TrayEntry> trayEntries(
   final entries = <TrayEntry>[];
 
   if (status == null) {
-    entries.add(TrayEntry('Iniciar jornada', children: [
+    entries.add(TrayEntry(tr('Iniciar jornada', 'Start workday'), children: [
       for (final hours in WorkdayConfig.presetWorkdays)
-        TrayEntry('${hours.inHours} horas',
+        TrayEntry(tr('${hours.inHours} horas', '${hours.inHours} hours'),
             action: TrayAction.startWorkday, workday: hours),
     ]));
   } else {
     final phase = status.phase;
     if (phase != null) {
       entries.add(TrayEntry(
-        '${phase.kind.displayName} · ciclo ${phase.cycle}',
+        tr('${phase.kind.displayName} · ciclo ${phase.cycle}', '${phase.kind.displayName} · cycle ${phase.cycle}'),
         enabled: false,
       ));
       entries.add(const TrayEntry.separator());
     }
     entries.add(status.state == WorkdayRunState.paused
-        ? const TrayEntry('Reanudar', action: TrayAction.resume)
-        : const TrayEntry('Pausar', action: TrayAction.pause));
-    entries.add(const TrayEntry('Saltar fase', action: TrayAction.skipPhase));
+        ? TrayEntry(tr('Reanudar', 'Resume'), action: TrayAction.resume)
+        : TrayEntry(tr('Pausar', 'Pause'), action: TrayAction.pause));
+    entries.add(TrayEntry(tr('Saltar fase', 'Skip phase'), action: TrayAction.skipPhase));
     entries
-        .add(const TrayEntry('Finalizar jornada', action: TrayAction.finish));
+        .add(TrayEntry(tr('Finalizar jornada', 'End workday'), action: TrayAction.finish));
   }
 
   entries
     ..add(const TrayEntry.separator())
-    ..add(const TrayEntry('Estadísticas', action: TrayAction.showStats))
-    ..add(const TrayEntry('Pendientes', action: TrayAction.showPending))
-    ..add(const TrayEntry('Ajustes…', action: TrayAction.showSettings))
-    ..add(TrayEntry(mascotVisible ? 'Ocultar mascota' : 'Mostrar mascota',
+    ..add(TrayEntry(tr('Estadísticas', 'Stats'), action: TrayAction.showStats))
+    ..add(TrayEntry(tr('Pendientes', 'To-do'), action: TrayAction.showPending))
+    ..add(TrayEntry(tr('Ajustes…', 'Settings…'), action: TrayAction.showSettings))
+    ..add(TrayEntry(mascotVisible ? tr('Ocultar mascota', 'Hide pet') : tr('Mostrar mascota', 'Show pet'),
         action: TrayAction.toggleMascot))
-    ..add(TrayEntry('Detectar apps y sugerir modo',
+    ..add(TrayEntry(tr('Detectar apps y sugerir modo', 'Detect apps and suggest a mode'),
         action: TrayAction.toggleDetection, checked: detectionEnabled))
-    ..add(TrayEntry('Pasear por el escritorio',
+    ..add(TrayEntry(tr('Pasear por el escritorio', 'Walk around the desktop'),
         action: TrayAction.toggleWalk, checked: walkEnabled))
-    ..add(TrayEntry('Guardián del enfoque',
+    ..add(TrayEntry(tr('Guardián del enfoque', 'Focus guard'),
         action: TrayAction.toggleFocusGuard, checked: focusGuardEnabled));
   if (petName != null) {
-    entries.add(TrayEntry('Escuchar «Oye $petName» (micrófono)',
+    entries.add(TrayEntry(tr('Escuchar «Oye $petName» (micrófono)', 'Listen for “Hey $petName” (microphone)'),
         action: TrayAction.toggleWake, checked: wakeEnabled));
   }
   if (launchAtLogin != null) {
-    entries.add(TrayEntry('Abrir al iniciar sesión',
+    entries.add(TrayEntry(tr('Abrir al iniciar sesión', 'Open at login'),
         action: TrayAction.toggleLaunchAtLogin, checked: launchAtLogin));
   }
   entries
     ..add(const TrayEntry.separator())
-    ..add(const TrayEntry('Salir de PixelMate', action: TrayAction.quit));
+    ..add(TrayEntry(tr('Salir de PixelMate', 'Quit PixelMate'), action: TrayAction.quit));
   return entries;
 }

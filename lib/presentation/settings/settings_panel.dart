@@ -335,8 +335,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       },
                     ),
                     if (_needsApproval)
-                      const Text(launchAtLoginApprovalHint,
-                          style: TextStyle(
+                      Text(launchAtLoginApprovalHint,
+                          style: const TextStyle(
                               color: StatsStyle.textSecondary, fontSize: 10)),
                   ],
                   _Section(tr('Inteligencia artificial', 'Artificial intelligence')),

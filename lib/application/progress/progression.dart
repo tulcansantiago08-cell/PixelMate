@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:math';
 
 import '../../domain/activity/activity_mode.dart';
@@ -48,16 +49,16 @@ int levelForXp(int xp) {
 }
 
 /// Títulos según el nivel: se muestran en el panel y al subir de nivel.
-const _titles = <(int, String)>[
-  (1, 'Gatito novato'),
-  (3, 'Aprendiz curioso'),
-  (5, 'Constante'),
-  (8, 'Mente enfocada'),
-  (12, 'Maestro del ritmo'),
-  (16, 'Sabio zen'),
-  (20, 'Leyenda pixel'),
-  (25, 'Mito del enfoque'),
-];
+List<(int, String)> get _titles => [
+      (1, tr('Gatito novato', 'Rookie kitten')),
+      (3, tr('Aprendiz curioso', 'Curious apprentice')),
+      (5, tr('Constante', 'Consistent')),
+      (8, tr('Mente enfocada', 'Focused mind')),
+      (12, tr('Maestro del ritmo', 'Rhythm master')),
+      (16, tr('Sabio zen', 'Zen sage')),
+      (20, tr('Leyenda pixel', 'Pixel legend')),
+      (25, tr('Mito del enfoque', 'Focus myth')),
+    ];
 
 String titleForLevel(int level) => _titles.lastWhere((t) => level >= t.$1).$2;
 
@@ -67,12 +68,17 @@ String titleForLevel(int level) => _titles.lastWhere((t) => level >= t.$1).$2;
 class Achievement {
   final String id;
   final String emoji;
-  final String title;
-  final String description;
+
+  /// (español, inglés).
+  final (String, String) _title;
+  final (String, String) _description;
   final bool Function(_History h) _unlocked;
 
   const Achievement._(
-      this.id, this.emoji, this.title, this.description, this._unlocked);
+      this.id, this.emoji, this._title, this._description, this._unlocked);
+
+  String get title => tr(_title.$1, _title.$2);
+  String get description => tr(_description.$1, _description.$2);
 }
 
 /// Resumen del historial que usan los logros.
@@ -106,54 +112,54 @@ class _History {
 
 /// Logros en el orden en que se muestran.
 final achievements = <Achievement>[
-  Achievement._('first', '🐾', 'Primeros pasos', 'Haz tu primera sesión.',
+  Achievement._('first', '🐾', ('Primeros pasos', 'First steps'), ('Haz tu primera sesión.', 'Do your first session.'),
       (h) => h.records.isNotEmpty),
   Achievement._(
       'complete',
       '✅',
-      'Hasta el final',
-      'Completa una jornada sin terminarla antes.',
+      ('Hasta el final', 'All the way'),
+      ('Completa una jornada sin terminarla antes.', 'Complete a workday without ending it early.'),
       (h) => h.records.any((r) => r.completed)),
   Achievement._(
       'cycles',
       '🌀',
-      'Ciclo perfecto',
-      'Completa 3 ciclos en una misma jornada.',
+      ('Ciclo perfecto', 'Perfect cycle'),
+      ('Completa 3 ciclos en una misma jornada.', 'Complete 3 cycles in a single workday.'),
       (h) => h.records.any((r) => r.cyclesCompleted >= 3)),
-  Achievement._('rest', '☕', 'Buen descanso', 'Suma 1 hora de descansos.',
+  Achievement._('rest', '☕', ('Buen descanso', 'Good rest'), ('Suma 1 hora de descansos.', 'Add up 1 hour of breaks.'),
       (h) => h.breaks >= const Duration(hours: 1)),
-  Achievement._('focus10', '⏱️', '10 horas', 'Suma 10 horas de enfoque.',
+  Achievement._('focus10', '⏱️', ('10 horas', '10 hours'), ('Suma 10 horas de enfoque.', 'Add up 10 hours of focus.'),
       (h) => h.focus >= const Duration(hours: 10)),
-  Achievement._('focus50', '🔥', '50 horas', 'Suma 50 horas de enfoque.',
+  Achievement._('focus50', '🔥', ('50 horas', '50 hours'), ('Suma 50 horas de enfoque.', 'Add up 50 hours of focus.'),
       (h) => h.focus >= const Duration(hours: 50)),
   Achievement._(
       'days7',
       '📅',
-      'Siete días',
-      'Ten sesiones en 7 días distintos (no hace falta que sean seguidos).',
+      ('Siete días', 'Seven days'),
+      ('Ten sesiones en 7 días distintos (no hace falta que sean seguidos).', 'Have sessions on 7 different days (they don\'t need to be in a row).'),
       (h) => h.activeDays >= 7),
   Achievement._(
       'steady',
       '🌱',
-      'Buen ritmo',
-      'Ten sesiones en 5 de 7 días (no hace falta que sean seguidos).',
+      ('Buen ritmo', 'Good rhythm'),
+      ('Ten sesiones en 5 de 7 días (no hace falta que sean seguidos).', 'Have sessions on 5 of 7 days (they don\'t need to be in a row).'),
       (h) => h.steady),
-  Achievement._('study', '📚', 'Estudioso', 'Haz 5 sesiones de estudio.',
+  Achievement._('study', '📚', ('Estudioso', 'Studious'), ('Haz 5 sesiones de estudio.', 'Do 5 study sessions.'),
       (h) => h.sessionsOf(ActivityMode.study) >= 5),
   Achievement._(
       'gamer',
       '🎮',
-      'Gamer responsable',
-      'Completa una sesión de juego con sus pausas.',
+      ('Gamer responsable', 'Responsible gamer'),
+      ('Completa una sesión de juego con sus pausas.', 'Complete a gaming session with its breaks.'),
       (h) =>
           h.records.any((r) => r.mode == ActivityMode.gaming && r.completed)),
   Achievement._(
       'early',
       '🌅',
-      'Madrugador',
-      'Empieza una sesión antes de las 8:00.',
+      ('Madrugador', 'Early bird'),
+      ('Empieza una sesión antes de las 8:00.', 'Start a session before 8:00.'),
       (h) => h.records.any((r) => r.startedAt.toLocal().hour < 8)),
-  Achievement._('legend', '🌈', 'Leyenda', 'Llega al nivel 25.',
+  Achievement._('legend', '🌈', ('Leyenda', 'Legend'), ('Llega al nivel 25.', 'Reach level 25.'),
       (h) => levelForXp(h.xp) >= 25),
 ];
 
@@ -269,22 +275,25 @@ List<ProgressEvent> progressEvents(
         :final aura
       ) =>
         (
-          title: 'Nivel $level',
+          title: tr('Nivel $level', 'Level $level'),
           message: (newTitle
-                  ? 'Subiste a nivel $level: ahora eres «$title».'
-                  : 'Subiste a nivel $level.') +
+                  ? tr('Subiste a nivel $level: ahora eres «$title».',
+                      'You reached level $level: now you\'re “$title”.')
+                  : tr('Subiste a nivel $level.', 'You reached level $level.')) +
               _unlocks([
                 for (final k in species) '${k.emoji} ${k.label}',
                 for (final a in accessories) '${a.emoji} ${a.label}',
-                if (aura) '✨ Aura brillante',
+                if (aura) tr('✨ Aura brillante', '✨ Shiny aura'),
               ]),
         ),
       AchievementUnlocked(:final achievement) => (
-          title: 'Logro desbloqueado',
-          message: 'Logro: ${achievement.title}. ${achievement.description}',
+          title: tr('Logro desbloqueado', 'Achievement unlocked'),
+          message: tr('Logro: ${achievement.title}. ${achievement.description}',
+              'Achievement: ${achievement.title}. ${achievement.description}'),
         ),
     };
 
 String _unlocks(List<String> items) => items.isEmpty
     ? ''
-    : ' Desbloqueaste: ${items.join(', ')} (elígelo en ⚙️ Ajustes).';
+    : tr(' Desbloqueaste: ${items.join(', ')} (elígelo en ⚙️ Ajustes).',
+        ' You unlocked: ${items.join(', ')} (choose it in ⚙️ Settings).');

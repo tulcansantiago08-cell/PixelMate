@@ -1,3 +1,5 @@
+import '../../core/i18n/language.dart';
+
 /// Fase actual dentro de un ciclo Pomodoro.
 enum SessionPhase {
   focus,
@@ -9,10 +11,10 @@ enum SessionPhase {
 extension SessionPhaseX on SessionPhase {
   String get displayName {
     switch (this) {
-      case SessionPhase.focus:      return 'Enfoque';
-      case SessionPhase.shortBreak: return 'Descanso corto';
-      case SessionPhase.longBreak:  return 'Descanso largo';
-      case SessionPhase.idle:       return 'Inactivo';
+      case SessionPhase.focus:      return tr('Enfoque', 'Focus');
+      case SessionPhase.shortBreak: return tr('Descanso corto', 'Short break');
+      case SessionPhase.longBreak:  return tr('Descanso largo', 'Long break');
+      case SessionPhase.idle:       return tr('Inactivo', 'Idle');
     }
   }
 

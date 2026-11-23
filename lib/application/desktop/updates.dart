@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -172,4 +173,4 @@ final updateProvider =
 
 /// Mensaje de aviso.
 String updateMessage(ReleaseInfo r) =>
-    '🆕 Hay una versión nueva de PixelMate: la ${r.version}. Descárgala desde Ajustes → Acerca de.';
+    tr('🆕 Hay una versión nueva de PixelMate: la ${r.version}. Descárgala desde Ajustes → Acerca de.', "🆕 There's a new version of PixelMate: ${r.version}. Download it from Settings → About.");

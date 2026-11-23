@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -69,7 +70,7 @@ bool goalJustReached(DailyGoalStatus? before, DailyGoalStatus? after) =>
 String goalReachedMessage(Duration goal) {
   final h = goal.inMinutes ~/ 60, m = goal.inMinutes % 60;
   final text = h == 0 ? '$m min' : (m == 0 ? '$h h' : '$h h $m min');
-  return 'Meta diaria cumplida: $text de enfoque hoy.';
+  return tr('Meta diaria cumplida: $text de enfoque hoy.', 'Daily goal reached: $text of focus today.');
 }
 
 /// Se sobrescribe en `main()` con las preferencias guardadas.

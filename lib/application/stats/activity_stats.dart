@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../workday/workday_store.dart';
 
@@ -5,9 +6,9 @@ enum StatsPeriod { today, week, month }
 
 extension StatsPeriodX on StatsPeriod {
   String get label => switch (this) {
-        StatsPeriod.today => 'Hoy',
-        StatsPeriod.week => 'Semana',
-        StatsPeriod.month => 'Mes',
+        StatsPeriod.today => tr('Hoy', 'Today'),
+        StatsPeriod.week => tr('Semana', 'Week'),
+        StatsPeriod.month => tr('Mes', 'Month'),
       };
 }
 

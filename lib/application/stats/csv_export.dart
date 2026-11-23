@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../progress/progression.dart';
 import '../workday/workday_store.dart';
@@ -50,7 +51,7 @@ String workdaysCsv(List<WorkdayRecord> records) {
         '${r.effectiveBreak.inMinutes}',
         '${r.focusBlocksCompleted}',
         '${r.cyclesCompleted}',
-        r.completed ? 'sí' : 'no',
+        r.completed ? tr('sí', 'yes') : 'no',
         '${xpForRecord(r)}',
       ].map(_field).join(';'),
   ];

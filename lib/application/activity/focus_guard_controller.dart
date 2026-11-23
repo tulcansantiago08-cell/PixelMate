@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,7 +114,7 @@ final distractionsTodayProvider = Provider<DistractionTally?>((ref) {
 String focusNudgeMessage(FocusNudge nudge, WorkdayView view) {
   final left = view.status?.phaseRemaining.inMinutes;
   final when = left == null || left < 1
-      ? 'Ya casi es el descanso.'
-      : 'Quedan $left min para el descanso.';
-  return '👀 Veo ${nudge.appName} en pleno enfoque. ¿Lo dejamos para el descanso? $when';
+      ? tr('Ya casi es el descanso.', "It's almost break time.")
+      : tr('Quedan $left min para el descanso.', '$left min until the break.');
+  return tr('👀 Veo ${nudge.appName} en pleno enfoque. ¿Lo dejamos para el descanso? $when', '👀 I see ${nudge.appName} in the middle of focus. Shall we leave it for the break? $when');
 }

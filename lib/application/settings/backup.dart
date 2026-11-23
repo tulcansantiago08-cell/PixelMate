@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,10 +66,10 @@ Future<int> restoreBackup(SharedPreferences prefs, String json) async {
   try {
     root = jsonDecode(json);
   } on FormatException {
-    throw const FormatException('No es un archivo de copia válido.');
+    throw FormatException(tr('No es un archivo de copia válido.', "It's not a valid backup file."));
   }
   if (root is! Map || root['app'] != 'PixelMate' || root['data'] is! Map) {
-    throw const FormatException('No es una copia de PixelMate.');
+    throw FormatException(tr('No es una copia de PixelMate.', "It's not a PixelMate backup."));
   }
   var count = 0;
   for (final MapEntry(:key, :value) in (root['data'] as Map).entries) {

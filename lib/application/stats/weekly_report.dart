@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -52,10 +53,10 @@ class WeeklyReport {
     for (final s in stats.sessions) {
       final h = s.startedAt.toLocal().hour;
       final part = h >= 5 && h < 12
-          ? 'por la mañana'
+          ? tr('por la mañana', 'in the morning')
           : h >= 12 && h < 19
-              ? 'por la tarde'
-              : 'por la noche';
+              ? tr('por la tarde', 'in the afternoon')
+              : tr('por la noche', 'at night');
       byPart[part] = (byPart[part] ?? Duration.zero) + s.effectiveFocus;
     }
     if (byPart.isEmpty) return null;

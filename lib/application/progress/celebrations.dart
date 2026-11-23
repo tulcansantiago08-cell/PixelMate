@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/session/session_phase.dart';
@@ -26,10 +27,10 @@ class Celebration {
   /// Las que se guardaron durante el enfoque, juntas en una sola.
   factory Celebration.combined(List<Celebration> held) => held.length == 1
       ? Celebration(
-          held.single.title, 'Mientras te enfocabas: ${held.single.message}',
+          held.single.title, tr('Mientras te enfocabas: ${held.single.message}', 'While you were focusing: ${held.single.message}'),
           levelUp: held.single.levelUp)
       : Celebration(
-          'Mientras te enfocabas',
+          tr('Mientras te enfocabas', 'While you were focusing'),
           'Mientras te enfocabas: ${held.map((c) => c.message).join(' · ')}',
           levelUp: held.any((c) => c.levelUp),
         );
@@ -92,7 +93,7 @@ final celebrationProvider =
   ref.listen<Consistency>(consistencyProvider, (before, after) {
     final message = consistencyMilestone(before, after);
     if (message != null) {
-      c.add(Celebration('Buen ritmo', message, alwaysNotify: false));
+      c.add(Celebration(tr('Buen ritmo', 'Good rhythm'), message, alwaysNotify: false));
     }
   });
   return c;

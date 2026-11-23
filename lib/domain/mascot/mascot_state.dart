@@ -1,3 +1,5 @@
+import '../../core/i18n/language.dart';
+
 /// Estados posibles de la mascota.
 /// Cada estado tiene una animación y un comportamiento asociado.
 enum MascotState {
@@ -18,27 +20,27 @@ extension MascotStateX on MascotState {
   String get displayName {
     switch (this) {
       case MascotState.idle:
-        return 'Libre';
+        return tr('Libre', 'Free');
       case MascotState.greeting:
-        return 'Saludando';
+        return tr('Saludando', 'Greeting');
       case MascotState.working:
-        return 'Trabajando';
+        return tr('Trabajando', 'Working');
       case MascotState.studying:
-        return 'Estudiando';
+        return tr('Estudiando', 'Studying');
       case MascotState.gaming:
-        return 'Jugando';
+        return tr('Jugando', 'Playing');
       case MascotState.resting:
-        return 'Descansando';
+        return tr('Descansando', 'Resting');
       case MascotState.sleeping:
-        return 'Durmiendo';
+        return tr('Durmiendo', 'Sleeping');
       case MascotState.celebrating:
-        return 'Celebrando';
+        return tr('Celebrando', 'Celebrating');
       case MascotState.alert:
-        return 'Alerta';
+        return tr('Alerta', 'Alert');
       case MascotState.tired:
-        return 'Cansada';
+        return tr('Cansada', 'Tired');
       case MascotState.chatting:
-        return 'Chateando';
+        return tr('Chateando', 'Chatting');
     }
   }
 

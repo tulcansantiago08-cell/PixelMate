@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,7 +75,7 @@ class MusicController extends StateNotifier<MusicState> {
   /// (también durante el enfoque, porque se pidió).
   void startDisco(Duration length) {
     state = MusicState(
-        now: const NowPlaying(source: 'disco', playing: true),
+        now: NowPlaying(source: 'disco', playing: true),
         announce: state.announce);
     _videoEnds?.cancel();
     _videoEnds = Timer(length, () {
@@ -122,7 +123,7 @@ class MusicController extends StateNotifier<MusicState> {
       this.checkEvery = const Duration(seconds: 2),
       this.startWithin = const Duration(seconds: 12),
       this.stopAfterSilence = const Duration(seconds: 6)})
-      : super(const MusicState()) {
+      : super(MusicState()) {
     _sub = events.listen(onEvent);
   }
 
@@ -188,7 +189,7 @@ class MusicController extends StateNotifier<MusicState> {
 
 /// Se sobrescribe en `main()` con los avisos de macOS.
 final musicEventsProvider =
-    Provider<Stream<NowPlaying>>((_) => const Stream.empty());
+    Provider<Stream<NowPlaying>>((_) => Stream.empty());
 
 final musicProvider = StateNotifierProvider<MusicController, MusicState>(
     (ref) => MusicController(ref.watch(musicEventsProvider),
@@ -209,13 +210,13 @@ final discoModeProvider = Provider<bool>((ref) {
   return music.playing && music.now?.source == 'disco';
 });
 
-const _openers = [
-  'Suena',
-  'Suena',
-  '🎵 Suena',
-  'Suena',
-  'Suena',
-  'Modo discoteca',
+List<String> get _openers => [
+  tr('Suena', 'Now playing'),
+  tr('Suena', 'Now playing'),
+  tr('🎵 Suena', '🎵 Now playing'),
+  tr('Suena', 'Now playing'),
+  tr('Suena', 'Now playing'),
+  tr('Modo discoteca', 'Disco mode'),
 ];
 
 /// Lo que dice la mascota al empezar una canción ([n] cambia la frase).
