@@ -3,6 +3,8 @@
 /// decide la IA.
 library;
 
+import 'english_commands.dart';
+
 part 'parser/code.dart';
 part 'parser/requests.dart';
 part 'parser/alarms.dart';
@@ -289,7 +291,7 @@ final _timePhrase = RegExp(
 /// - con "mañana", "pasado mañana", "hoy" o un día de la semana.
 /// Si la hora ya pasó hoy y no dijo día, es mañana.
 DateTime? parseWhen(String message, DateTime now) {
-  final m = fold(message);
+  final m = fold(englishToSpanish(message));
   final rel = RegExp(
           r'\b(?:dentro de|en)\s+(media hora|un cuarto de hora|(\d+|[a-z]+(?: y [a-z]+)?)\s*(minutos?|mins?|horas?|h)\b)')
       .firstMatch(m);
@@ -400,7 +402,9 @@ String cleanText(String s) {
 }
 
 ParsedCommand? parseCommand(String message, DateTime now, {String? petName}) {
-  final original = fixVerbTypo(normalizeRequest(message, petName: petName));
+  // Con la app en inglés, las órdenes comunes se llevan a su forma en español.
+  final original =
+      fixVerbTypo(normalizeRequest(englishToSpanish(message), petName: petName));
   final m = fold(original);
   String tail(Match match) => original.substring(match.end).trim();
 
