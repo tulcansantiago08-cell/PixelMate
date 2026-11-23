@@ -93,18 +93,11 @@ class NoVoice implements VoicePort {
 
 /// Qué decir cuando no se puede escuchar.
 String voiceProblem(String code) => switch (code) {
-      'speech-denied' => '🎙️ Para entenderte necesito permiso: Ajustes del '
-          'Sistema › Privacidad y seguridad › Reconocimiento de voz › '
-          'activa PixelMate.',
-      'mic-denied' => '🎙️ No puedo usar el micrófono: Ajustes del Sistema › '
-          'Privacidad y seguridad › Micrófono › activa PixelMate.',
+      'speech-denied' => '🎙️ Para entenderte necesito permiso: Ajustes del Sistema › Privacidad y seguridad › Reconocimiento de voz › activa PixelMate.',
+      'mic-denied' => '🎙️ No puedo usar el micrófono: Ajustes del Sistema › Privacidad y seguridad › Micrófono › activa PixelMate.',
       'mic' => '🎙️ No encuentro ningún micrófono conectado.',
-      'offline' => '🎙️ Para esperar a que me llames necesito entender español '
-          'sin internet: Ajustes del Sistema › Teclado › Dictado, activa el '
-          'dictado en español y deja que se descargue.',
-      _ => '🎙️ El reconocimiento de voz en español no está disponible ahora. '
-          'Revisa tu conexión o activa el dictado en Ajustes del Sistema › '
-          'Teclado.',
+      'offline' => '🎙️ Para esperar a que me llames necesito entender español sin internet: Ajustes del Sistema › Teclado › Dictado, activa el dictado en español y deja que se descargue.',
+      _ => '🎙️ El reconocimiento de voz en español no está disponible ahora. Revisa tu conexión o activa el dictado en Ajustes del Sistema › Teclado.',
     };
 
 /// Texto para leer en voz alta: sin emojis ni símbolos que la voz

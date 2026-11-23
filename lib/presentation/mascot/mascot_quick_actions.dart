@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import '../stats/stats_style.dart';
 
@@ -40,7 +41,7 @@ class MascotQuickActions extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _RoundButton(
-            tooltip: statsOpen ? 'Cerrar estadísticas' : 'Estadísticas',
+            tooltip: statsOpen ? tr('Cerrar estadísticas', 'Close stats') : tr('Estadísticas', 'Stats'),
             icon: Icons.bar_chart_rounded,
             active: statsOpen,
             onPressed: (_) => onStats(),
@@ -48,7 +49,7 @@ class MascotQuickActions extends StatelessWidget {
           if (onGame != null) ...[
             const SizedBox(height: 6),
             _RoundButton(
-              tooltip: gameOpen ? 'Cerrar el juego' : 'Atrapa estrellas',
+              tooltip: gameOpen ? tr('Cerrar el juego', 'Close the game') : tr('Atrapa estrellas', 'Catch the stars'),
               icon: Icons.star_rounded,
               active: gameOpen,
               onPressed: (_) => onGame!(),
@@ -57,7 +58,7 @@ class MascotQuickActions extends StatelessWidget {
           if (onDaily != null) ...[
             const SizedBox(height: 6),
             _RoundButton(
-              tooltip: dailyOpen ? 'Cerrar tareas diarias' : 'Tareas diarias',
+              tooltip: dailyOpen ? tr('Cerrar tareas diarias', 'Close daily tasks') : tr('Tareas diarias', 'Daily tasks'),
               icon: Icons.alarm_rounded,
               active: dailyOpen,
               onPressed: (_) => onDaily!(),
@@ -65,7 +66,7 @@ class MascotQuickActions extends StatelessWidget {
           ],
           const SizedBox(height: 6),
           _RoundButton(
-            tooltip: 'Menú: jornada, pausa…',
+            tooltip: tr('Menú: jornada, pausa…', 'Menu: workday, pause…'),
             icon: Icons.more_horiz_rounded,
             onPressed: onMenu,
           ),
@@ -73,7 +74,7 @@ class MascotQuickActions extends StatelessWidget {
             const SizedBox(height: 6),
             _RoundButton(
               key: const ValueKey('mascot-hide'),
-              tooltip: 'Esconder (vuelve con «Oye…», ⌃⌥P o la barra superior)',
+              tooltip: tr('Esconder (vuelve con «Oye…», ⌃⌥P o la barra superior)', 'Hide (comes back with “Hey…”, ⌃⌥P or the top bar)'),
               icon: Icons.visibility_off_rounded,
               onPressed: (_) => onHide!(),
             ),

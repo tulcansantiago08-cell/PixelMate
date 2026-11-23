@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -30,7 +31,7 @@ class StatsDayChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('máx. $scaleHours h por día',
+        Text(tr('máx. $scaleHours h por día', 'max. $scaleHours h per day'),
             style: const TextStyle(color: StatsStyle.textMuted, fontSize: 10)),
         const SizedBox(height: 4),
         SizedBox(
@@ -105,7 +106,7 @@ class StatsDayChart extends StatelessWidget {
   static String _tooltip(DayBucket day) {
     final lines = [longDate(day.day)];
     if (day.total == Duration.zero) {
-      lines.add('Sin sesiones');
+      lines.add(tr('Sin sesiones', 'No sessions'));
     } else {
       for (final mode in trackedModes) {
         final d = day.focusByMode[mode];

@@ -38,24 +38,24 @@ class _AlarmOptions extends ConsumerWidget {
         );
     return Column(children: [
       row(
-          'Sonido de alarma',
+          tr('Sonido de alarma', 'Alarm sound'),
           pick('settings-alarm-sound', alarms.sound, alarmSounds, (s) {
             alarms.setSound(s);
             ref.read(soundPlayerProvider).play(s);
           })),
       row(
-          'Posponer',
+          tr('Posponer', 'Snooze'),
           pick(
               'settings-alarm-snooze',
               alarms.snoozeMinutes,
               {for (final m in snoozeChoices) m: '$m min'},
               alarms.setSnoozeMinutes)),
       row(
-          'Avisarme antes',
+          tr('Avisarme antes', 'Remind me before'),
           pick(
               'settings-alarm-lead',
               alarms.leadMinutes,
-              {for (final m in leadChoices) m: m == 0 ? 'No' : '$m min antes'},
+              {for (final m in leadChoices) m: m == 0 ? 'No' : tr('$m min antes', '$m min before')},
               alarms.setLeadMinutes)),
     ]);
   }

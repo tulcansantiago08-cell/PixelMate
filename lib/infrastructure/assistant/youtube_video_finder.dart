@@ -19,8 +19,7 @@ class YouTubeVideoFinder implements VideoFinder {
       final res = await _client.get(url, headers: {
         'Accept-Language': 'es',
         // Sin un agente de navegador YouTube devuelve otra página.
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
       }).timeout(const Duration(seconds: 8));
       if (res.statusCode != 200) return null;
       return parseFirstVideo(res.body);

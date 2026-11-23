@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,13 +70,13 @@ class _CollectionPanelState extends ConsumerState<CollectionPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            const Expanded(
+            Expanded(
               child: Row(children: [
                 Icon(Icons.collections_bookmark_outlined,
                     size: 18, color: StatsStyle.accentLight),
                 SizedBox(width: 6),
                 Flexible(
-                    child: Text('Álbum',
+                    child: Text(tr('Álbum', 'Album'),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             color: StatsStyle.textPrimary,
@@ -84,13 +85,12 @@ class _CollectionPanelState extends ConsumerState<CollectionPanel> {
               ]),
             ),
             Text(
-                '${collection.unlocked}/${collection.total} · '
-                '${(collection.fraction * 100).round()} %',
+                '${collection.unlocked}/${collection.total} · ${(collection.fraction * 100).round()} %',
                 key: const ValueKey('album-count'),
                 style: const TextStyle(
                     color: StatsStyle.textSecondary, fontSize: 12)),
             IconButton(
-              tooltip: 'Cerrar',
+              tooltip: tr('Cerrar', 'Close'),
               onPressed: widget.onClose,
               icon: const Icon(Icons.close,
                   size: 18, color: StatsStyle.textSecondary),
@@ -111,7 +111,7 @@ class _CollectionPanelState extends ConsumerState<CollectionPanel> {
           if (next != null)
             Padding(
               padding: const EdgeInsets.only(top: 4, right: 8),
-              child: Text('Próximo por nivel: ${next.emoji} ${next.name}',
+              child: Text(tr('Próximo por nivel: ${next.emoji} ${next.name}', 'Next by level: ${next.emoji} ${next.name}'),
                   key: const ValueKey('album-next'),
                   style: const TextStyle(
                       color: StatsStyle.textMuted, fontSize: 11)),
@@ -225,7 +225,7 @@ class _Detail extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: item == null
-          ? const Text('Toca una pieza para ver qué es y cómo conseguirla.',
+          ? Text(tr('Toca una pieza para ver qué es y cómo conseguirla.', 'Tap a piece to see what it is and how to get it.'),
               style: TextStyle(color: StatsStyle.textMuted, fontSize: 11))
           : Row(children: [
               Text(item.unlocked ? item.emoji : '🔒',
@@ -260,7 +260,7 @@ class _Detail extends StatelessWidget {
   static String _useLabel(CollectionItem item) {
     final toggles = item.action == CollectionAction.accessory ||
         item.action == CollectionAction.aura;
-    if (item.inUse) return toggles ? 'Quitar' : 'En uso';
-    return toggles ? 'Poner' : 'Usar';
+    if (item.inUse) return toggles ? tr('Quitar', 'Remove') : tr('En uso', 'In use');
+    return toggles ? tr('Poner', 'Put on') : tr('Usar', 'Use');
   }
 }

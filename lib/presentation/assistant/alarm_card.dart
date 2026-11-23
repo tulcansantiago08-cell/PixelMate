@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -135,7 +136,7 @@ class _AlarmCardState extends ConsumerState<AlarmCard>
                     foregroundColor: StatsStyle.accent,
                     padding: const EdgeInsets.symmetric(vertical: 6),
                   ),
-                  child: Text(daily.isEmpty ? 'Apagar' : 'Hecha',
+                  child: Text(daily.isEmpty ? tr('Apagar', 'Turn off') : tr('Hecha', 'Done'),
                       style: const TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w700)),
                 ),

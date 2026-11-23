@@ -82,8 +82,7 @@ class SqliteWorkdayStore implements WorkdayStore {
   @override
   void saveActive(ActiveWorkday active) {
     _db.execute(
-      'INSERT OR REPLACE INTO active_workday (slot, mode, timer_json) '
-      'VALUES (1, ?, ?)',
+      'INSERT OR REPLACE INTO active_workday (slot, mode, timer_json) VALUES (1, ?, ?)',
       [active.mode.name, jsonEncode(active.timer.toJson())],
     );
   }
@@ -93,9 +92,7 @@ class SqliteWorkdayStore implements WorkdayStore {
     _db.execute('BEGIN');
     try {
       _db.execute(
-        'INSERT OR REPLACE INTO workday_history (id, mode, started_at, '
-        'ended_at, planned_s, effective_focus_s, effective_break_s, '
-        'focus_blocks, cycles, completed) VALUES (?,?,?,?,?,?,?,?,?,?)',
+        'INSERT OR REPLACE INTO workday_history (id, mode, started_at, ended_at, planned_s, effective_focus_s, effective_break_s, focus_blocks, cycles, completed) VALUES (?,?,?,?,?,?,?,?,?,?)',
         [
           r.id,
           r.mode.name,
@@ -122,8 +119,7 @@ class SqliteWorkdayStore implements WorkdayStore {
     final rows = since == null
         ? _db.select('SELECT * FROM workday_history ORDER BY started_at')
         : _db.select(
-            'SELECT * FROM workday_history WHERE started_at >= ? '
-            'ORDER BY started_at',
+            'SELECT * FROM workday_history WHERE started_at >= ? ORDER BY started_at',
             [since.toUtc().toIso8601String()]);
     return [
       for (final row in rows)

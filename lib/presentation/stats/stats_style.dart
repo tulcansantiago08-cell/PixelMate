@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -82,10 +83,10 @@ class StatsStyle {
       };
 
   static String modeLabel(ActivityMode mode) => switch (mode) {
-        ActivityMode.work => 'Trabajo',
-        ActivityMode.study => 'Estudio',
-        ActivityMode.gaming => 'Juego',
-        ActivityMode.free => 'Libre',
+        ActivityMode.work => tr('Trabajo', 'Work'),
+        ActivityMode.study => tr('Estudio', 'Study'),
+        ActivityMode.gaming => tr('Juego', 'Play'),
+        ActivityMode.free => tr('Libre', 'Free'),
       };
 }
 
@@ -101,8 +102,21 @@ String formatSpent(Duration d) {
   return m == 0 ? '$h h' : '$h h $m min';
 }
 
-const _weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-const _weekdayLong = [
+const _weekdayShortEs = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const _weekdayShortEn = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const _weekdayLongEn = [
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+];
+const _monthsEn = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+bool get _english => tr('es', 'en') == 'en';
+List<String> get _weekdayShort => _english ? _weekdayShortEn : _weekdayShortEs;
+List<String> get _weekdayLong => _english ? _weekdayLongEn : _weekdayLongEs;
+
+/// Meses cortos en el idioma de la app ("nov" / "Nov").
+List<String> get shortMonths => _english ? _monthsEn : _months;
+const _weekdayLongEs = [
   'Lunes',
   'Martes',
   'Miércoles',
@@ -128,9 +142,10 @@ const _months = [
 
 String weekdayInitial(DateTime d) => _weekdayShort[d.weekday - 1];
 
-/// "Martes 10 nov".
-String longDate(DateTime d) =>
-    '${_weekdayLong[d.weekday - 1]} ${d.day} ${_months[d.month - 1]}';
+/// "Martes 10 nov" / "Tuesday, Nov 10".
+String longDate(DateTime d) => _english
+    ? '${_weekdayLong[d.weekday - 1]}, ${shortMonths[d.month - 1]} ${d.day}'
+    : '${_weekdayLong[d.weekday - 1]} ${d.day} ${_months[d.month - 1]}';
 
 /// "Hoy 09:12", "Ayer 18:40" o "10 nov 09:12".
 String sessionWhen(DateTime startedAt, DateTime now) {
@@ -140,11 +155,13 @@ String sessionWhen(DateTime startedAt, DateTime now) {
   final today = DateTime(n.year, n.month, n.day);
   final hm = '${l.hour.toString().padLeft(2, '0')}:'
       '${l.minute.toString().padLeft(2, '0')}';
-  if (day == today) return 'Hoy $hm';
+  if (day == today) return tr('Hoy $hm', 'Today $hm');
   if (day == DateTime(today.year, today.month, today.day - 1)) {
-    return 'Ayer $hm';
+    return tr('Ayer $hm', 'Yesterday $hm');
   }
-  return '${l.day} ${_months[l.month - 1]} $hm';
+  return _english
+      ? '${shortMonths[l.month - 1]} ${l.day} $hm'
+      : '${l.day} ${_months[l.month - 1]} $hm';
 }
 
 /// Carga SF Rounded desde las letras del sistema (no se incluye en la app).

@@ -172,5 +172,4 @@ final updateProvider =
 
 /// Mensaje de aviso.
 String updateMessage(ReleaseInfo r) =>
-    '🆕 Hay una versión nueva de PixelMate: la ${r.version}. Descárgala '
-    'desde Ajustes → Acerca de.';
+    '🆕 Hay una versión nueva de PixelMate: la ${r.version}. Descárgala desde Ajustes → Acerca de.';

@@ -21,9 +21,9 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
       final path = await ref
           .read(backupFilesProvider)
           .save(backupFileName(now), makeBackup(prefs, now));
-      if (path != null) setState(() => _message = '✅ Copia guardada.');
+      if (path != null) setState(() => _message = tr('✅ Copia guardada.', '✅ Backup saved.'));
     } catch (_) {
-      setState(() => _message = '⚠️ No pude guardar la copia.');
+      setState(() => _message = tr('⚠️ No pude guardar la copia.', "⚠️ I couldn't save the backup."));
     }
   }
 
@@ -35,31 +35,30 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
     try {
       json = await files.open();
     } catch (_) {
-      setState(() => _message = '⚠️ No pude abrir el archivo.');
+      setState(() => _message = tr('⚠️ No pude abrir el archivo.', "⚠️ I couldn't open the file."));
       return;
     }
     if (json == null || !mounted) return;
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Restaurar la copia?'),
-        content: const Text('Tus tareas, calendario, alarmas y ajustes se '
-            'cambian por los de la copia, y PixelMate se vuelve a abrir.'),
+        title: Text(tr('¿Restaurar la copia?', 'Restore the backup?')),
+        content: Text(tr('Tus tareas, calendario, alarmas y ajustes se cambian por los de la copia, y PixelMate se vuelve a abrir.', "Your tasks, calendar, alarms and settings are replaced with the backup's, and PixelMate reopens.")),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(tr('Cancelar', 'Cancel'))),
           FilledButton(
               key: const ValueKey('backup-confirm'),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Restaurar')),
+              child: Text(tr('Restaurar', 'Restore'))),
         ],
       ),
     );
     if (sure != true) return;
     try {
       final count = await restoreBackup(prefs, json);
-      setState(() => _message = '✅ Restaurados $count datos. Reiniciando…');
+      setState(() => _message = tr('✅ Restaurados $count datos. Reiniciando…', '✅ Restored $count items. Restarting…'));
       await files.relaunch();
     } on FormatException catch (e) {
       setState(() => _message = '⚠️ ${e.message}');
@@ -70,9 +69,8 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-              'Guarda tus tareas, calendario, alarmas y ajustes en un archivo '
-              'para no perderlos (por ejemplo, al cambiar de Mac).',
+          Text(
+              tr('Guarda tus tareas, calendario, alarmas y ajustes en un archivo para no perderlos (por ejemplo, al cambiar de Mac).', "Save your tasks, calendar, alarms and settings to a file so you don't lose them (for example, when changing Macs)."),
               style: TextStyle(color: StatsStyle.textMuted, fontSize: 10)),
           const SizedBox(height: 6),
           Row(children: [
@@ -80,7 +78,7 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
               child: OutlinedButton(
                 key: const ValueKey('backup-export'),
                 onPressed: _export,
-                child: const Text('Guardar…', style: TextStyle(fontSize: 12)),
+                child: Text(tr('Guardar…', 'Save…'), style: TextStyle(fontSize: 12)),
               ),
             ),
             const SizedBox(width: 8),
@@ -88,7 +86,7 @@ class _BackupButtonsState extends ConsumerState<_BackupButtons> {
               child: OutlinedButton(
                 key: const ValueKey('backup-import'),
                 onPressed: _import,
-                child: const Text('Restaurar…', style: TextStyle(fontSize: 12)),
+                child: Text(tr('Restaurar…', 'Restore…'), style: TextStyle(fontSize: 12)),
               ),
             ),
           ]),

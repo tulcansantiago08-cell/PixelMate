@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../core/i18n/language.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/activity/detection_settings.dart';
@@ -105,7 +106,7 @@ class DesktopShell {
       if (_toldHowToReturn) return;
       _toldHowToReturn = true;
       unawaited(notifier.show(WorkdayNotice(
-          '${mascot.name} se escondió',
+          tr('${mascot.name} se escondió', '${mascot.name} is hiding'),
           hiddenMascotHelp(
               name: mascot.name,
               wake: mascot.wakeWord,
@@ -123,6 +124,10 @@ class DesktopShell {
     _cleanup.add(() => focusGuard.removeListener(onVisibility));
     launchAtLogin.addListener(onVisibility);
     _cleanup.add(() => launchAtLogin.removeListener(onVisibility));
+    // El menú de la barra de menú también cambia de idioma.
+    final language = container.read(languageSettingsProvider);
+    language.addListener(onVisibility);
+    _cleanup.add(() => language.removeListener(onVisibility));
 
     final events = _workday.events.listen((event) {
       final notice = noticeFor(event, mode: _workday.currentMode);
@@ -152,7 +157,7 @@ class DesktopShell {
         if (goalJustReached(before, after)) {
           _play(PetSound.goal);
           unawaited(notifier.show(WorkdayNotice(
-              'Meta diaria cumplida', goalReachedMessage(after!.goal))));
+              tr('Meta diaria cumplida', 'Daily goal reached'), goalReachedMessage(after!.goal))));
         }
       },
     );
@@ -164,7 +169,7 @@ class DesktopShell {
       (before, nudge) {
         if (nudge != null && before == null && !window.visible.value) {
           unawaited(notifier.show(WorkdayNotice(
-              'Guardián del enfoque',
+              tr('Guardián del enfoque', 'Focus guard'),
               focusNudgeMessage(
                   nudge, container.read(workdayControllerProvider)))));
         }
@@ -201,7 +206,7 @@ class DesktopShell {
       if (others.isEmpty) return;
       _play(PetSound.focus);
       unawaited(notifier.show(WorkdayNotice(
-          'Recordatorio', ReminderAlert(others, alert.at).message)));
+          tr('Recordatorio', 'Reminder'), ReminderAlert(others, alert.at).message)));
     }
 
     final reminders =
@@ -221,7 +226,7 @@ class DesktopShell {
     final ringing = container.listen<AlarmState>(alarmProvider, (before, now) {
       if (!now.active || (before?.active ?? false)) return;
       if (!window.visible.value) unawaited(window.show());
-      unawaited(notifier.show(WorkdayNotice('Alarma', now.text)));
+      unawaited(notifier.show(WorkdayNotice(tr('Alarma', 'Alarm'), now.text)));
     });
     _cleanup.add(ringing.close);
 
@@ -229,7 +234,7 @@ class DesktopShell {
     final briefing =
         container.listen<String?>(briefingProvider, (before, message) {
       if (message != null && message != before && !window.visible.value) {
-        unawaited(notifier.show(WorkdayNotice('Tu día', message)));
+        unawaited(notifier.show(WorkdayNotice(tr('Tu día', 'Your day'), message)));
       }
     });
     _cleanup.add(briefing.close);
@@ -237,7 +242,7 @@ class DesktopShell {
     // Recordatorio nocturno: si la mascota está oculta, por notificación.
     final night = container.listen<String?>(lateNightProvider, (before, msg) {
       if (msg != null && before == null && !window.visible.value) {
-        unawaited(notifier.show(WorkdayNotice('Es tarde', msg)));
+        unawaited(notifier.show(WorkdayNotice(tr('Es tarde', "It's late"), msg)));
       }
     });
     _cleanup.add(night.close);
@@ -347,8 +352,8 @@ class DesktopShell {
         await focusGuard.setEnabled(!focusGuard.enabled);
       case TrayAction.toggleLaunchAtLogin:
         if (!await launchAtLogin.setEnabled(!launchAtLogin.enabled)) {
-          unawaited(notifier.show(const WorkdayNotice(
-              'Falta un permiso', launchAtLoginApprovalHint)));
+          unawaited(notifier.show(WorkdayNotice(
+              tr('Falta un permiso', 'A permission is missing'), launchAtLoginApprovalHint)));
         }
       case TrayAction.quit:
         await dispose();
@@ -439,12 +444,12 @@ class DesktopShell {
 /// Cómo traer de vuelta a la mascota escondida.
 String hiddenMascotHelp(
     {required String name, required bool wake, required bool shortcut}) {
-  const menu =
-      'elige «Mostrar mascota» en el menú de PixelMate (barra superior)';
+  final menu =
+      tr('elige «Mostrar mascota» en el menú de PixelMate (barra superior)', 'choose “Show pet” in the PixelMate menu (top bar)');
   final ways = [
-    if (wake) 'di «Oye $name»',
-    if (shortcut) 'pulsa ⌃⌥P',
+    if (wake) tr('di «Oye $name»', 'say “Hey $name”'),
+    if (shortcut) tr('pulsa ⌃⌥P', 'press ⌃⌥P'),
   ];
-  final how = ways.isEmpty ? menu : '${ways.join(', ')} o $menu';
-  return 'Sigue aquí. Para que vuelva, $how.';
+  final how = ways.isEmpty ? menu : '${ways.join(', ')}${tr(' o ', ' or ')}$menu';
+  return tr('Sigue aquí. Para que vuelva, $how.', "It's still here. To bring it back, $how.");
 }

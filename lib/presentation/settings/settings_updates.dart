@@ -16,34 +16,34 @@ class _UpdateRow extends StatelessWidget {
     final release = state.release;
     final (text, button) = switch (state.status) {
       UpdateStatus.available when release != null => (
-          '🆕 Versión ${release.version} disponible.',
+          tr('🆕 Versión ${release.version} disponible.', '🆕 Version ${release.version} available.'),
           TextButton(
             key: const ValueKey('update-download'),
             onPressed: () => onDownload(release.page),
-            child: const Text('Descargar ↗'),
+            child: Text(tr('Descargar ↗', 'Download ↗')),
           ),
         ),
-      UpdateStatus.checking => ('Buscando…', null),
+      UpdateStatus.checking => (tr('Buscando…', 'Checking…'), null),
       UpdateStatus.upToDate => (
-          '✅ Tienes la última versión.',
+          tr('✅ Tienes la última versión.', '✅ You have the latest version.'),
           TextButton(
               key: const ValueKey('update-check'),
               onPressed: onCheck,
-              child: const Text('Buscar otra vez')),
+              child: Text(tr('Buscar otra vez', 'Check again'))),
         ),
       UpdateStatus.failed => (
-          '⚠️ No pude conectar con GitHub.',
+          tr('⚠️ No pude conectar con GitHub.', "⚠️ I couldn't connect to GitHub."),
           TextButton(
               key: const ValueKey('update-check'),
               onPressed: onCheck,
-              child: const Text('Reintentar')),
+              child: Text(tr('Reintentar', 'Retry'))),
         ),
       _ => (
           '',
           TextButton(
               key: const ValueKey('update-check'),
               onPressed: onCheck,
-              child: const Text('Buscar actualizaciones')),
+              child: Text(tr('Buscar actualizaciones', 'Check for updates'))),
         ),
     };
     // Texto y botón uno debajo del otro si no caben en una línea.

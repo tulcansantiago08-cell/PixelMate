@@ -19,10 +19,8 @@ enum AppleAiAvailability {
   String? get problem => switch (this) {
         available => null,
         appleIntelligenceNotEnabled =>
-          'Para charlar gratis conmigo, activa Apple Intelligence en '
-              'Configuración del Sistema → Apple Intelligence y Siri.',
-        modelNotReady => 'Apple Intelligence aún está descargando su modelo. '
-            'Vuelve a intentarlo en un rato ⏳',
+          'Para charlar gratis conmigo, activa Apple Intelligence en Configuración del Sistema → Apple Intelligence y Siri.',
+        modelNotReady => 'Apple Intelligence aún está descargando su modelo. Vuelve a intentarlo en un rato ⏳',
         deviceNotEligible =>
           'Este Mac no es compatible con Apple Intelligence.',
         unsupported => 'La IA de Apple necesita macOS 26 o posterior.',

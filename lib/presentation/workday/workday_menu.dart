@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -34,11 +35,11 @@ Future<MenuAction?> showWorkdayMenu({
   final List<PopupMenuEntry<MenuAction>> items;
   if (!view.isActive) {
     items = [
-      const PopupMenuItem(enabled: false, child: Text('Iniciar jornada')),
+      PopupMenuItem(enabled: false, child: Text(tr('Iniciar jornada', 'Start workday'))),
       for (final hours in WorkdayConfig.presetWorkdays)
         PopupMenuItem(
           value: () => controller.start(WorkdayConfig(workday: hours)),
-          child: _label(Icons.work_outline_rounded, '${hours.inHours} horas'),
+          child: _label(Icons.work_outline_rounded, tr('${hours.inHours} horas', '${hours.inHours} hours')),
         ),
     ];
   } else {
@@ -47,17 +48,17 @@ Future<MenuAction?> showWorkdayMenu({
       PopupMenuItem(
         value: paused ? controller.resume : controller.pause,
         child: paused
-            ? _label(Icons.play_arrow_rounded, 'Reanudar')
-            : _label(Icons.pause_rounded, 'Pausar'),
+            ? _label(Icons.play_arrow_rounded, tr('Reanudar', 'Resume'))
+            : _label(Icons.pause_rounded, tr('Pausar', 'Pause')),
       ),
       PopupMenuItem(
         value: controller.skipPhase,
-        child: _label(Icons.skip_next_rounded, 'Saltar fase'),
+        child: _label(Icons.skip_next_rounded, tr('Saltar fase', 'Skip phase')),
       ),
       const PopupMenuDivider(),
       PopupMenuItem(
         value: controller.finish,
-        child: _label(Icons.stop_rounded, 'Finalizar jornada'),
+        child: _label(Icons.stop_rounded, tr('Finalizar jornada', 'End workday')),
       ),
     ];
   }
@@ -66,26 +67,26 @@ Future<MenuAction?> showWorkdayMenu({
     ..add(const PopupMenuDivider())
     ..add(PopupMenuItem(
         value: onShowStats,
-        child: _label(Icons.bar_chart_rounded, 'Estadísticas')));
+        child: _label(Icons.bar_chart_rounded, tr('Estadísticas', 'Stats'))));
   if (onPending != null) {
     items.add(PopupMenuItem(
         value: onPending,
-        child: _label(Icons.checklist_rounded, 'Pendientes')));
+        child: _label(Icons.checklist_rounded, tr('Pendientes', 'To-do'))));
   }
   if (onWalk != null) {
     items.add(PopupMenuItem(
         value: onWalk,
-        child: _label(Icons.directions_walk_rounded, 'Dar un paseo')));
+        child: _label(Icons.directions_walk_rounded, tr('Dar un paseo', 'Take a walk'))));
   }
 
   if (onRename != null) {
     items.add(PopupMenuItem(
-        value: onRename, child: _label(Icons.edit_outlined, 'Cambiar nombre')));
+        value: onRename, child: _label(Icons.edit_outlined, tr('Cambiar nombre', 'Rename'))));
   }
 
   if (onSettings != null) {
     items.add(PopupMenuItem(
-        value: onSettings, child: _label(Icons.settings_outlined, 'Ajustes')));
+        value: onSettings, child: _label(Icons.settings_outlined, tr('Ajustes', 'Settings'))));
   }
 
   if (onHide != null) {
@@ -93,7 +94,7 @@ Future<MenuAction?> showWorkdayMenu({
       ..add(const PopupMenuDivider())
       ..add(PopupMenuItem(
           value: onHide,
-          child: _label(Icons.visibility_off_outlined, 'Esconder')));
+          child: _label(Icons.visibility_off_outlined, tr('Esconder', 'Hide'))));
   }
 
   return showMenu<MenuAction>(

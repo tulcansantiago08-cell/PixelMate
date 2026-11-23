@@ -31,8 +31,7 @@ Responde siempre en español, de forma breve (máximo 3 oraciones).
   }) async {
     if (apiKey.isEmpty) {
       throw ClaudeApiException(
-        'Falta la API key 🔑. Ejecuta la app con '
-        '--dart-define=ANTHROPIC_API_KEY=tu_clave',
+        'Falta la API key 🔑. Ejecuta la app con --dart-define=ANTHROPIC_API_KEY=tu_clave',
       );
     }
 
@@ -125,8 +124,7 @@ Responde siempre en español, de forma breve (máximo 3 oraciones).
   static String _friendlyError(int status, String type, String message) {
     final lower = message.toLowerCase();
     if (lower.contains('credit balance')) {
-      return 'Tu cuenta de la API de Claude se quedó sin créditos 💳. '
-          'Recarga en console.anthropic.com → Plans & Billing.';
+      return 'Tu cuenta de la API de Claude se quedó sin créditos 💳. Recarga en console.anthropic.com → Plans & Billing.';
     }
     if (status == 401 || type == 'authentication_error') {
       return 'La API key de Claude no es válida 🔑. Revisa ANTHROPIC_API_KEY.';

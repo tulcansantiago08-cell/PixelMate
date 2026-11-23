@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -21,24 +22,24 @@ class GameTheme {
   final Color bottom;
   final Color accent;
   final Color twinkle;
-  const GameTheme(this.name, this.top, this.bottom, this.accent, this.twinkle);
+  GameTheme(this.name, this.top, this.bottom, this.accent, this.twinkle);
 
-  static const all = [
-    GameTheme('Cielo de la tarde 🌤️', Color(0xFF1B2A4A), Color(0xFF3E5C8A),
+  static final all = [
+    GameTheme(tr('Cielo de la tarde 🌤️', 'Afternoon sky 🌤️'), Color(0xFF1B2A4A), Color(0xFF3E5C8A),
         Color(0xFF64B5F6), Color(0x66FFFFFF)),
-    GameTheme('Atardecer 🌇', Color(0xFF2B1B3D), Color(0xFF8A3B5C),
+    GameTheme(tr('Atardecer 🌇', 'Sunset 🌇'), Color(0xFF2B1B3D), Color(0xFF8A3B5C),
         Color(0xFFFF8A65), Color(0x66FFE0B2)),
-    GameTheme('Noche 🌙', Color(0xFF0B1026), Color(0xFF1F2A5A),
+    GameTheme(tr('Noche 🌙', 'Night 🌙'), Color(0xFF0B1026), Color(0xFF1F2A5A),
         Color(0xFF9FA8DA), Color(0x99FFFFFF)),
-    GameTheme('Aurora 🌌', Color(0xFF07202A), Color(0xFF1F6B5A),
+    GameTheme(tr('Aurora 🌌', 'Aurora 🌌'), Color(0xFF07202A), Color(0xFF1F6B5A),
         Color(0xFF4DD0A1), Color(0x99B2FFD9)),
-    GameTheme('Bosque mágico 🍄', Color(0xFF0F1F14), Color(0xFF2F5A2A),
+    GameTheme(tr('Bosque mágico 🍄', 'Magic forest 🍄'), Color(0xFF0F1F14), Color(0xFF2F5A2A),
         Color(0xFFAED581), Color(0x99F0F4C3)),
-    GameTheme('Nebulosa 🔮', Color(0xFF1A0B2E), Color(0xFF6A2C8A),
+    GameTheme(tr('Nebulosa 🔮', 'Nebula 🔮'), Color(0xFF1A0B2E), Color(0xFF6A2C8A),
         Color(0xFFCE93D8), Color(0x99F8BBD0)),
-    GameTheme('Volcán 🌋', Color(0xFF1F0A0A), Color(0xFF8A2E14),
+    GameTheme(tr('Volcán 🌋', 'Volcano 🌋'), Color(0xFF1F0A0A), Color(0xFF8A2E14),
         Color(0xFFFF7043), Color(0x99FFCC80)),
-    GameTheme('Galaxia 🪐', Color(0xFF05030F), Color(0xFF2A1458),
+    GameTheme(tr('Galaxia 🪐', 'Galaxy 🪐'), Color(0xFF05030F), Color(0xFF2A1458),
         Color(0xFFFFD54F), Color(0xCCFFFFFF)),
   ];
 
@@ -93,7 +94,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
       _dailyAnnounced = false;
       _result = null;
       _flashes.clear();
-      _banner = ('Nivel 1 · ${GameTheme.forLevel(1).name}', Duration.zero);
+      _banner = (tr('Nivel 1 · ${GameTheme.forLevel(1).name}', 'Level 1 · ${GameTheme.forLevel(1).name}'), Duration.zero);
       _stage = _Stage.playing;
     });
     _last = Duration.zero;
@@ -121,16 +122,15 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     if (game.level > levelBefore) {
       final life = game.lives > livesBefore ? ' · +1 ❤️' : '';
       final challenge =
-          StarCatchGame.challengeFor(game.level) ?? 'Más rápido ⚡';
+          StarCatchGame.challengeFor(game.level) ?? tr('Más rápido ⚡', 'Faster ⚡');
       _banner = (
-        '¡Nivel ${game.level}! ${GameTheme.forLevel(game.level).name}$life'
-            ' · $challenge',
+        tr('¡Nivel ${game.level}! ${GameTheme.forLevel(game.level).name}$life · $challenge', 'Level ${game.level}! ${GameTheme.forLevel(game.level).name}$life · $challenge'),
         game.elapsed
       );
     }
     if (!_dailyAnnounced && _daily != null && _daily!.met(GameRun.of(game))) {
       _dailyAnnounced = true;
-      _banner = ('🎯 ¡Reto del día cumplido! Sigue jugando', game.elapsed);
+      _banner = (tr('🎯 ¡Reto del día cumplido! Sigue jugando', '🎯 Daily challenge done! Keep playing'), game.elapsed);
     }
     if (_banner != null &&
         game.elapsed - _banner!.$2 > const Duration(milliseconds: 3500)) {
@@ -196,18 +196,18 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
           Row(children: [
             Expanded(
               child: _stage == _Stage.playing
-                  ? Text('Nivel ${_game!.level}',
+                  ? Text(tr('Nivel ${_game!.level}', 'Level ${_game!.level}'),
                       key: const ValueKey('game-level'),
                       style: TextStyle(
                           color: theme!.accent,
                           fontSize: 15,
                           fontWeight: FontWeight.w700))
-                  : const Row(children: [
+                  : Row(children: [
                       Icon(Icons.star_outline_rounded,
                           size: 18, color: StatsStyle.accentLight),
                       SizedBox(width: 6),
                       Flexible(
-                          child: Text('Atrapa estrellas',
+                          child: Text(tr('Atrapa estrellas', 'Catch the stars'),
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   color: StatsStyle.textPrimary,
@@ -218,7 +218,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
             if (_stage == _Stage.playing) _hud(_game!),
             IconButton(
               key: const ValueKey('game-close'),
-              tooltip: 'Cerrar',
+              tooltip: tr('Cerrar', 'Close'),
               onPressed: widget.onClose,
               icon: const Icon(Icons.close,
                   size: 18, color: StatsStyle.textSecondary),
@@ -262,8 +262,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         const Text('🎯', style: TextStyle(fontSize: 32)),
         const SizedBox(height: 8),
         Text(
-            'Ahora toca enfocarse. $name te espera en el descanso para '
-            'jugar 😉',
+            tr('Ahora toca enfocarse. $name te espera en el descanso para jugar 😉', 'Time to focus now. $name will wait for you on the break to play 😉'),
             key: const ValueKey('game-focus'),
             textAlign: TextAlign.center,
             style: _body),
@@ -271,27 +270,20 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     }
     final key = currentBreakKey(view);
     final xpLine = key == null
-        ? 'En los descansos, cada partida da hasta $maxGameXp XP (una por '
-            'descanso). Ahora juegas por el récord.'
+        ? tr('En los descansos, cada partida da hasta $maxGameXp XP (una por descanso). Ahora juegas por el récord.', "On breaks, each game gives up to $maxGameXp XP (one per break). Now you're playing for the record.")
         : store.canEarnIn(key)
-            ? '☕ Estás en un descanso: esta partida da hasta $maxGameXp XP.'
-            : 'Ya ganaste la XP de este descanso; ahora juegas por el récord.';
+            ? tr('☕ Estás en un descanso: esta partida da hasta $maxGameXp XP.', "☕ You're on a break: this game gives up to $maxGameXp XP.")
+            : tr('Ya ganaste la XP de este descanso; ahora juegas por el récord.', "You already earned this break's XP; now you're playing for the record.");
     return _centered([
       const Text('⭐ 🌟 💣 🌀', style: TextStyle(fontSize: 26)),
       const SizedBox(height: 8),
-      const Text(
-          'Lleva la cesta con el ratón o las flechas ← → (tiene su propia '
-          'velocidad: ¡anticípate!). ⭐ suma 1 y 🌟 suma 3; atrápalas seguidas para multiplicar 🔥. '
-          'Tienes 3 vidas: '
-          'pierdes una si se te escapa una estrella o si atrapas una trampa. '
-          'Con los puntos subes de nivel: todo va más rápido y aparecen '
-          'trampas nuevas.',
+      Text(
+          tr('Lleva la cesta con el ratón o las flechas ← → (tiene su propia velocidad: ¡anticípate!). ⭐ suma 1 y 🌟 suma 3; atrápalas seguidas para multiplicar 🔥. Tienes 3 vidas: pierdes una si se te escapa una estrella o si atrapas una trampa. Con los puntos subes de nivel: todo va más rápido y aparecen trampas nuevas.', 'Move the basket with the mouse or the ← → arrows (it has its own speed: think ahead!). ⭐ adds 1 and 🌟 adds 3; catch them in a row to multiply 🔥. You have 3 lives: you lose one if a star gets away or if you catch a trap. Points level you up: everything gets faster and new traps appear.'),
           textAlign: TextAlign.center,
           style: _body),
       const SizedBox(height: 6),
-      const Text(
-          'Trampas: ⛈️ 💣 💀 quitan vida · 🧊 congela · 🌀 invierte · '
-          '🍄 encoge\nAyudas: 💖 vida · 🧲 imán · 🛡️ escudo',
+      Text(
+          tr('Trampas: ⛈️ 💣 💀 quitan vida · 🧊 congela · 🌀 invierte · 🍄 encoge\nAyudas: 💖 vida · 🧲 imán · 🛡️ escudo', 'Traps: ⛈️ 💣 💀 take a life · 🧊 freezes · 🌀 reverses · 🍄 shrinks\nHelps: 💖 life · 🧲 magnet · 🛡️ shield'),
           key: ValueKey('game-legend'),
           textAlign: TextAlign.center,
           style: _body),
@@ -303,15 +295,18 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
       if (store.best > 0 || store.bestTimeAttack > 0) ...[
         const SizedBox(height: 6),
         Text(
-            'Récord: ${store.best}'
-            '${store.bestTimeAttack > 0 ? ' · contrarreloj: ${store.bestTimeAttack}' : ''}',
+            tr('Récord: ${store.best}', 'Record: ${store.best}') +
+                (store.bestTimeAttack > 0
+                    ? tr(' · contrarreloj: ${store.bestTimeAttack}',
+                        ' · time attack: ${store.bestTimeAttack}')
+                    : ''),
             style: _body),
       ],
       const SizedBox(height: 8),
       _dailyCard(store),
       const SizedBox(height: 6),
       Text(
-          'Cesta: ${store.skin.emoji} ${store.skin.label} — ${store.skin.perk}',
+          tr('Cesta: ${store.skin.emoji} ${store.skin.label} — ${store.skin.perk}', 'Basket: ${store.skin.emoji} ${store.skin.label} — ${store.skin.perk}'),
           key: const ValueKey('game-skin'),
           textAlign: TextAlign.center,
           style: _body),
@@ -320,13 +315,13 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         FilledButton(
           key: const ValueKey('game-start'),
           onPressed: _start,
-          child: const Text('¡Jugar!'),
+          child: Text(tr('¡Jugar!', 'Play!')),
         ),
         OutlinedButton.icon(
           key: const ValueKey('game-start-time'),
           onPressed: () => _start(GameMode.timeAttack),
           icon: const Icon(Icons.timer_outlined, size: 16),
-          label: const Text('Contrarreloj 60 s'),
+          label: Text(tr('Contrarreloj 60 s', 'Time attack 60 s')),
         ),
         OutlinedButton(
           key: const ValueKey('game-medals'),
@@ -353,18 +348,18 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
       const SizedBox(height: 4),
       Text(
           _game!.mode == GameMode.timeAttack
-              ? 'Contrarreloj · nivel ${_game!.level} · '
-                  '${_game!.starsCaught} estrellas · récord '
-                  '${store.bestTimeAttack}'
-              : 'Nivel ${_game!.level} · ${_game!.starsCaught} estrellas · '
-                  'aguantaste ${_game!.elapsed.inSeconds} s · récord ${store.best}',
+              ? tr('Contrarreloj · nivel ${_game!.level} · ${_game!.starsCaught} estrellas · récord ${store.bestTimeAttack}', 'Time attack · level ${_game!.level} · ${_game!.starsCaught} stars · record ${store.bestTimeAttack}')
+              : tr('Nivel ${_game!.level} · ${_game!.starsCaught} estrellas · aguantaste ${_game!.elapsed.inSeconds} s · récord ${store.best}', 'Level ${_game!.level} · ${_game!.starsCaught} stars · you lasted ${_game!.elapsed.inSeconds} s · record ${store.best}'),
           textAlign: TextAlign.center,
           style: _body),
       if (r.dailyXp > 0) ...[
         const SizedBox(height: 6),
         Text(
-            '🎯 ¡Reto del día cumplido! +${r.dailyXp} XP'
-            '${r.dailyStreak > 1 ? ' · racha de ${r.dailyStreak} días 🔥' : ''}',
+            tr('🎯 ¡Reto del día cumplido! +${r.dailyXp} XP', '🎯 Daily challenge done! +${r.dailyXp} XP') +
+                (r.dailyStreak > 1
+                    ? tr(' · racha de ${r.dailyStreak} días 🔥',
+                        ' · ${r.dailyStreak}-day streak 🔥')
+                    : ''),
             key: const ValueKey('game-daily-done'),
             textAlign: TextAlign.center,
             style: _body.copyWith(
@@ -372,16 +367,14 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
       ] else if (!store.dailyDone && _daily != null) ...[
         const SizedBox(height: 6),
         Text(
-            '🎯 Reto de hoy: ${_daily!.text} '
-            '(${_daily!.progress(GameRun.of(_game!))}/${_daily!.goal})',
+            tr('🎯 Reto de hoy: ${_daily!.text} (${_daily!.progress(GameRun.of(_game!))}/${_daily!.goal})', "🎯 Today's challenge: ${_daily!.text} (${_daily!.progress(GameRun.of(_game!))}/${_daily!.goal})"),
             textAlign: TextAlign.center,
             style: _body),
       ],
       for (final m in r.newMedals) ...[
         const SizedBox(height: 6),
         Text(
-            '🏅 ¡Medalla «${m.title}»! Nueva cesta: ${m.reward.emoji} '
-            '${m.reward.label} (${m.reward.perk})',
+            tr('🏅 ¡Medalla «${m.title}»! Nueva cesta: ${m.reward.emoji} ${m.reward.label} (${m.reward.perk})', '🏅 “${m.title}” medal! New basket: ${m.reward.emoji} ${m.reward.label} (${m.reward.perk})'),
             key: ValueKey('game-new-medal-${m.id}'),
             textAlign: TextAlign.center,
             style: _body.copyWith(
@@ -397,7 +390,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         FilledButton(
           key: const ValueKey('game-again'),
           onPressed: () => _start(_game?.mode ?? GameMode.classic),
-          child: const Text('Otra vez'),
+          child: Text(tr('Otra vez', 'Again')),
         ),
         OutlinedButton(
           onPressed: () => setState(() => _stage = _Stage.medals),
@@ -412,12 +405,17 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     final done = store.dailyDone;
     final streak = store.streak;
     final text = done
-        ? '🎯 Reto de hoy cumplido ✅'
-            '${streak > 1 ? ' · racha de $streak días 🔥' : ''}\n'
-            'Vuelve mañana por otro.'
-        : '🎯 Reto de hoy: ${store.daily.text}\n'
-            '+${dailyXp(streak + 1)} XP'
-            '${streak > 0 ? ' · racha de $streak 🔥 (no la pierdas)' : ''}';
+        ? tr('🎯 Reto de hoy cumplido ✅', "🎯 Today's challenge done ✅") +
+            (streak > 1
+                ? tr(' · racha de $streak días 🔥', ' · $streak-day streak 🔥')
+                : '') +
+            '\n' +
+            tr('Vuelve mañana por otro.', 'Come back tomorrow for another.')
+        : tr('🎯 Reto de hoy: ${store.daily.text}\n+${dailyXp(streak + 1)} XP', "🎯 Today's challenge: ${store.daily.text}\n+${dailyXp(streak + 1)} XP") +
+            (streak > 0
+                ? tr(' · racha de $streak 🔥 (no la pierdas)',
+                    " · $streak streak 🔥 (don't lose it)")
+                : '');
     return Container(
       key: const ValueKey('game-daily'),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -447,8 +445,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Text(
-          'Próxima medalla: ${m.emoji} ${m.title} '
-          '(${m.progress(store.stats)}/${m.goal}) → ${m.reward.emoji}',
+          tr('Próxima medalla: ${m.emoji} ${m.title} (${m.progress(store.stats)}/${m.goal}) → ${m.reward.emoji}', 'Next medal: ${m.emoji} ${m.title} (${m.progress(store.stats)}/${m.goal}) → ${m.reward.emoji}'),
           key: const ValueKey('game-next-goal'),
           textAlign: TextAlign.center,
           style: _body.copyWith(color: StatsStyle.textPrimary)),
@@ -464,7 +461,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
         Expanded(
           child: ListView(
             children: [
-              const Text('Cestas (toca una para usarla)',
+              Text(tr('Cestas (toca una para usarla)', 'Baskets (tap one to use it)'),
                   style: TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 12,
@@ -476,7 +473,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
               const SizedBox(height: 4),
               Text('${store.skin.emoji} ${store.skin.perk}', style: _body),
               const SizedBox(height: 10),
-              const Text('Medallas',
+              Text(tr('Medallas', 'Medals'),
                   style: TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 12,
@@ -529,11 +526,11 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
           FilledButton(
             key: const ValueKey('game-start-from-medals'),
             onPressed: _start,
-            child: const Text('¡Jugar!'),
+            child: Text(tr('¡Jugar!', 'Play!')),
           ),
           TextButton(
             onPressed: () => setState(() => _stage = _Stage.ready),
-            child: const Text('Volver'),
+            child: Text(tr('Volver', 'Back')),
           ),
         ]),
       ],
@@ -546,7 +543,7 @@ class _StarCatchPanelState extends ConsumerState<StarCatchPanel>
     return Tooltip(
       message: unlocked
           ? '${skin.label}: ${skin.perk}'
-          : '${skin.label}: se desbloquea con una medalla',
+          : tr('${skin.label}: se desbloquea con una medalla', '${skin.label}: unlocks with a medal'),
       child: InkWell(
         key: ValueKey('skin-${skin.name}'),
         onTap: unlocked ? () => store.selectSkin(skin) : null,

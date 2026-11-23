@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -140,7 +141,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
   Future<void> _save() async {
     final text = _text.text.trim();
     if (text.isEmpty) {
-      setState(() => _problem = 'Escribe qué quieres anotar.');
+      setState(() => _problem = tr('Escribe qué quieres anotar.', 'Write what you want to note.'));
       return;
     }
     _now = widget.today ?? DateTime.now();
@@ -149,7 +150,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
     if (!_allDay && _repeat == NoteRepeat.none) {
       final when = DateTime(day.year, day.month, day.day, _hour, _minute);
       if (!when.isAfter(_now)) {
-        setState(() => _problem = 'Esa hora ya pasó: elige otra.');
+        setState(() => _problem = tr('Esa hora ya pasó: elige otra.', 'That time has passed: choose another.'));
         return;
       }
     }
@@ -252,11 +253,10 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
         ),
       ),
       child: Row(children: [
-        arrow('cal-prev', Icons.chevron_left_rounded, 'Mes anterior', -1),
+        arrow('cal-prev', Icons.chevron_left_rounded, tr('Mes anterior', 'Previous month'), -1),
         Expanded(
           child: Text(
-            '${monthNames[_month.month - 1][0].toUpperCase()}'
-            '${monthNames[_month.month - 1].substring(1)} ${_month.year}',
+            '${monthNames[_month.month - 1][0].toUpperCase()}${monthNames[_month.month - 1].substring(1)} ${_month.year}',
             key: const ValueKey('cal-month'),
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -265,7 +265,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
                 fontWeight: FontWeight.w600),
           ),
         ),
-        arrow('cal-next', Icons.chevron_right_rounded, 'Mes siguiente', 1),
+        arrow('cal-next', Icons.chevron_right_rounded, tr('Mes siguiente', 'Next month'), 1),
       ]),
     );
   }
@@ -280,15 +280,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
     return colors.toSet().toList();
   }
 
-  static const _weekdayShort = [
-    'LUN',
-    'MAR',
-    'MIÉ',
-    'JUE',
-    'VIE',
-    'SÁB',
-    'DOM'
-  ];
+  static List<String> get _weekdayShort => tr('es', 'en') == 'en'
+      ? const ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+      : const ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
   Widget _grid(CalendarStore notes, List<ReminderItem> dated) {
     final first = DateTime(_month.year, _month.month);
@@ -330,9 +324,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       button: true,
       selected: selected,
       excludeSemantics: true,
-      label: '${day.day} de ${monthNames[day.month - 1]}'
-          '${today ? ', hoy' : ''}'
-          '${colors.isEmpty ? '' : ', con cosas anotadas'}',
+      label: dayOfMonth(day) +
+          (today ? tr(', hoy', ', today') : '') +
+          (colors.isEmpty ? '' : tr(', con cosas anotadas', ', with notes')),
       child: InkWell(
         key: ValueKey('cal-day-${day.day}'),
         customBorder: const CircleBorder(),
@@ -432,8 +426,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       Row(children: [
         Expanded(
           child: Text(
-            '${weekdayNames[_selected.weekday - 1]} ${_selected.day} de '
-            '${monthNames[_selected.month - 1]}',
+            calendarLongDate(_selected),
             key: const ValueKey('cal-selected'),
             style: const TextStyle(
                 color: StatsStyle.textPrimary,
@@ -446,10 +439,10 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
             key: const ValueKey('cal-add'),
             style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
             onPressed: _openForm,
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.schedule_rounded, size: 14),
               SizedBox(width: 4),
-              Text('Con hora', style: TextStyle(fontSize: 11)),
+              Text(tr('Con hora', 'With time'), style: TextStyle(fontSize: 11)),
             ]),
           ),
       ]),
@@ -462,9 +455,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               style: const TextStyle(color: Colors.amber, fontSize: 11)),
         ),
       if (mine.isEmpty && items.isEmpty && routine.isEmpty && !notes.toMac)
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(vertical: 6),
-          child: Text('Nada para este día.',
+          child: Text(tr('Nada para este día.', 'Nothing for this day.'),
               style: TextStyle(color: StatsStyle.textMuted, fontSize: 11)),
         ),
       for (final n in mine)
@@ -499,7 +492,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               ? Icons.check_circle_outline_rounded
               : Icons.repeat_rounded,
           time: t.time12,
-          text: '${t.text} (diaria)',
+          text: tr('${t.text} (diaria)', '${t.text} (daily)'),
         ),
       if (notes.toMac)
         FutureBuilder<List<CalendarEvent>>(
@@ -516,7 +509,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
                   key: ValueKey('cal-mac-${e.id}-${e.title}'),
                   icon: Icons.event_available_outlined,
                   time: e.allDay
-                      ? 'Todo el día'
+                      ? tr('Todo el día', 'All day')
                       : clock12(e.start.hour, e.start.minute),
                   text: e.title,
                 ),
@@ -542,7 +535,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               style: const TextStyle(color: Colors.white, fontSize: 13),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Anotar en este día',
+                hintText: tr('Anotar en este día', 'Note on this day'),
                 hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
                 prefixIcon: Padding(
                   padding: const EdgeInsets.only(right: 6),
@@ -553,7 +546,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
                     const BoxConstraints(minWidth: 24, minHeight: 24),
                 suffixIcon: IconButton(
                   key: const ValueKey('cal-quick-save'),
-                  tooltip: 'Anotar',
+                  tooltip: tr('Anotar', 'Note'),
                   visualDensity: VisualDensity.compact,
                   onPressed: _quickSave,
                   icon: const Icon(Icons.check,
@@ -640,7 +633,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               ),
               if (onDelete != null)
                 IconButton(
-                  tooltip: 'Borrar',
+                  tooltip: tr('Borrar', 'Delete'),
                   visualDensity: VisualDensity.compact,
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline,
@@ -656,9 +649,8 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
       children: [
         Text(
           _editing == null
-              ? 'Anotar el ${_selected.day} de '
-                  '${monthNames[_selected.month - 1]}'
-              : 'Cambiar la nota',
+              ? tr('Anotar el ${dayOfMonth(_selected)}', 'Note on ${dayOfMonth(_selected)}')
+              : tr('Cambiar la nota', 'Change the note'),
           style: const TextStyle(
               color: StatsStyle.textPrimary,
               fontSize: 12,
@@ -670,19 +662,19 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           autofocus: true,
           onTap: focusApp,
           style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: const InputDecoration(
-            hintText: '¿Qué quieres anotar?',
+          decoration: InputDecoration(
+            hintText: tr('¿Qué quieres anotar?', 'What do you want to note?'),
             hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
             isDense: true,
           ),
           onSubmitted: (_) => _save(),
         ),
         const SizedBox(height: 6),
-        const Text('Color', style: small),
+        Text(tr('Color', 'Color'), style: small),
         const SizedBox(height: 2),
         _colorPicker(),
         const SizedBox(height: 6),
-        const Text('Repetir', style: small),
+        Text(tr('Repetir', 'Repeat'), style: small),
         Wrap(spacing: 4, children: [
           for (final r in NoteRepeat.values)
             ChoiceChip(
@@ -701,9 +693,8 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           contentPadding: EdgeInsets.zero,
           title: Text(
               _allDay
-                  ? 'Todo el día (te aviso a las '
-                      '${clock12(CalendarNote.noticeHour, 0)})'
-                  : 'Todo el día',
+                  ? tr('Todo el día (te aviso a las ${clock12(CalendarNote.noticeHour, 0)})', "All day (I'll remind you at ${clock12(CalendarNote.noticeHour, 0)})")
+                  : tr('Todo el día', 'All day'),
               style: small),
           value: _allDay,
           onChanged: (v) => setState(() => _allDay = v),
@@ -724,8 +715,8 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
             contentPadding: EdgeInsets.zero,
             title: Text(
                 _alarm
-                    ? 'Con alarma (suena hasta apagarla)'
-                    : 'Con alarma (si no, solo un aviso)',
+                    ? tr('Con alarma (suena hasta apagarla)', 'With alarm (rings until you turn it off)')
+                    : tr('Con alarma (si no, solo un aviso)', 'With alarm (otherwise, just a notice)'),
                 style: small),
             value: _alarm,
             onChanged: (v) => setState(() => _alarm = v),
@@ -735,7 +726,7 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
           key: const ValueKey('cal-mac'),
           dense: true,
           contentPadding: EdgeInsets.zero,
-          title: const Text('También en el Calendario del Mac', style: small),
+          title: Text(tr('También en el Calendario del Mac', 'Also in the Mac Calendar'), style: small),
           value: notes.toMac,
           onChanged: (v) => notes.setToMac(v),
         ),
@@ -749,13 +740,13 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               _adding = false;
               _resetForm();
             }),
-            child: const Text('Cancelar', style: TextStyle(fontSize: 12)),
+            child: Text(tr('Cancelar', 'Cancel'), style: TextStyle(fontSize: 12)),
           ),
           const Spacer(),
           FilledButton(
             key: const ValueKey('cal-save'),
             onPressed: _save,
-            child: const Text('Guardar', style: TextStyle(fontSize: 12)),
+            child: Text(tr('Guardar', 'Save'), style: TextStyle(fontSize: 12)),
           ),
         ]),
       ],

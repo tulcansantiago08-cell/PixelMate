@@ -42,8 +42,7 @@ class Suggestion {
   static Suggestion? forApp(ForegroundApp app, DetectableApp rule) =>
       switch (rule.category) {
         AppCategory.development => Suggestion(
-            message: 'Abriste ${rule.name}. '
-                '¿Iniciamos una jornada?',
+            message: 'Abriste ${rule.name}. ¿Iniciamos una jornada?',
             options: [
               const SuggestionOption(
                   '💼 Jornada laboral', SuggestionAction.startWork),
@@ -57,8 +56,7 @@ class Suggestion {
             category: rule.category,
           ),
         AppCategory.gaming => Suggestion(
-            message: 'Abriste ${rule.name}. '
-                '¿Activamos el modo gamer?',
+            message: 'Abriste ${rule.name}. ¿Activamos el modo gamer?',
             options: [
               const SuggestionOption(
                   '🎮 Sí, vamos a jugar', SuggestionAction.startGaming),

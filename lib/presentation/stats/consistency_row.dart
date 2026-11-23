@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/stats/consistency.dart';
@@ -15,8 +16,8 @@ class ConsistencyRow extends StatelessWidget {
       Expanded(
         child: Text(
           c.active == 0
-              ? 'Sin sesiones en los últimos 7 días'
-              : '${c.active} de los últimos ${c.window} días',
+              ? tr('Sin sesiones en los últimos 7 días', 'No sessions in the last 7 days')
+              : tr('${c.active} de los últimos ${c.window} días', '${c.active} of the last ${c.window} days'),
           key: const ValueKey('consistency-text'),
           style: const TextStyle(color: StatsStyle.textSecondary, fontSize: 11),
         ),
@@ -25,7 +26,7 @@ class ConsistencyRow extends StatelessWidget {
         Tooltip(
           message:
               '${longDate(DateTime(c.today.year, c.today.month, c.today.day - (c.days.length - 1 - i)))}: '
-              '${c.days[i] ? 'con sesión' : 'sin sesión'}',
+              '${c.days[i] ? tr('con sesión', 'with a session') : tr('sin sesión', 'no session')}',
           child: Container(
             width: 8,
             height: 8,

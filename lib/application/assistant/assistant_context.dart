@@ -104,11 +104,9 @@ String describeContext({
     lines.add('Jornada de ${_mode(workday.mode)} en curso'
         '${paused ? ' (en pausa)' : ''}.');
     if (phase != null) {
-      lines.add('Fase: ${_phase(phase.kind)} (ciclo ${phase.cycle}); '
-          'quedan ${_dur(status.phaseRemaining)} de esta fase.');
+      lines.add('Fase: ${_phase(phase.kind)} (ciclo ${phase.cycle}); quedan ${_dur(status.phaseRemaining)} de esta fase.');
     }
-    lines.add('Enfoque de esta jornada: ${_dur(status.effectiveFocus)}; '
-        'quedan ${_dur(status.workdayRemaining)} de jornada.');
+    lines.add('Enfoque de esta jornada: ${_dur(status.effectiveFocus)}; quedan ${_dur(status.workdayRemaining)} de jornada.');
   }
   if (goal == null) {
     lines.add('Sin meta diaria.');
@@ -116,10 +114,7 @@ String describeContext({
     lines.add('Enfoque de hoy: ${_dur(goal.done)} de una meta de '
         '${_dur(goal.goal)}${goal.reached ? ' (meta cumplida)' : ''}.');
   }
-  lines.add('Nivel ${progress.level} («${progress.title}»), '
-      '${progress.xp} XP; faltan '
-      '${progress.xpNeededForNext - progress.xpIntoLevel} XP para el '
-      'nivel ${progress.level + 1}.');
+  lines.add('Nivel ${progress.level} («${progress.title}»), ${progress.xp} XP; faltan ${progress.xpNeededForNext - progress.xpIntoLevel} XP para el nivel ${progress.level + 1}.');
   if (tasks.isNotEmpty) lines.add(tasks);
   return lines.join(' ');
 }

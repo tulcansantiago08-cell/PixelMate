@@ -23,9 +23,7 @@ String workdaySummaryPrompt({
   final d = distractions;
   return 'Acabo de terminar mi jornada de $kind. '
       '${status.completedNaturally ? 'La completé entera' : 'La terminé antes de tiempo'}: '
-      '${_dur(status.effectiveFocus)} de enfoque, '
-      '${_dur(status.effectiveBreak)} de descanso, '
-      '${status.focusBlocksCompleted} bloques de enfoque terminados. '
+      '${_dur(status.effectiveFocus)} de enfoque, ${_dur(status.effectiveBreak)} de descanso, ${status.focusBlocksCompleted} bloques de enfoque terminados. '
       '${d == null ? '' : d.episodes == 0 ? 'Hoy no tuve distracciones durante el enfoque. ' : 'Hoy tuve ${d.episodes} distracciones durante el enfoque (${_dur(d.time)}). '}'
       'Dame un resumen breve y motivador de cómo me fue (2 oraciones) con un '
       'consejo concreto para la próxima. No elijas ninguna acción.';

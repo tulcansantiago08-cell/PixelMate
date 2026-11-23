@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 import 'application/activity/activity_providers.dart';
+import 'core/i18n/language.dart';
 import 'application/activity/detection_settings.dart';
 import 'application/activity/focus_guard.dart';
 import 'application/activity/focus_guard_controller.dart';
@@ -69,6 +70,8 @@ void main() async {
   await dataDir.create(recursive: true);
   final store = SqliteWorkdayStore.open(p.join(dataDir.path, 'pixelmate.db'));
   final prefs = await SharedPreferences.getInstance();
+  // El idioma va primero: lo usan los textos del menú y los avisos al arrancar.
+  final language = LanguageSettings(prefs);
 
   // Errores al registro de la app (Library/Logs/pixelmate.log), para poder
   // diagnosticar lo que no se ve.
@@ -114,6 +117,7 @@ void main() async {
 
   final container = ProviderContainer(overrides: [
     workdayStoreProvider.overrideWithValue(store),
+    languageSettingsProvider.overrideWith((_) => language),
     mascotWindowProvider.overrideWithValue(window),
     detectionSettingsProvider.overrideWithValue(detection),
     mascotSettingsProvider.overrideWithValue(mascotSettings),
@@ -185,11 +189,15 @@ void main() async {
   container.read(updateProvider);
 }
 
-class PixelMateApp extends StatelessWidget {
+class PixelMateApp extends ConsumerWidget {
   const PixelMateApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Al cambiar de idioma se vuelve a dibujar todo con los textos nuevos.
+    ref.listen<LanguageSettings>(languageSettingsProvider, (_, __) {
+      rebuildAllWidgets(context);
+    });
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

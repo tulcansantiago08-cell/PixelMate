@@ -44,10 +44,8 @@ class FocusModeSettings extends ChangeNotifier {
 /// Qué decir si un atajo no funcionó.
 String? focusModeProblem(String status, String shortcut) => switch (status) {
       'ok' => null,
-      'missing' => 'No encuentro el atajo «$shortcut». Créalo en la app '
-          'Atajos (mira cómo, arriba).',
-      'denied' => 'Sin permiso para usar Atajos: Ajustes del Sistema › '
-          'Privacidad y seguridad › Automatización › PixelMate.',
+      'missing' => 'No encuentro el atajo «$shortcut». Créalo en la app Atajos (mira cómo, arriba).',
+      'denied' => 'Sin permiso para usar Atajos: Ajustes del Sistema › Privacidad y seguridad › Automatización › PixelMate.',
       _ => 'No pude ejecutar el atajo «$shortcut».',
     };
 

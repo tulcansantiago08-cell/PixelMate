@@ -52,10 +52,8 @@ class LateNightReminder {
   static String message(int index, DateTime local) {
     final time = '${local.hour}:${local.minute.toString().padLeft(2, '0')}';
     return switch (index) {
-      0 => '🌙 Ya son las $time. ¿Cerramos por hoy? Descansar también es '
-          'avanzar.',
-      1 => '🌙 Son las $time y seguimos aquí. Tu yo de mañana te lo '
-          'agradecerá: ¿lo dejamos?',
+      0 => '🌙 Ya son las $time. ¿Cerramos por hoy? Descansar también es avanzar.',
+      1 => '🌙 Son las $time y seguimos aquí. Tu yo de mañana te lo agradecerá: ¿lo dejamos?',
       _ => '😴 Ya es la $time… De verdad, a dormir. Mañana seguimos.',
     };
   }

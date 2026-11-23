@@ -26,9 +26,8 @@ extension _Reactions on _MascotWindowState {
           !now.playing &&
           ref.read(musicProvider.notifier).videoDidNotStart) {
         _react(
-            const MascotReaction(
-                'Abrí el video, pero no empezó a sonar: dale play en el '
-                'navegador.',
+            MascotReaction(
+                tr('Abrí el video, pero no empezó a sonar: dale play en el navegador.', "I opened the video, but it didn't start playing: press play in the browser."),
                 MascotState.alert),
             duration: const Duration(seconds: 10));
         return;

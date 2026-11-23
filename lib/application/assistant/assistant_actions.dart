@@ -28,8 +28,7 @@ String? runAssistantAction(
     final config =
         hours > 0 ? base.copyWith(workday: Duration(hours: hours)) : base;
     workday.start(config, mode: mode);
-    return '▶️ Empecé una jornada de $label de '
-        '${config.workday.inHours} h.';
+    return '▶️ Empecé una jornada de $label de ${config.workday.inHours} h.';
   }
 
   switch (reply.action) {
@@ -140,7 +139,6 @@ String workdayCommandSkipped(AssistantAction a) => switch (a) {
       AssistantAction.pause => 'ℹ️ No hay una jornada en marcha para pausar.',
       AssistantAction.resume => 'ℹ️ No hay una jornada en pausa.',
       AssistantAction.finish => 'ℹ️ No hay ninguna jornada en curso.',
-      AssistantAction.setGoal => 'ℹ️ Dime la meta en horas, por ejemplo '
-          '«cambia mi meta a 6 horas».',
+      AssistantAction.setGoal => 'ℹ️ Dime la meta en horas, por ejemplo «cambia mi meta a 6 horas».',
       _ => 'ℹ️ No pude hacerlo ahora.',
     };

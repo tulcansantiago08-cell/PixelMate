@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/progress/progression.dart';
@@ -58,7 +59,7 @@ class _LevelCardState extends State<LevelCard> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(children: [
-                  Text('Nv. ${progress.level}',
+                  Text(tr('Nv. ${progress.level}', 'Lv. ${progress.level}'),
                       key: const ValueKey('level'),
                       style: const TextStyle(
                           color: StatsStyle.textPrimary,
@@ -80,8 +81,7 @@ class _LevelCardState extends State<LevelCard> {
                 const SizedBox(height: 6),
                 Tooltip(
                   message:
-                      '${progress.xpIntoLevel} de ${progress.xpNeededForNext} XP'
-                      ' para el nivel ${progress.level + 1}',
+                      tr('${progress.xpIntoLevel} de ${progress.xpNeededForNext} XP para el nivel ${progress.level + 1}', '${progress.xpIntoLevel} of ${progress.xpNeededForNext} XP to level ${progress.level + 1}'),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
@@ -96,8 +96,7 @@ class _LevelCardState extends State<LevelCard> {
                 Row(children: [
                   Expanded(
                     child: Text(
-                      'Faltan ${progress.xpNeededForNext - progress.xpIntoLevel} XP '
-                      'para el nivel ${progress.level + 1}',
+                      tr('Faltan ${progress.xpNeededForNext - progress.xpIntoLevel} XP para el nivel ${progress.level + 1}', '${progress.xpNeededForNext - progress.xpIntoLevel} XP to level ${progress.level + 1}'),
                       style: const TextStyle(
                           color: StatsStyle.textMuted, fontSize: 10),
                     ),
@@ -110,9 +109,9 @@ class _LevelCardState extends State<LevelCard> {
                     ),
                   Text(
                     _expanded
-                        ? 'Ocultar ▴'
+                        ? tr('Ocultar ▴', 'Hide ▴')
                         : '$unlocked/${achievements.length}'
-                            '${onEquip != null ? ' · accesorios' : ''} ▾',
+                            '${onEquip != null ? tr(' · accesorios', ' · accessories') : ''} ▾',
                     style: const TextStyle(
                         color: StatsStyle.textSecondary, fontSize: 10),
                   ),
@@ -130,7 +129,7 @@ class _LevelCardState extends State<LevelCard> {
           ValueChanged<PetAccessory?>? onEquip, int unlocked) =>
       [
         const SizedBox(height: 8),
-        Text('Logros $unlocked/${achievements.length}',
+        Text(tr('Logros $unlocked/${achievements.length}', 'Achievements $unlocked/${achievements.length}'),
             style:
                 const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
         const SizedBox(height: 4),
@@ -143,7 +142,7 @@ class _LevelCardState extends State<LevelCard> {
         ),
         if (onEquip != null) ...[
           const SizedBox(height: 8),
-          const Text('Accesorios',
+          Text(tr('Accesorios', 'Accessories'),
               style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
           const SizedBox(height: 4),
           AccessoryPicker(
@@ -163,7 +162,7 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: '${achievement.title}${unlocked ? ' ✓' : ' (bloqueado)'}\n'
+      message: '${achievement.title}${unlocked ? ' ✓' : tr(' (bloqueado)', ' (locked)')}\n'
           '${achievement.description}',
       child: Container(
         width: 26,
@@ -230,10 +229,10 @@ class _AccessoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tooltip = !unlocked
-        ? '${accessory.label}: se desbloquea en el nivel ${accessory.unlockLevel}'
+        ? tr('${accessory.label}: se desbloquea en el nivel ${accessory.unlockLevel}', '${accessory.label}: unlocks at level ${accessory.unlockLevel}')
         : equipped
-            ? '${accessory.label} (puesto). Toca para quitártelo'
-            : '${accessory.label}. Toca para ponértelo';
+            ? tr('${accessory.label} (puesto). Toca para quitártelo', '${accessory.label} (on). Tap to take it off')
+            : tr('${accessory.label}. Toca para ponértelo', '${accessory.label}. Tap to put it on');
     return Tooltip(
       message: tooltip,
       child: Material(
@@ -256,7 +255,7 @@ class _AccessoryChip extends StatelessWidget {
                   style: TextStyle(fontSize: unlocked ? 13 : 10)),
               if (!unlocked) ...[
                 const SizedBox(width: 3),
-                Text('Nv. ${accessory.unlockLevel}',
+                Text(tr('Nv. ${accessory.unlockLevel}', 'Lv. ${accessory.unlockLevel}'),
                     style: const TextStyle(
                         color: StatsStyle.textMuted, fontSize: 10)),
               ],

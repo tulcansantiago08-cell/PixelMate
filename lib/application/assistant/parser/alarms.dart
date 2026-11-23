@@ -59,10 +59,7 @@ ParsedCommand? _alarmCommand(String original, String m, DateTime now) {
   const alarmVerbs =
       r'(?:pon(?:me|le)?|programa(?:me)?|crea(?:me)?|activa(?:me)?|agrega(?:me)?|anade(?:me)?|configura(?:me)?|dame|hazme|haz|quiero|necesito|coloca(?:me)?|establece|fija(?:me)?|ajusta(?:me)?)';
   final set =
-      RegExp('^(?:$alarmVerbs\\s+)?(?:una?\\s+|la\\s+)?(?:nueva\\s+)?alarma\\b'
-              '|^(?:despiertame|levantame)\\b'
-              '|\\btareas? diarias?\\b'
-              '|\\b$alarmVerbs\\s+(?:una?\\s+)?(?:nueva\\s+)?alarma\\b')
+      RegExp('^(?:$alarmVerbs\\s+)?(?:una?\\s+|la\\s+)?(?:nueva\\s+)?alarma\\b|^(?:despiertame|levantame)\\b|\\btareas? diarias?\\b|\\b$alarmVerbs\\s+(?:una?\\s+)?(?:nueva\\s+)?alarma\\b')
           .firstMatch(t);
   final remindWithAlarm =
       RegExp(r'^(?:recuerdame|avisame)\b.*\bcon (?:alarma|sonido)\b')

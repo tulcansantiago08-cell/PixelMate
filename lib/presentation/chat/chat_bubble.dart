@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/assistant/chat_controller.dart';
@@ -93,7 +94,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                 const Spacer(),
                 // Qué IA responde (la de Apple funciona sin conexión).
                 Text(
-                  assistant?.label ?? 'Sin IA',
+                  assistant?.label ?? tr('Sin IA', 'No AI'),
                   key: const ValueKey('assistant-label'),
                   style: const TextStyle(color: Colors.white70, fontSize: 10),
                 ),
@@ -133,7 +134,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (msg.hasImage)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.only(bottom: 4),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -141,7 +142,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                                 Icon(Icons.screenshot,
                                     color: Colors.white70, size: 12),
                                 SizedBox(width: 4),
-                                Text('Pantalla capturada',
+                                Text(tr('Pantalla capturada', 'Screen captured'),
                                     style: TextStyle(
                                         color: Colors.white70, fontSize: 10)),
                               ],
@@ -182,7 +183,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
 
           // Loading
           if (notifier.isLoading)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -196,7 +197,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                     ),
                   ),
                   SizedBox(width: 6),
-                  Text('Pensando...',
+                  Text(tr('Pensando...', 'Thinking...'),
                       style: TextStyle(color: Colors.white38, fontSize: 11)),
                 ],
               ),
@@ -239,7 +240,7 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                           style: const TextStyle(
                               color: Colors.white, fontSize: 12),
                           decoration: InputDecoration(
-                            hintText: 'Escribe o pide algo',
+                            hintText: tr('Escribe o pide algo', 'Type or ask for something'),
                             hintStyle: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.35),
                                 fontSize: 12),
@@ -259,8 +260,8 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                 // Micrófono: hablarle (otra vez para terminar la frase).
                 Tooltip(
                   message: voice.listening
-                      ? 'Terminar'
-                      : 'Hablarle (también con ⌃⌥V)',
+                      ? tr('Terminar', 'Stop')
+                      : tr('Hablarle (también con ⌃⌥V)', 'Talk to it (also with ⌃⌥V)'),
                   child: GestureDetector(
                     key: const ValueKey('voice-button'),
                     onTap: _voice.toggle,
@@ -310,7 +311,7 @@ class _Listening extends StatelessWidget {
         border: Border.all(color: const Color(0xFFFF4F7B), width: 1),
       ),
       child: Text(
-        heard.isEmpty ? 'Escuchando…' : heard,
+        heard.isEmpty ? tr('Escuchando…', 'Listening…') : heard,
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(

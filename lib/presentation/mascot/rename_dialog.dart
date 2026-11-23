@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/mascot/mascot_settings.dart';
@@ -6,15 +7,17 @@ import '../stats/stats_style.dart';
 /// Pide un nombre para la mascota. Devuelve el texto escrito o `null` si se
 /// cancela.
 Future<String?> showRenameDialog(BuildContext context, String current,
-        {String title = '¿Cómo me llamo?',
-        String hint = 'Michi, Luna, Nube…',
-        String fieldKey = 'pet-name'}) =>
+        {String? title, String? hint, String fieldKey = 'pet-name'}) =>
     showDialog<String>(
       context: context,
       // La ventana es transparente: un fondo oscuro pintaría un rectángulo
       // gris sobre el escritorio.
       barrierColor: Colors.transparent,
-      builder: (_) => _RenameDialog(current, title, hint, fieldKey),
+      builder: (_) => _RenameDialog(
+          current,
+          title ?? tr('¿Cómo me llamo?', "What's my name?"),
+          hint ?? tr('Michi, Luna, Nube…', 'Kitty, Luna, Cloud…'),
+          fieldKey),
     );
 
 /// El diálogo es dueño de su campo de texto, así se libera cuando termina
@@ -63,12 +66,12 @@ class _RenameDialogState extends State<_RenameDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(tr('Cancelar', 'Cancel')),
         ),
         FilledButton(
           key: ValueKey('${widget.fieldKey}-save'),
           onPressed: _save,
-          child: const Text('Guardar'),
+          child: Text(tr('Guardar', 'Save')),
         ),
       ],
     );

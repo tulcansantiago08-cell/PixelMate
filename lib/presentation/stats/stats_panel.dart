@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,8 +47,8 @@ class StatsPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            const Expanded(
-              child: Text('Estadísticas',
+            Expanded(
+              child: Text(tr('Estadísticas', 'Stats'),
                   style: TextStyle(
                       color: StatsStyle.textPrimary,
                       fontSize: 15,
@@ -58,10 +59,10 @@ class StatsPanel extends ConsumerWidget {
                 key: const ValueKey('open-album'),
                 onPressed: onShowAlbum,
                 icon: const Icon(Icons.collections_bookmark_outlined, size: 16),
-                label: const Text('Álbum'),
+                label: Text(tr('Álbum', 'Album')),
               ),
             IconButton(
-              tooltip: 'Cerrar',
+              tooltip: tr('Cerrar', 'Close'),
               onPressed: onClose,
               icon: const Icon(Icons.close,
                   size: 18, color: StatsStyle.textSecondary),
@@ -99,10 +100,10 @@ class StatsPanel extends ConsumerWidget {
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         d.episodes == 0
-                            ? 'Sin distracciones en el enfoque de hoy'
-                            : '${d.episodes} '
-                                '${d.episodes == 1 ? 'distracción' : 'distracciones'}'
-                                ' en el enfoque · ${formatSpent(d.time)}',
+                            ? tr('Sin distracciones en el enfoque de hoy', "No distractions in today's focus")
+                            : tr(
+                                '${d.episodes} ${d.episodes == 1 ? 'distracción' : 'distracciones'} en el enfoque · ${formatSpent(d.time)}',
+                                '${d.episodes} ${d.episodes == 1 ? 'distraction' : 'distractions'} during focus · ${formatSpent(d.time)}'),
                         key: const ValueKey('distractions-today'),
                         style: const TextStyle(
                             color: StatsStyle.textSecondary, fontSize: 11),
@@ -122,7 +123,7 @@ class StatsPanel extends ConsumerWidget {
                     key: const ValueKey('open-weekly'),
                     onPressed: onShowWeekly,
                     icon: const Icon(Icons.insights_rounded, size: 16),
-                    label: const Text('Resumen de la semana'),
+                    label: Text(tr('Resumen de la semana', 'Week summary')),
                   ),
                 ],
                 const SizedBox(height: 6),
@@ -181,10 +182,10 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = stats.isEmpty
-        ? 'Aún no hay sesiones.'
+        ? tr('Aún no hay sesiones.', 'No sessions yet.')
         : stats.period == StatsPeriod.today
-            ? '${stats.sessions.length} ${stats.sessions.length == 1 ? 'sesión' : 'sesiones'}'
-            : '${stats.activeDays} ${stats.activeDays == 1 ? 'día activo' : 'días activos'}';
+            ? '${stats.sessions.length} ${stats.sessions.length == 1 ? tr('sesión', 'session') : tr('sesiones', 'sessions')}'
+            : '${stats.activeDays} ${stats.activeDays == 1 ? tr('día activo', 'active day') : tr('días activos', 'active days')}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -193,7 +194,7 @@ class _Hero extends StatelessWidget {
                 color: StatsStyle.textPrimary,
                 fontSize: 26,
                 fontWeight: FontWeight.w700)),
-        Text('de actividad · $subtitle',
+        Text(tr('de actividad · $subtitle', 'of activity · $subtitle'),
             style:
                 const TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
       ],
@@ -209,10 +210,10 @@ class _ModeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final detail = totals.sessions == 0
-        ? 'sin sesiones'
-        : '${totals.sessions} ${totals.sessions == 1 ? 'sesión' : 'sesiones'}'
-            '${totals.completed > 0 ? ' · ${totals.completed} ${totals.completed == 1 ? 'completa' : 'completas'}' : ''}'
-            '${totals.breaks > Duration.zero ? ' · ${formatSpent(totals.breaks)} de descanso' : ''}';
+        ? tr('sin sesiones', 'no sessions')
+        : '${totals.sessions} ${totals.sessions == 1 ? tr('sesión', 'session') : tr('sesiones', 'sessions')}'
+            '${totals.completed > 0 ? ' · ${totals.completed} ${totals.completed == 1 ? tr('completa', 'completed') : tr('completas', 'completed')}' : ''}'
+            '${totals.breaks > Duration.zero ? tr(' · ${formatSpent(totals.breaks)} de descanso', ' · ${formatSpent(totals.breaks)} of break') : ''}';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [
@@ -260,7 +261,7 @@ class _RecentSessions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Últimas sesiones',
+        Text(tr('Últimas sesiones', 'Latest sessions'),
             style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
         const SizedBox(height: 4),
         for (final s in sessions.take(5))
@@ -275,9 +276,8 @@ class _RecentSessions extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${sessionWhen(s.startedAt, now)} · ${StatsStyle.modeLabel(s.mode)}\n'
-                  '${formatSpent(s.effectiveFocus)} · '
-                  '${s.id == liveId ? 'en curso' : s.completed ? '✓ completa' : 'terminada'}',
+                  '${sessionWhen(s.startedAt, now)} · ${StatsStyle.modeLabel(s.mode)}\n${formatSpent(s.effectiveFocus)} · '
+                  '${s.id == liveId ? tr('en curso', 'in progress') : s.completed ? tr('✓ completa', '✓ completed') : tr('terminada', 'ended')}',
                   style: const TextStyle(
                       color: StatsStyle.textPrimary, fontSize: 11),
                 ),

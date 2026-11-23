@@ -115,6 +115,5 @@ String focusNudgeMessage(FocusNudge nudge, WorkdayView view) {
   final when = left == null || left < 1
       ? 'Ya casi es el descanso.'
       : 'Quedan $left min para el descanso.';
-  return '👀 Veo ${nudge.appName} en pleno enfoque. '
-      '¿Lo dejamos para el descanso? $when';
+  return '👀 Veo ${nudge.appName} en pleno enfoque. ¿Lo dejamos para el descanso? $when';
 }

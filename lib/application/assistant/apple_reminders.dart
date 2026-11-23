@@ -84,8 +84,7 @@ class AppleRemindersSync extends ChangeNotifier {
         await _pushOnce();
       } while (_again && _enabled);
     } on CalendarDenied {
-      problem = 'Sin permiso para Recordatorios: Ajustes del Sistema › '
-          'Privacidad y seguridad › Recordatorios › activa PixelMate.';
+      problem = 'Sin permiso para Recordatorios: Ajustes del Sistema › Privacidad y seguridad › Recordatorios › activa PixelMate.';
       _enabled = false;
       await _prefs?.setBool(_onKey, false);
       notifyListeners();

@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/goals/daily_goal.dart';
@@ -27,17 +28,17 @@ class DailyGoalRow extends StatelessWidget {
           Expanded(
             child: Text(
               s == null
-                  ? 'Sin meta diaria'
+                  ? tr('Sin meta diaria', 'No daily goal')
                   : s.reached
-                      ? 'Meta cumplida'
-                      : 'Faltan ${formatSpent(s.remaining)} para tu meta',
+                      ? tr('Meta cumplida', 'Goal reached')
+                      : tr('Faltan ${formatSpent(s.remaining)} para tu meta', '${formatSpent(s.remaining)} to go for your goal'),
               style: const TextStyle(
                   color: StatsStyle.textSecondary, fontSize: 11),
             ),
           ),
           PopupMenuButton<Duration>(
             key: const ValueKey('goal-picker'),
-            tooltip: 'Cambiar la meta diaria',
+            tooltip: tr('Cambiar la meta diaria', 'Change the daily goal'),
             initialValue: goal,
             onSelected: onGoalChanged,
             color: StatsStyle.surfaceRaised,
@@ -48,8 +49,8 @@ class DailyGoalRow extends StatelessWidget {
                   height: 32,
                   child: Text(
                     option == Duration.zero
-                        ? 'Sin meta'
-                        : '${formatSpent(option)} al día',
+                        ? tr('Sin meta', 'No goal')
+                        : tr('${formatSpent(option)} al día', '${formatSpent(option)} a day'),
                     style: const TextStyle(
                         color: StatsStyle.textPrimary, fontSize: 12),
                   ),
@@ -59,8 +60,8 @@ class DailyGoalRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Text(
                 goal == Duration.zero
-                    ? 'Poner meta ▾'
-                    : 'Meta: ${formatSpent(goal)} ▾',
+                    ? tr('Poner meta ▾', 'Set goal ▾')
+                    : tr('Meta: ${formatSpent(goal)} ▾', 'Goal: ${formatSpent(goal)} ▾'),
                 style: const TextStyle(
                     color: StatsStyle.textPrimary, fontSize: 11),
               ),

@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'calendar_notes.dart';
 import 'daily_briefing.dart';
 import 'code_writer.dart';
@@ -15,6 +16,12 @@ const _weekdayNames = [
   'viernes',
   'sábado',
   'domingo'
+];
+const _weekdayNamesEn = [
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+];
+const _monthNamesEn = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 const _monthNames = [
   'ene',
@@ -39,11 +46,15 @@ String describeWhen(DateTime when, DateTime now) {
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(when.year, when.month, when.day);
   final days = day.difference(today).inDays;
-  final at = 'a las ${_hm(when)}';
-  if (days == 0) return 'hoy $at';
-  if (days == 1) return 'mañana $at';
-  if (days > 1 && days < 7) return 'el ${_weekdayNames[when.weekday - 1]} $at';
-  return 'el ${when.day} ${_monthNames[when.month - 1]} $at';
+  final at = tr('a las ${_hm(when)}', 'at ${_hm(when)}');
+  if (days == 0) return tr('hoy $at', 'today $at');
+  if (days == 1) return tr('mañana $at', 'tomorrow $at');
+  if (days > 1 && days < 7) {
+    return tr('el ${_weekdayNames[when.weekday - 1]} $at',
+        'on ${_weekdayNamesEn[when.weekday - 1]} $at');
+  }
+  return tr('el ${when.day} ${_monthNames[when.month - 1]} $at',
+      'on ${_monthNamesEn[when.month - 1]} ${when.day} $at');
 }
 
 /// Hace lo que pidió el usuario y devuelve el texto para el chat: siempre
@@ -99,8 +110,7 @@ class AssistantExecutor {
   final int Function() snoozeMinutes;
 
   static const _askWhen =
-      '¿Para cuándo? Dime, por ejemplo, «en 20 minutos», «a las 5» o '
-      '«mañana a las 9».';
+      '¿Para cuándo? Dime, por ejemplo, «en 20 minutos», «a las 5» o «mañana a las 9».';
 
   /// Lo que espera un «sí» antes de hacerse (cerrar una app, quitar una
   /// alarma), y desde cuándo.
@@ -156,8 +166,7 @@ class AssistantExecutor {
       case AssistantIntent.completeTask:
         final number = c.number ?? _matchTask(c.text);
         if (number == null) {
-          return '¿Cuál terminaste? Dime su número, por ejemplo «marca la 1 '
-              'como hecha».\n${_pendingText()}';
+          return '¿Cuál terminaste? Dime su número, por ejemplo «marca la 1 como hecha».\n${_pendingText()}';
         }
         final done = await store.completeTask(number);
         if (done == null) {
@@ -181,14 +190,12 @@ class AssistantExecutor {
           return '💃 Ahora no puedo bailar.';
         }
         onDance!(true);
-        return '🪩 Modo discoteca: bailo un minuto. '
-            '(dime «para de bailar» si quieres que pare).';
+        return '🪩 Modo discoteca: bailo un minuto. (dime «para de bailar» si quieres que pare).';
 
       case AssistantIntent.alarm:
         final when = c.when;
         if (when == null) {
-          return '⏰ ¿A qué hora pongo la alarma? Dime, por ejemplo, «pon una '
-              'alarma a las 8 am reunión virtual».';
+          return '⏰ ¿A qué hora pongo la alarma? Dime, por ejemplo, «pon una alarma a las 8 am reunión virtual».';
         }
         if (!when.isAfter(t)) return '⏰ Esa hora ya pasó. $_askWhen';
         final repeat = AlarmRepeat.byName(c.repeat);
@@ -197,9 +204,7 @@ class AssistantExecutor {
           final task = await dailyStore.add(c.text, when.hour, when.minute,
               days: repeat == AlarmRepeat.weekdays ? weekdays : allDays,
               now: t);
-          return '📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} '
-              'a las ${task.time12}, «${task.text}». Sonará como alarma; la '
-              'ves con el botón ⏰ junto a mí.';
+          return '📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} a las ${task.time12}, «${task.text}». Sonará como alarma; la ves con el botón ⏰ junto a mí.';
         }
         await store.addReminder(c.text, when, alarm: true, repeat: repeat);
         return '⏰ Alarma puesta ${describeWhen(when, t)}'
@@ -227,8 +232,7 @@ class AssistantExecutor {
         }
         final r = await mac.volume(c.text, c.number ?? 0);
         if (r == null) {
-          return '🔈 Esta salida de sonido no deja cambiar el volumen desde '
-              'aquí. Prueba con las teclas de volumen del teclado.';
+          return '🔈 Esta salida de sonido no deja cambiar el volumen desde aquí. Prueba con las teclas de volumen del teclado.';
         }
         return describeVolume(c.text, r);
 
@@ -258,10 +262,8 @@ class AssistantExecutor {
         final pet = await onWakeWord?.call(on);
         if (pet == null) return '🎙️ Eso no lo puedo hacer aquí.';
         return on
-            ? '👂 Activado. Di «Oye $pet» y te escucho, aunque '
-                'esté cerrado el chat (verás el punto naranja del micrófono).'
-            : '🔕 Ya no espero a que me llames. Para hablarme, toca 🎙️ o '
-                'pulsa ⌃⌥V.';
+            ? '👂 Activado. Di «Oye $pet» y te escucho, aunque esté cerrado el chat (verás el punto naranja del micrófono).'
+            : '🔕 Ya no espero a que me llames. Para hablarme, toca 🎙️ o pulsa ⌃⌥V.';
 
       case AssistantIntent.closeApp:
         if (!confirmed) {
@@ -326,8 +328,7 @@ class AssistantExecutor {
   Future<String> _calendarNote(ParsedCommand c, DateTime t) async {
     final day = c.when;
     if (day == null) {
-      return '📅 ¿Para qué día anoto «${c.text}»? Dime, por ejemplo, «el '
-          'viernes», «mañana» o «el 20 de diciembre».';
+      return '📅 ¿Para qué día anoto «${c.text}»? Dime, por ejemplo, «el viernes», «mañana» o «el 20 de diciembre».';
     }
     final notes = calendar;
     if (notes == null) return '📅 No tengo el calendario a mano ahora.';
@@ -368,8 +369,7 @@ class AssistantExecutor {
     try {
       found = await mac.findContacts(who);
     } on ContactsDenied {
-      return '🔒 Sin permiso para Contactos: Ajustes del Sistema › '
-          'Privacidad y seguridad › Contactos › activa PixelMate.';
+      return '🔒 Sin permiso para Contactos: Ajustes del Sistema › Privacidad y seguridad › Contactos › activa PixelMate.';
     }
     final withPhone = [
       for (final x in found)
@@ -388,8 +388,7 @@ class AssistantExecutor {
             '${copied ? ' Copié el mensaje para que lo pegues con ⌘V.' : ''}';
       }
       return copied
-          ? '💬 $why. Abrí WhatsApp y copié el mensaje: busca su chat y '
-              'pégalo con ⌘V.'
+          ? '💬 $why. Abrí WhatsApp y copié el mensaje: busca su chat y pégalo con ⌘V.'
           : '💬 $why. Abrí WhatsApp: busca su chat.';
     }
     // Igual que la búsqueda: sin tildes, mayúsculas ni emojis.
@@ -419,8 +418,7 @@ class AssistantExecutor {
     }
     return c.text.isEmpty
         ? '💬 Abrí el chat de ${person.name} en WhatsApp.'
-        : '💬 Mensaje para ${person.name} listo en WhatsApp. Revísalo y '
-            'pulsa Enter para enviarlo.';
+        : '💬 Mensaje para ${person.name} listo en WhatsApp. Revísalo y pulsa Enter para enviarlo.';
   }
 
   Future<String> _code(ParsedCommand c) async {
@@ -428,15 +426,13 @@ class AssistantExecutor {
     final pretty = language[0].toUpperCase() + language.substring(1);
     final code = await coder?.write(language, c.text);
     if (code == null) {
-      return '💻 Para escribir código necesito la IA de Apple (Apple '
-          'Intelligence). Actívala en Configuración del Sistema.';
+      return '💻 Para escribir código necesito la IA de Apple (Apple Intelligence). Actívala en Configuración del Sistema.';
     }
     final saved = await mac.saveCode(codeFileName(c.text, language), code,
         editor: c.editor);
     if (saved == null) return '💻 No guardé el script (cancelaste).';
     final where = saved.editor.isEmpty ? '' : ' y lo abrí en ${saved.editor}';
-    return '💻 Escribí «${saved.fileName}» ($pretty)$where. Revísalo antes de '
-        'ejecutarlo.';
+    return '💻 Escribí «${saved.fileName}» ($pretty)$where. Revísalo antes de ejecutarlo.';
   }
 
   Future<String> _media(ParsedCommand c) async {
@@ -445,12 +441,10 @@ class AssistantExecutor {
     switch (r.error) {
       case 'none':
         return c.app == null
-            ? '🎵 No veo Spotify ni Música abiertos. Dime «abre Spotify» o '
-                '«reproduce …».'
+            ? '🎵 No veo Spotify ni Música abiertos. Dime «abre Spotify» o «reproduce …».'
             : '🎵 ${c.app} no está abierto.';
       case 'denied':
-        return '🔒 No tengo permiso para controlar $player: Ajustes del '
-            'Sistema › Privacidad y seguridad › Automatización › PixelMate.';
+        return '🔒 No tengo permiso para controlar $player: Ajustes del Sistema › Privacidad y seguridad › Automatización › PixelMate.';
       case 'failed':
         return '😵 No pude controlar $player.';
     }
@@ -502,8 +496,7 @@ class AssistantExecutor {
         if (app != null &&
             await mac.openUrl(searchUrl(site, c.text, spotifyApp: true))) {
           return c.play
-              ? '🎵 Abrí Spotify buscando «${c.text}». Sin tu cuenta de '
-                  'Spotify no puedo darle play: elige la canción ▶️.'
+              ? '🎵 Abrí Spotify buscando «${c.text}». Sin tu cuenta de Spotify no puedo darle play: elige la canción ▶️.'
               : '🎵 Abrí Spotify buscando «${c.text}».';
         }
       }
@@ -540,8 +533,7 @@ class AssistantExecutor {
   }
 
   static const _calendarDenied =
-      '📅 Para usar tu calendario, permite el acceso en Configuración del '
-      'Sistema → Privacidad y seguridad → Calendarios → PixelMate.';
+      '📅 Para usar tu calendario, permite el acceso en Configuración del Sistema → Privacidad y seguridad → Calendarios → PixelMate.';
 
   String _pendingText() {
     final tasks = store.pending;

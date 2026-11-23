@@ -158,13 +158,10 @@ String weeklyPrompt(WeeklyReport r) {
       ? ''
       : 'Cumplí mi meta diaria de ${_dur(r.goal!)} ${r.goalDays} '
           '${r.goalDays == 1 ? 'día' : 'días'}. ';
-  return 'Este es el resumen de mi semana: ${_dur(r.focus)} de enfoque '
-      '($modes) en ${r.activeDays} '
+  return 'Este es el resumen de mi semana: ${_dur(r.focus)} de enfoque ($modes) en ${r.activeDays} '
       '${r.activeDays == 1 ? 'día' : 'días'} y ${r.sessions} '
       '${r.sessions == 1 ? 'sesión' : 'sesiones'}. $change $goal'
-      'Gané ${r.xp} XP. Coméntame la semana en 2 o 3 oraciones, con ánimo '
-      'y un consejo concreto para la semana que empieza. No elijas ninguna '
-      'acción.';
+      'Gané ${r.xp} XP. Coméntame la semana en 2 o 3 oraciones, con ánimo y un consejo concreto para la semana que empieza. No elijas ninguna acción.';
 }
 
 /// Qué semanas ya se mostraron y el comentario de la IA de cada una (para

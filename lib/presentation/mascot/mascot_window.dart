@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -297,8 +298,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     if (!mounted) return;
     _react(
         MascotReaction(
-            'Hola. Soy '
-            '${ref.read(petNameProvider)} 🐾',
+            tr('Hola. Soy ${ref.read(petNameProvider)} 🐾', "Hi. I'm ${ref.read(petNameProvider)} 🐾"),
             MascotState.celebrating),
         replace: true);
   }
@@ -375,7 +375,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
     if (typed == null) return;
     final name = await settings.setName(typed);
     if (name == null || !mounted) return;
-    _react(MascotReaction('Ahora me llamo $name.', MascotState.celebrating),
+    _react(MascotReaction(tr('Ahora me llamo $name.', 'Now my name is $name.'), MascotState.celebrating),
         replace: true);
   }
 
@@ -570,8 +570,7 @@ class _MascotWindowState extends ConsumerState<MascotWindow> {
                         ),
                         Semantics(
                           button: true,
-                          label: '${ref.watch(petNameProvider)}: toca para '
-                              'charlar, arrastra para moverla',
+                          label: tr('${ref.watch(petNameProvider)}: toca para charlar, arrastra para moverla', '${ref.watch(petNameProvider)}: tap to chat, drag to move it'),
                           child: GestureDetector(
                             key: mascotKey,
                             behavior: HitTestBehavior.opaque,

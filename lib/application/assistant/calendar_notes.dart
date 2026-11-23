@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -12,7 +13,7 @@ import 'mac_actions.dart';
 import 'personal_store.dart';
 import 'reminders.dart';
 
-const monthNames = [
+const _monthNamesEs = [
   'enero',
   'febrero',
   'marzo',
@@ -26,7 +27,30 @@ const monthNames = [
   'noviembre',
   'diciembre'
 ];
-const weekdayNames = [
+const _monthNamesEn = [
+  'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+  'September', 'October', 'November', 'December'
+];
+
+/// Nombres de los meses en el idioma de la app ("noviembre" / "November").
+List<String> get monthNames => tr('es', 'en') == 'en' ? _monthNamesEn : _monthNamesEs;
+
+const _weekdayNamesEn = [
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+];
+
+/// Nombres de los días en el idioma de la app ("Lunes" / "Monday").
+List<String> get weekdayNames => tr('es', 'en') == 'en' ? _weekdayNamesEn : _weekdayNamesEs;
+
+/// "20 de noviembre" / "November 20".
+String dayOfMonth(DateTime d) =>
+    tr('${d.day} de ${monthNames[d.month - 1]}', '${monthNames[d.month - 1]} ${d.day}');
+
+/// "Lunes 20 de noviembre" / "Monday, November 20".
+String calendarLongDate(DateTime d) =>
+    tr('${weekdayNames[d.weekday - 1]} ${dayOfMonth(d)}', '${weekdayNames[d.weekday - 1]}, ${dayOfMonth(d)}');
+
+const _weekdayNamesEs = [
   'Lunes',
   'Martes',
   'Miércoles',
@@ -41,10 +65,10 @@ String describeDay(DateTime day, DateTime now) {
   final d = DateTime.utc(day.year, day.month, day.day)
       .difference(DateTime.utc(now.year, now.month, now.day))
       .inDays;
-  if (d == 0) return 'hoy';
-  if (d == 1) return 'mañana';
-  return 'el ${weekdayNames[day.weekday - 1].toLowerCase()} ${day.day} de '
-      '${monthNames[day.month - 1]}';
+  if (d == 0) return tr('hoy', 'today');
+  if (d == 1) return tr('mañana', 'tomorrow');
+  return tr('el ${weekdayNames[day.weekday - 1].toLowerCase()} ${dayOfMonth(day)}',
+      'on ${calendarLongDate(day)}');
 }
 
 /// Colores para marcar las notas del calendario (el índice se guarda).
@@ -469,8 +493,7 @@ final calendarAlertProvider =
 
 /// Qué decir si el Mac no deja usar su Calendario.
 const calendarDeniedMessage =
-    'Sin permiso para el Calendario del Mac: Ajustes del Sistema › '
-    'Privacidad y seguridad › Calendarios › activa PixelMate.';
+    'Sin permiso para el Calendario del Mac: Ajustes del Sistema › Privacidad y seguridad › Calendarios › activa PixelMate.';
 
 /// Copia [note] al Calendario del Mac (con aviso: las de todo el día a las
 /// 8, las de hora 10 min antes, o a su hora si llevan alarma) y guarda el

@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -50,15 +51,15 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(children: [
-                const Expanded(
-                  child: Text('Pendientes',
+                Expanded(
+                  child: Text(tr('Pendientes', 'To-do'),
                       style: TextStyle(
                           color: StatsStyle.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
-                  tooltip: 'Cerrar',
+                  tooltip: tr('Cerrar', 'Close'),
                   onPressed: widget.onClose,
                   icon: const Icon(Icons.close,
                       size: 18, color: StatsStyle.textSecondary),
@@ -72,9 +73,9 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                     if (pending.isEmpty &&
                         reminders.isEmpty &&
                         store.notes.isEmpty)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text('Nada pendiente.',
+                        child: Text(tr('Nada pendiente.', 'Nothing pending.'),
                             style: TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 11)),
                       ),
@@ -87,7 +88,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         onDelete: () => store.removeTask(pending[i].id),
                       ),
                     if (reminders.isNotEmpty) ...[
-                      const _Header('Recordatorios y alarmas'),
+                      _Header(tr('Recordatorios y alarmas', 'Reminders and alarms')),
                       for (final r in reminders)
                         _Row(
                           key: ValueKey('reminder-${r.id}'),
@@ -104,7 +105,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         ),
                     ],
                     if (store.notes.isNotEmpty) ...[
-                      const _Header('Notas'),
+                      _Header(tr('Notas', 'Notes')),
                       for (final n in store.notes)
                         _Row(
                           key: ValueKey('note-${n.id}'),
@@ -115,7 +116,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                         ),
                     ],
                     if (done.isNotEmpty) ...[
-                      const _Header('Hechas'),
+                      _Header(tr('Hechas', 'Done')),
                       for (final t in done)
                         _TaskRow(
                           key: ValueKey('task-${t.id}'),
@@ -136,7 +137,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                     style: const TextStyle(
                         color: StatsStyle.textPrimary, fontSize: 12),
                     decoration: InputDecoration(
-                      hintText: 'Nueva tarea…',
+                      hintText: tr('Nueva tarea…', 'New task…'),
                       hintStyle: const TextStyle(
                           color: StatsStyle.textMuted, fontSize: 12),
                       isDense: true,
@@ -153,7 +154,7 @@ class _PendingPanelState extends ConsumerState<PendingPanel> {
                 ),
                 IconButton(
                   key: const ValueKey('pending-add'),
-                  tooltip: 'Añadir tarea',
+                  tooltip: tr('Añadir tarea', 'Add task'),
                   onPressed: _add,
                   icon: const Icon(Icons.add_circle,
                       color: StatsStyle.accent, size: 24),
@@ -245,7 +246,7 @@ class _Row extends StatelessWidget {
                 )),
           ),
           IconButton(
-            tooltip: 'Borrar',
+            tooltip: tr('Borrar', 'Delete'),
             onPressed: onDelete,
             visualDensity: VisualDensity.compact,
             icon:
@@ -285,8 +286,8 @@ class _AppleRemindersRowState extends ConsumerState<_AppleRemindersRow> {
             const Icon(Icons.phone_iphone_rounded,
                 size: 16, color: StatsStyle.accentLight),
             const SizedBox(width: 8),
-            const Expanded(
-              child: Text('También en Recordatorios (iPhone)',
+            Expanded(
+              child: Text(tr('También en Recordatorios (iPhone)', 'Also in Reminders (iPhone)'),
                   style:
                       TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
             ),

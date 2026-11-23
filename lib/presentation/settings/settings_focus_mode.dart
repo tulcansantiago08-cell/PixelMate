@@ -14,25 +14,22 @@ class _FocusModeOptions extends ConsumerWidget {
       children: [
         _Switch(
           keyName: 'focusmode',
-          label: 'Activar Concentración en el enfoque',
-          help: 'Silencia las notificaciones mientras te enfocas y las '
-              'devuelve en los descansos.',
+          label: tr('Activar Concentración en el enfoque', 'Turn on Focus during focus time'),
+          help: tr('Silencia las notificaciones mientras te enfocas y las devuelve en los descansos.', 'Silences notifications while you focus and brings them back on breaks.'),
           value: focus.enabled,
           onChanged: focus.setEnabled,
         ),
         const SizedBox(height: 4),
-        const Text(
-            'Necesita dos atajos en la app Atajos: «${FocusModeSettings.onShortcut}» '
-            'con la acción «Activar Concentración» y '
-            '«${FocusModeSettings.offShortcut}» con «Desactivar Concentración».',
+        Text(
+            tr('Necesita dos atajos en la app Atajos: «${FocusModeSettings.onShortcut}» con la acción «Activar Concentración» y «${FocusModeSettings.offShortcut}» con «Desactivar Concentración».', 'It needs two shortcuts in the Shortcuts app: “${FocusModeSettings.onShortcut}” with the “Turn Focus On” action and “${FocusModeSettings.offShortcut}” with “Turn Focus Off”.'),
             style: small),
         const SizedBox(height: 6),
         Wrap(spacing: 8, children: [
           OutlinedButton.icon(
             key: const ValueKey('focusmode-open'),
-            onPressed: () => ref.read(macActionsProvider).openApp('Atajos'),
+            onPressed: () => ref.read(macActionsProvider).openApp(tr('Atajos', 'Shortcuts')),
             icon: const Icon(Icons.open_in_new_rounded, size: 14),
-            label: const Text('Abrir Atajos', style: TextStyle(fontSize: 11)),
+            label: Text(tr('Abrir Atajos', 'Open Shortcuts'), style: TextStyle(fontSize: 11)),
           ),
           OutlinedButton.icon(
             key: const ValueKey('focusmode-test'),
@@ -44,7 +41,7 @@ class _FocusModeOptions extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.play_arrow_rounded, size: 14),
-            label: const Text('Probar', style: TextStyle(fontSize: 11)),
+            label: Text(tr('Probar', 'Test'), style: TextStyle(fontSize: 11)),
           ),
         ]),
         if (focus.problem != null)

@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,11 +25,18 @@ const _months = [
   'dic',
 ];
 
-/// "3–9 nov" o "29 sep – 5 oct".
-String weekRange(DateTime start, DateTime end) => start.month == end.month
-    ? '${start.day}–${end.day} ${_months[end.month - 1]}'
-    : '${start.day} ${_months[start.month - 1]} – '
-        '${end.day} ${_months[end.month - 1]}';
+/// "3–9 nov" o "29 sep – 5 oct" (en inglés: "Nov 3–9", "Sep 29 – Oct 5").
+String weekRange(DateTime start, DateTime end) {
+  if (tr('es', 'en') == 'en') {
+    final m = shortMonths;
+    return start.month == end.month
+        ? '${m[end.month - 1]} ${start.day}–${end.day}'
+        : '${m[start.month - 1]} ${start.day} – ${m[end.month - 1]} ${end.day}';
+  }
+  return start.month == end.month
+      ? '${start.day}–${end.day} ${_months[end.month - 1]}'
+      : '${start.day} ${_months[start.month - 1]} – ${end.day} ${_months[end.month - 1]}';
+}
 
 /// Resumen de la semana con el comentario de la mascota.
 class WeeklyReportPanel extends ConsumerStatefulWidget {
@@ -72,13 +80,13 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
             _Arrow(
               key: const ValueKey('weekly-prev'),
               icon: Icons.chevron_left,
-              tooltip: 'Semana anterior',
+              tooltip: tr('Semana anterior', 'Previous week'),
               onTap: () => ref.read(weeklyReportWeekProvider.notifier).state =
                   DateTime(week.year, week.month, week.day - 7),
             ),
             Expanded(
               child: Text(
-                  '${current ? 'Esta semana' : 'Tu semana'} · '
+                  '${current ? tr('Esta semana', 'This week') : tr('Tu semana', 'Your week')} · '
                   '${weekRange(report.start, report.end)}',
                   key: const ValueKey('weekly-title'),
                   style: const TextStyle(
@@ -89,14 +97,14 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
             _Arrow(
               key: const ValueKey('weekly-next'),
               icon: Icons.chevron_right,
-              tooltip: 'Semana siguiente',
+              tooltip: tr('Semana siguiente', 'Next week'),
               onTap: current
                   ? null
                   : () => ref.read(weeklyReportWeekProvider.notifier).state =
                       DateTime(week.year, week.month, week.day + 7),
             ),
             IconButton(
-              tooltip: 'Cerrar',
+              tooltip: tr('Cerrar', 'Close'),
               onPressed: widget.onClose,
               icon: const Icon(Icons.close,
                   size: 18, color: StatsStyle.textSecondary),
@@ -107,9 +115,9 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
               padding: const EdgeInsets.only(right: 4),
               children: report.isEmpty
                   ? [
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 12),
-                        child: Text('Esta semana no hubo sesiones.',
+                        child: Text(tr('Esta semana no hubo sesiones.', 'There were no sessions this week.'),
                             style: TextStyle(
                                 color: StatsStyle.textSecondary, fontSize: 12)),
                       ),
@@ -129,22 +137,22 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                       StatsDayChart(days: report.stats.days, height: 80),
                       const SizedBox(height: 10),
                       _Line(Icons.calendar_today_outlined,
-                          '${report.activeDays} de 7 días activos'),
+                          tr('${report.activeDays} de 7 días activos', '${report.activeDays} of 7 days active')),
                       _Line(
                           Icons.check_circle_outline_rounded,
                           '${report.sessions} '
-                          '${report.sessions == 1 ? 'sesión' : 'sesiones'}'
-                          '${report.completed > 0 ? ' · ${report.completed} ${report.completed == 1 ? 'completa' : 'completas'}' : ''}'),
+                          '${report.sessions == 1 ? tr('sesión', 'session') : tr('sesiones', 'sessions')}'
+                          '${report.completed > 0 ? ' · ${report.completed} ${report.completed == 1 ? tr('completa', 'completed') : tr('completas', 'completed')}' : ''}'),
                       if (report.goal != null)
                         _Line(Icons.flag_outlined,
-                            'Meta cumplida ${report.goalDays} de 7 días'),
+                            tr('Meta cumplida ${report.goalDays} de 7 días', 'Goal reached ${report.goalDays} of 7 days')),
                       if (report.bestDay case final best?)
                         _Line(Icons.emoji_events_outlined,
-                            'Mejor día: ${longDate(best.day)} (${formatSpent(best.total)})'),
+                            tr('Mejor día: ${longDate(best.day)} (${formatSpent(best.total)})', 'Best day: ${longDate(best.day)} (${formatSpent(best.total)})')),
                       _Line(Icons.star_outline_rounded, '+${report.xp} XP'),
                       if (report.bestTimeOfDay case final moment?)
                         _Line(
-                            Icons.schedule_rounded, 'Te enfocas más $moment.'),
+                            Icons.schedule_rounded, tr('Te enfocas más $moment.', 'You focus most $moment.')),
                       if (report.suggestedGoal case final next?)
                         _GoalSuggestion(next: next, current: goal),
                       const SizedBox(height: 10),
@@ -153,7 +161,7 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
                         builder: (context, snap) {
                           final text = snap.data;
                           if (snap.connectionState != ConnectionState.done) {
-                            return Text('$name está pensando…',
+                            return Text(tr('$name está pensando…', '$name is thinking…'),
                                 style: const TextStyle(
                                     color: StatsStyle.textMuted, fontSize: 12));
                           }
@@ -183,12 +191,12 @@ class _WeeklyReportPanelState extends ConsumerState<WeeklyReportPanel> {
   /// La diferencia también va en texto (no solo con flechas o colores).
   static String _changeText(WeeklyReport r) {
     if (r.previousFocus == Duration.zero) {
-      return 'de enfoque · la semana pasada no hubo sesiones';
+      return tr('de enfoque · la semana pasada no hubo sesiones', 'of focus · no sessions last week');
     }
-    if (r.change == Duration.zero) return 'de enfoque · igual que la anterior';
+    if (r.change == Duration.zero) return tr('de enfoque · igual que la anterior', 'of focus · same as the previous one');
     return r.change > Duration.zero
-        ? 'de enfoque · ▲ ${formatSpent(r.change)} más que la anterior'
-        : 'de enfoque · ▼ ${formatSpent(-r.change)} menos que la anterior';
+        ? tr('de enfoque · ▲ ${formatSpent(r.change)} más que la anterior', 'of focus · ▲ ${formatSpent(r.change)} more than the previous one')
+        : tr('de enfoque · ▼ ${formatSpent(-r.change)} menos que la anterior', 'of focus · ▼ ${formatSpent(-r.change)} less than the previous one');
   }
 }
 
@@ -252,8 +260,8 @@ class _GoalSuggestion extends ConsumerWidget {
         Expanded(
           child: Text(
               same
-                  ? 'Tu meta de ${next.inHours} h al día va bien: mantenla.'
-                  : 'Para la próxima semana: ${next.inHours} h al día.',
+                  ? tr('Tu meta de ${next.inHours} h al día va bien: mantenla.', 'Your ${next.inHours} h a day goal is going well: keep it.')
+                  : tr('Para la próxima semana: ${next.inHours} h al día.', 'For next week: ${next.inHours} h a day.'),
               style: const TextStyle(color: Colors.white, fontSize: 12)),
         ),
         if (!same)
@@ -263,7 +271,7 @@ class _GoalSuggestion extends ConsumerWidget {
                 foregroundColor: Colors.white,
                 visualDensity: VisualDensity.compact),
             onPressed: () => ref.read(dailyGoalSettingsProvider).setGoal(next),
-            child: const Text('Usarla', style: TextStyle(fontSize: 12)),
+            child: Text(tr('Usarla', 'Use it'), style: TextStyle(fontSize: 12)),
           ),
       ]),
     );

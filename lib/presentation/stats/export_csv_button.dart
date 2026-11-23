@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,10 +33,10 @@ class _ExportCsvButtonState extends ConsumerState<ExportCsvButton> {
       status = path == null
           ? ''
           : '${history.length} '
-              '${history.length == 1 ? 'jornada guardada' : 'jornadas guardadas'}'
-              ' en ${path.split('/').last}';
+              '${history.length == 1 ? tr('jornada guardada', 'workday saved') : tr('jornadas guardadas', 'workdays saved')}'
+              '${tr(' en ', ' in ')}${path.split('/').last}';
     } catch (_) {
-      status = 'No se pudo guardar el archivo.';
+      status = tr('No se pudo guardar el archivo.', "The file couldn't be saved.");
     }
     if (mounted) {
       setState(() {
@@ -53,7 +54,7 @@ class _ExportCsvButtonState extends ConsumerState<ExportCsvButton> {
             key: const ValueKey('export-csv'),
             onPressed: _busy ? null : _export,
             icon: const Icon(Icons.download_rounded, size: 16),
-            label: const Text('Exportar CSV'),
+            label: Text(tr('Exportar CSV', 'Export CSV')),
           ),
           if (_status != null)
             Padding(

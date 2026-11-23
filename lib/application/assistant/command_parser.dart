@@ -133,9 +133,7 @@ class ParsedCommand {
       this.allDay = false});
 
   @override
-  String toString() => 'ParsedCommand($intent, "$text", $when, n=$number, '
-      'd=$dayOffset, browser=$browser, in=$searchIn, play=$play, '
-      'lang=$language, editor=$editor)';
+  String toString() => 'ParsedCommand($intent, "$text", $when, n=$number, d=$dayOffset, browser=$browser, in=$searchIn, play=$play, lang=$language, editor=$editor)';
 }
 
 /// Navegadores que se pueden pedir con "en …".

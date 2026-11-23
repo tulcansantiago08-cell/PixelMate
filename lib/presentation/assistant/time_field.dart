@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -48,7 +49,7 @@ class _TimeFieldState extends State<TimeField> {
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        const Text('Hora', style: label),
+        Text(tr('Hora', 'Time'), style: label),
         const SizedBox(width: 8),
         DropdownButton<int>(
           key: ValueKey('${widget.keyPrefix}-hour'),
@@ -61,7 +62,7 @@ class _TimeFieldState extends State<TimeField> {
               DropdownMenuItem(
                   value: h,
                   child: Text(
-                      '${h % 12 == 0 ? 12 : h % 12} ${h < 12 ? 'a. m.' : 'p. m.'}')),
+                      '${h % 12 == 0 ? 12 : h % 12} ${h < 12 ? tr('a. m.', 'AM') : tr('p. m.', 'PM')}')),
           ],
           onChanged: (v) {
             if (v != null) widget.onChanged(v, widget.minute);

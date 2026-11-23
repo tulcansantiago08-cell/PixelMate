@@ -56,10 +56,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       : super([
           ChatMessage(
             text:
-                'Hola${_greetName(_ref)}. Soy ${_ref.read(petNameProvider)}.\n'
-                '¿En qué te ayudo hoy?\n\n'
-                'Puedo decirte cuánto te falta, empezar o pausar tu jornada '
-                'y cambiar tu meta. Pídemelo con tus palabras.',
+                'Hola${_greetName(_ref)}. Soy ${_ref.read(petNameProvider)}.\n¿En qué te ayudo hoy?\n\nPuedo decirte cuánto te falta, empezar o pausar tu jornada y cambiar tu meta. Pídemelo con tus palabras.',
             isUser: false,
           ),
         ]);
@@ -170,8 +167,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       final capture = _ref.read(screenCaptureProvider);
       if (!assistant.supportsImages || capture == null) {
         _add(ChatMessage(
-          text: '📷 Con ${assistant.label} no puedo ver tu pantalla. '
-              'Eso solo funciona con Claude (necesita API key con créditos).',
+          text: '📷 Con ${assistant.label} no puedo ver tu pantalla. Eso solo funciona con Claude (necesita API key con créditos).',
           isUser: false,
           isNote: true,
         ));
@@ -182,8 +178,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       } catch (e) {
         debugPrint('Captura de pantalla: $e');
         _add(ChatMessage(
-          text: '⚠️ No pude capturar la pantalla. Revisa el permiso en '
-              'Configuración del Sistema → Privacidad → Grabación de pantalla.',
+          text: '⚠️ No pude capturar la pantalla. Revisa el permiso en Configuración del Sistema → Privacidad → Grabación de pantalla.',
           isUser: false,
         ));
         return;
@@ -201,8 +196,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     try {
       final reply = await assistant.reply(
         text.isEmpty
-            ? 'Describe brevemente qué estoy haciendo en esta pantalla y '
-                'ofréceme ayuda.'
+            ? 'Describe brevemente qué estoy haciendo en esta pantalla y ofréceme ayuda.'
             : text,
         context: _context(),
         imageBase64: image,

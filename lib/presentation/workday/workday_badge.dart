@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/workday/workday_controller.dart';
@@ -21,9 +22,8 @@ class WorkdayBadge extends StatelessWidget {
     final status = view.status;
     final phase = status?.phase;
     if (status == null || phase == null) return null;
-    final paused = status.state == WorkdayRunState.paused ? ' · en pausa' : '';
-    return '${phaseIcon(phase.kind)} ${phase.kind.displayName} '
-        '${formatCountdown(status.phaseRemaining)}$paused';
+    final paused = status.state == WorkdayRunState.paused ? tr(' · en pausa', '· paused') : '';
+    return '${phaseIcon(phase.kind)} ${phase.kind.displayName} ${formatCountdown(status.phaseRemaining)}$paused';
   }
 
   @override
@@ -70,13 +70,13 @@ class WorkdayBadge extends StatelessWidget {
               key: const ValueKey('badge-play'),
               onTap: onPlay,
               borderRadius: BorderRadius.circular(6),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.sports_esports_outlined,
                       size: 14, color: StatsStyle.accentLight),
                   SizedBox(width: 4),
-                  Text('¿Jugamos? +XP',
+                  Text(tr('¿Jugamos? +XP', 'Shall we play? +XP'),
                       style: TextStyle(
                           color: StatsStyle.accentLight,
                           fontSize: 12,

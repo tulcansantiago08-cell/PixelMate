@@ -21,7 +21,7 @@ class _SpeciesPicker extends StatelessWidget {
             Tooltip(
               message: k.unlockedAt(level)
                   ? k.label
-                  : '${k.label}: se desbloquea en el nivel ${k.unlockLevel}',
+                  : tr('${k.label}: se desbloquea en el nivel ${k.unlockLevel}', '${k.label}: unlocks at level ${k.unlockLevel}'),
               child: Material(
                 color: k == active ? StatsStyle.accent : StatsStyle.surface,
                 borderRadius: BorderRadius.circular(6),
@@ -46,7 +46,7 @@ class _SpeciesPicker extends StatelessWidget {
                       Text(
                           k.unlockedAt(level)
                               ? k.label
-                              : '${k.label} · Nv. ${k.unlockLevel}',
+                              : tr('${k.label} · Nv. ${k.unlockLevel}', '${k.label} · Lv. ${k.unlockLevel}'),
                           style: TextStyle(
                               fontSize: 11,
                               color: k == active

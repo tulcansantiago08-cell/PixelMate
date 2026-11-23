@@ -69,5 +69,4 @@ final launchAtLoginProvider =
 
 /// Explicación cuando macOS pide aprobarlo.
 const launchAtLoginApprovalHint =
-    'Para abrir PixelMate al iniciar sesión, actívala en '
-    'Configuración del Sistema → General → Ítems de inicio.';
+    'Para abrir PixelMate al iniciar sesión, actívala en Configuración del Sistema → General → Ítems de inicio.';

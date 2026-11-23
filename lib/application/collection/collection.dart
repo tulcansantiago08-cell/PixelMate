@@ -152,8 +152,7 @@ Collection buildCollection({
           unlocked: m.done(game.stats),
           detail:
               '${m.description} Te dio ${m.reward.emoji} ${m.reward.label}.',
-          hint: '${m.description} '
-              '(${m.progress(game.stats)}/${m.goal})',
+          hint: '${m.description} (${m.progress(game.stats)}/${m.goal})',
         ),
     ]),
     CollectionSection('Cestas del juego', [
