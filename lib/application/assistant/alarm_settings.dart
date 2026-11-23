@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,10 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../desktop/sounds.dart';
 
 /// Los sonidos de alarma que se pueden elegir.
-const alarmSounds = {
-  PetSound.alarm: 'Bip bip',
-  PetSound.alarmBell: 'Campana',
-  PetSound.alarmSoft: 'Suave',
+Map<PetSound, String> get alarmSounds => {
+  PetSound.alarm: tr('Bip bip', 'Beep beep'),
+  PetSound.alarmBell: tr('Campana', 'Bell'),
+  PetSound.alarmSoft: tr('Suave', 'Soft'),
 };
 
 /// Cuánto se puede posponer y con cuánta antelación avisar (minutos).

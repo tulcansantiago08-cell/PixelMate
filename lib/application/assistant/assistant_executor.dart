@@ -109,8 +109,8 @@ class AssistantExecutor {
   /// Lo que se pospone una alarma si no dices cuánto.
   final int Function() snoozeMinutes;
 
-  static const _askWhen =
-      '¿Para cuándo? Dime, por ejemplo, «en 20 minutos», «a las 5» o «mañana a las 9».';
+  static String get _askWhen =>
+      tr('¿Para cuándo? Dime, por ejemplo, «en 20 minutos», «a las 5» o «mañana a las 9».', 'For when? Tell me, for example, “in 20 minutes”, “at 5” or “tomorrow at 9”.');
 
   /// Lo que espera un «sí» antes de hacerse (cerrar una app, quitar una
   /// alarma), y desde cuándo.
@@ -126,15 +126,15 @@ class AssistantExecutor {
   String _ask(ParsedCommand c, String question) {
     _pending = c;
     _pendingAt = now();
-    return '$question Responde «sí» o «no».';
+    return tr('$question Responde «sí» o «no».', '$question Answer “yes” or “no”.');
   }
 
   /// La respuesta a la pregunta pendiente.
   Future<String> confirm(bool yes) async {
     final c = awaitingConfirmation ? _pending : null;
     _pending = null;
-    if (c == null) return '🤔 No tenía nada pendiente de confirmar.';
-    if (!yes) return '👌 Vale, no lo hago.';
+    if (c == null) return tr('🤔 No tenía nada pendiente de confirmar.', '🤔 I had nothing waiting for confirmation.');
+    if (!yes) return tr('👌 Vale, no lo hago.', "👌 OK, I won't do it.");
     return run(c, confirmed: true);
   }
 
@@ -145,36 +145,36 @@ class AssistantExecutor {
     switch (c.intent) {
       case AssistantIntent.remind:
         final when = c.when;
-        if (when == null) return '⏰ Te lo recuerdo. $_askWhen';
-        if (!when.isAfter(t)) return '⏰ Esa hora ya pasó. $_askWhen';
+        if (when == null) return tr('⏰ Te lo recuerdo. $_askWhen', "⏰ I'll remind you. $_askWhen");
+        if (!when.isAfter(t)) return tr('⏰ Esa hora ya pasó. $_askWhen', '⏰ That time has passed. $_askWhen');
         await store.addReminder(c.text, when);
-        return '⏰ Recordatorio: «${c.text}», ${describeWhen(when, t)}.';
+        return tr('⏰ Recordatorio: «${c.text}», ${describeWhen(when, t)}.', '⏰ Reminder: “${c.text}”, ${describeWhen(when, t)}.');
 
       case AssistantIntent.whatsapp:
         return _whatsapp(c);
 
       case AssistantIntent.note:
         await store.addNote(c.text);
-        return '📝 Nota guardada en Pendientes › Notas.';
+        return tr('📝 Nota guardada en Pendientes › Notas.', '📝 Note saved in To-do › Notes.');
 
       case AssistantIntent.addTask:
         await store.addTask(c.text);
         final n = store.pending.length;
-        return '📝 Apuntado: «${c.text}». '
-            '${n == 1 ? '1 pendiente.' : '$n pendientes.'}';
+        return tr('📝 Apuntado: «${c.text}». ${n == 1 ? '1 pendiente.' : '$n pendientes.'}',
+            '📝 Noted: “${c.text}”. ${n == 1 ? '1 to do.' : '$n to do.'}');
 
       case AssistantIntent.completeTask:
         final number = c.number ?? _matchTask(c.text);
         if (number == null) {
-          return '¿Cuál terminaste? Dime su número, por ejemplo «marca la 1 como hecha».\n${_pendingText()}';
+          return tr('¿Cuál terminaste? Dime su número, por ejemplo «marca la 1 como hecha».\n${_pendingText()}', 'Which one did you finish? Tell me its number, for example “mark 1 as done”.\n${_pendingText()}');
         }
         final done = await store.completeTask(number);
         if (done == null) {
-          return 'No encuentro la tarea $number. ${_pendingText()}';
+          return tr('No encuentro la tarea $number. ${_pendingText()}', "I can't find task $number. ${_pendingText()}");
         }
         final left = store.pending.length;
-        return '✅ Tachada: «${done.text}». '
-            '${left == 0 ? 'No te queda nada pendiente.' : 'Te quedan $left.'}';
+        return tr('✅ Tachada: «${done.text}». ${left == 0 ? 'No te queda nada pendiente.' : 'Te quedan $left.'}',
+            '✅ Crossed off: “${done.text}”. ${left == 0 ? 'Nothing left to do.' : '$left left.'}');
 
       case AssistantIntent.showPending:
         return _pendingText();
@@ -187,40 +187,42 @@ class AssistantExecutor {
 
       case AssistantIntent.danceStart:
         if (onDance == null) {
-          return '💃 Ahora no puedo bailar.';
+          return tr('💃 Ahora no puedo bailar.', "💃 I can't dance right now.");
         }
         onDance!(true);
-        return '🪩 Modo discoteca: bailo un minuto. (dime «para de bailar» si quieres que pare).';
+        return tr('🪩 Modo discoteca: bailo un minuto. (dime «para de bailar» si quieres que pare).', "🪩 Disco mode: I'll dance for a minute. (tell me “stop dancing” if you want me to stop).");
 
       case AssistantIntent.alarm:
         final when = c.when;
         if (when == null) {
-          return '⏰ ¿A qué hora pongo la alarma? Dime, por ejemplo, «pon una alarma a las 8 am reunión virtual».';
+          return tr('⏰ ¿A qué hora pongo la alarma? Dime, por ejemplo, «pon una alarma a las 8 am reunión virtual».', '⏰ What time should I set the alarm for? Tell me, for example, “set an alarm at 8 am virtual meeting”.');
         }
-        if (!when.isAfter(t)) return '⏰ Esa hora ya pasó. $_askWhen';
+        if (!when.isAfter(t)) return tr('⏰ Esa hora ya pasó. $_askWhen', '⏰ That time has passed. $_askWhen');
         final repeat = AlarmRepeat.byName(c.repeat);
         final dailyStore = daily;
         if (repeat != AlarmRepeat.none && dailyStore != null) {
           final task = await dailyStore.add(c.text, when.hour, when.minute,
               days: repeat == AlarmRepeat.weekdays ? weekdays : allDays,
               now: t);
-          return '📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} a las ${task.time12}, «${task.text}». Sonará como alarma; la ves con el botón ⏰ junto a mí.';
+          return tr('📅 Tarea diaria guardada: ${task!.daysLabel.toLowerCase()} a las ${task.time12}, «${task.text}». Sonará como alarma; la ves con el botón ⏰ junto a mí.', '📅 Daily task saved: ${task!.daysLabel.toLowerCase()} at ${task.time12}, “${task.text}”. It will ring like an alarm; you can see it with the ⏰ button next to me.');
         }
         await store.addReminder(c.text, when, alarm: true, repeat: repeat);
-        return '⏰ Alarma puesta ${describeWhen(when, t)}'
-            '${repeat == AlarmRepeat.none ? '' : ' y luego ${repeat.label}'}: '
-            '«${c.text}». Sonará hasta que la apagues.';
+        final then = repeat == AlarmRepeat.none
+            ? ''
+            : tr(' y luego ${repeat.label}', ' and then ${repeat.label}');
+        return tr('⏰ Alarma puesta ${describeWhen(when, t)}$then: «${c.text}». Sonará hasta que la apagues.',
+            '⏰ Alarm set ${describeWhen(when, t)}$then: “${c.text}”. It will ring until you turn it off.');
 
       case AssistantIntent.alarmStop:
         return await onAlarm?.call(null) == true
-            ? '🔕 Alarma apagada.'
-            : '🔕 No hay ninguna alarma sonando.';
+            ? tr('🔕 Alarma apagada.', '🔕 Alarm off.')
+            : tr('🔕 No hay ninguna alarma sonando.', '🔕 No alarm is ringing.');
 
       case AssistantIntent.alarmSnooze:
         final minutes = (c.number ?? snoozeMinutes()).clamp(1, 120);
         return await onAlarm?.call(minutes) == true
-            ? '😴 Te la vuelvo a sonar en $minutes minutos.'
-            : '🔕 No hay ninguna alarma sonando.';
+            ? tr('😴 Te la vuelvo a sonar en $minutes minutos.', "😴 I'll ring it again in $minutes minutes.")
+            : tr('🔕 No hay ninguna alarma sonando.', '🔕 No alarm is ringing.');
 
       case AssistantIntent.alarmDelete:
         return _deleteAlarm(c, confirmed: confirmed);
@@ -228,56 +230,56 @@ class AssistantExecutor {
       case AssistantIntent.volume:
         // «Silencia» mientras suena una alarma: la apaga.
         if (c.text == 'mute' && await onAlarm?.call(null) == true) {
-          return '🔕 Alarma apagada.';
+          return tr('🔕 Alarma apagada.', '🔕 Alarm off.');
         }
         final r = await mac.volume(c.text, c.number ?? 0);
         if (r == null) {
-          return '🔈 Esta salida de sonido no deja cambiar el volumen desde aquí. Prueba con las teclas de volumen del teclado.';
+          return tr('🔈 Esta salida de sonido no deja cambiar el volumen desde aquí. Prueba con las teclas de volumen del teclado.', "🔈 This sound output doesn't let me change the volume from here. Try the volume keys on the keyboard.");
         }
         return describeVolume(c.text, r);
 
       case AssistantIntent.hideApp:
         final hidden = await mac.hideApp(c.text);
         return hidden == null
-            ? '🤔 No veo «${c.text}» abierta.'
-            : '🙈 Oculté $hidden.';
+            ? tr('🤔 No veo «${c.text}» abierta.', "🤔 I don't see “${c.text}” open.")
+            : tr('🙈 Oculté $hidden.', '🙈 I hid $hidden.');
 
       case AssistantIntent.listApps:
         final apps = await mac.runningApps();
-        if (apps.isEmpty) return '🖥️ No hay otras apps abiertas.';
-        return '🖥️ Tienes abiertas: ${apps.join(', ')}. Dime «cierra …» u '
-            '«oculta …» si quieres.';
+        if (apps.isEmpty) return tr('🖥️ No hay otras apps abiertas.', '🖥️ No other apps are open.');
+        return tr('🖥️ Tienes abiertas: ${apps.join(', ')}. Dime «cierra …» u «oculta …» si quieres.',
+            '🖥️ You have open: ${apps.join(', ')}. Tell me “close …” or “hide …” if you want.');
 
       case AssistantIntent.media:
         return _media(c);
 
       case AssistantIntent.setUserName:
         final name = cleanUserName(c.text);
-        if (name == null) return '🤔 ¿Cómo quieres que te llame?';
+        if (name == null) return tr('🤔 ¿Cómo quieres que te llame?', '🤔 What do you want me to call you?');
         await onUserName?.call(name);
-        return '😊 Hecho: te llamo $name.';
+        return tr('😊 Hecho: te llamo $name.', "😊 Done: I'll call you $name.");
 
       case AssistantIntent.wakeWord:
         final on = c.text == 'on';
         final pet = await onWakeWord?.call(on);
-        if (pet == null) return '🎙️ Eso no lo puedo hacer aquí.';
+        if (pet == null) return tr('🎙️ Eso no lo puedo hacer aquí.', "🎙️ I can't do that here.");
         return on
-            ? '👂 Activado. Di «Oye $pet» y te escucho, aunque esté cerrado el chat (verás el punto naranja del micrófono).'
-            : '🔕 Ya no espero a que me llames. Para hablarme, toca 🎙️ o pulsa ⌃⌥V.';
+            ? tr('👂 Activado. Di «Oye $pet» y te escucho, aunque esté cerrado el chat (verás el punto naranja del micrófono).', "👂 On. Say “Hey $pet” and I'll listen, even with the chat closed (you'll see the orange microphone dot).")
+            : tr('🔕 Ya no espero a que me llames. Para hablarme, toca 🎙️ o pulsa ⌃⌥V.', "🔕 I'm no longer waiting for you to call me. To talk to me, tap 🎙️ or press ⌃⌥V.");
 
       case AssistantIntent.closeApp:
         if (!confirmed) {
           return _ask(c,
-              '⚠️ ¿Cierro ${c.text}? Si tiene algo sin guardar, podrías perderlo.');
+              tr('⚠️ ¿Cierro ${c.text}? Si tiene algo sin guardar, podrías perderlo.', '⚠️ Should I close ${c.text}? If it has anything unsaved, you could lose it.'));
         }
         final closed = await mac.closeApp(c.text);
         return closed == null
-            ? '🤔 No veo «${c.text}» abierta.'
-            : '👋 Cerré $closed.';
+            ? tr('🤔 No veo «${c.text}» abierta.', "🤔 I don't see “${c.text}” open.")
+            : tr('👋 Cerré $closed.', '👋 I closed $closed.');
 
       case AssistantIntent.danceStop:
         onDance?.call(false);
-        return '🛑 Listo, paro de bailar.';
+        return tr('🛑 Listo, paro de bailar.', "🛑 Done, I'll stop dancing.");
 
       case AssistantIntent.showAgenda:
         return _agenda(c.dayOffset, t);
@@ -287,11 +289,13 @@ class AssistantExecutor {
 
       case AssistantIntent.createEvent:
         final when = c.when;
-        if (when == null) return '📅 ¿Para cuándo es «${c.text}»? $_askWhen';
+        if (when == null) return tr('📅 ¿Para cuándo es «${c.text}»? $_askWhen', '📅 When is “${c.text}”? $_askWhen');
         try {
           await mac.createEvent(c.text, when);
           final end = when.add(const Duration(hours: 1));
-          return '📅 Creé «${c.text}» ${describeWhen(when, t).replaceFirst('a las ${_hm(when)}', 'de ${_hm(when)} a ${_hm(end)}')}.';
+          return tr(
+              '📅 Creé «${c.text}» ${describeWhen(when, t).replaceFirst('a las ${_hm(when)}', 'de ${_hm(when)} a ${_hm(end)}')}.',
+              '📅 I created “${c.text}” ${describeWhen(when, t).replaceFirst('at ${_hm(when)}', 'from ${_hm(when)} to ${_hm(end)}')}.');
         } on CalendarDenied {
           return _calendarDenied;
         }
@@ -314,11 +318,11 @@ class AssistantExecutor {
         daily: daily,
         reminders: store.reminders,
         macEvents: mac);
-    final label = dayOffset == 1 ? 'Mañana' : 'Hoy';
+    final label = dayOffset == 1 ? tr('Mañana', 'Tomorrow') : tr('Hoy', 'Today');
     if (items.isEmpty) {
       return denied
-          ? '📅 $label no tienes nada anotado en PixelMate. $_calendarDenied'
-          : '📅 $label no tienes nada anotado.';
+          ? tr('📅 $label no tienes nada anotado en PixelMate. $_calendarDenied', '📅 $label you have nothing noted in PixelMate. $_calendarDenied')
+          : tr('📅 $label no tienes nada anotado.', '📅 $label you have nothing noted.');
     }
     return '📅 $label:\n${[
       for (final i in items) '• ${i.time} · ${i.text}'
@@ -328,14 +332,14 @@ class AssistantExecutor {
   Future<String> _calendarNote(ParsedCommand c, DateTime t) async {
     final day = c.when;
     if (day == null) {
-      return '📅 ¿Para qué día anoto «${c.text}»? Dime, por ejemplo, «el viernes», «mañana» o «el 20 de diciembre».';
+      return tr('📅 ¿Para qué día anoto «${c.text}»? Dime, por ejemplo, «el viernes», «mañana» o «el 20 de diciembre».', '📅 What day should I note “${c.text}” for? Tell me, for example, “Friday”, “tomorrow” or “December 20”.');
     }
     final notes = calendar;
-    if (notes == null) return '📅 No tengo el calendario a mano ahora.';
-    if (!c.allDay && !day.isAfter(t)) return '📅 Esa hora ya pasó. $_askWhen';
+    if (notes == null) return tr('📅 No tengo el calendario a mano ahora.', "📅 I don't have the calendar at hand right now.");
+    if (!c.allDay && !day.isAfter(t)) return tr('📅 Esa hora ya pasó. $_askWhen', '📅 That time has passed. $_askWhen');
     if (DateTime(day.year, day.month, day.day)
         .isBefore(DateTime(t.year, t.month, t.day))) {
-      return '📅 Ese día ya pasó. ¿Para qué día lo anoto?';
+      return tr('📅 Ese día ya pasó. ¿Para qué día lo anoto?', '📅 That day has passed. What day should I note it for?');
     }
     final note = await notes.add(c.text, day,
         hour: c.allDay ? null : day.hour,
@@ -344,18 +348,19 @@ class AssistantExecutor {
         color: 1,
         repeat: NoteRepeat.byName(c.repeat),
         now: t);
-    if (note == null) return '📅 ¿Qué anoto?';
+    if (note == null) return tr('📅 ¿Qué anoto?', '📅 What should I note?');
     final when = describeDay(day, t);
     final at = note.allDay
-        ? 'todo el día, aviso a las ${clock12(CalendarNote.noticeHour, 0)}'
-        : 'a las ${note.timeLabel}${note.alarm ? ', con alarma' : ''}';
+        ? tr('todo el día, aviso a las ${clock12(CalendarNote.noticeHour, 0)}', 'all day, reminder at ${clock12(CalendarNote.noticeHour, 0)}')
+        : tr('a las ${note.timeLabel}${note.alarm ? ', con alarma' : ''}',
+            'at ${note.timeLabel}${note.alarm ? ', with alarm' : ''}');
     final every =
         note.repeat == NoteRepeat.none ? '' : ', ${note.repeat.label}';
-    var reply = '📅 Anotado: «${note.text}», $when ($at)$every.';
+    var reply = tr('📅 Anotado: «${note.text}», $when ($at)$every.', '📅 Noted: “${note.text}”, $when ($at)$every.');
     if (notes.toMac) {
       final problem = await copyToMacCalendar(notes, mac, note);
       reply +=
-          problem == null ? ' Copiado al Calendario del Mac.' : ' $problem';
+          problem == null ? tr(' Copiado al Calendario del Mac.', 'Copied to the Mac Calendar.') : ' $problem';
     }
     return reply;
   }
@@ -364,12 +369,12 @@ class AssistantExecutor {
   /// revisas y pulsas Enter (no se envía solo).
   Future<String> _whatsapp(ParsedCommand c) async {
     final who = (c.app ?? '').trim();
-    if (who.isEmpty) return '💬 ¿A quién le escribo?';
+    if (who.isEmpty) return tr('💬 ¿A quién le escribo?', '💬 Who should I write to?');
     final List<Contact> found;
     try {
       found = await mac.findContacts(who);
     } on ContactsDenied {
-      return '🔒 Sin permiso para Contactos: Ajustes del Sistema › Privacidad y seguridad › Contactos › activa PixelMate.';
+      return tr('🔒 Sin permiso para Contactos: Ajustes del Sistema › Privacidad y seguridad › Contactos › activa PixelMate.', '🔒 No permission for Contacts: System Settings › Privacy & Security › Contacts › turn on PixelMate.');
     }
     final withPhone = [
       for (final x in found)
@@ -378,18 +383,21 @@ class AssistantExecutor {
     if (withPhone.isEmpty) {
       // Plan B: WhatsApp abierto y el mensaje copiado, para pegarlo.
       final why = found.isEmpty
-          ? 'No tengo a «$who» en los Contactos del Mac'
-          : '${found.first.name} no tiene número en Contactos';
+          ? tr('No tengo a «$who» en los Contactos del Mac', "I don't have “$who” in the Mac Contacts")
+          : tr('${found.first.name} no tiene número en Contactos', '${found.first.name} has no number in Contacts');
       final copied = c.text.isNotEmpty && await mac.copyText(c.text);
       final opened = await mac.openApp('WhatsApp') != null ||
           await mac.openUrl(Uri.parse('https://web.whatsapp.com'));
       if (!opened) {
-        return '💬 $why, y no pude abrir WhatsApp.'
-            '${copied ? ' Copié el mensaje para que lo pegues con ⌘V.' : ''}';
+        return tr('💬 $why, y no pude abrir WhatsApp.', "💬 $why, and I couldn't open WhatsApp.") +
+            (copied
+                ? tr(' Copié el mensaje para que lo pegues con ⌘V.',
+                    ' I copied the message so you can paste it with ⌘V.')
+                : '');
       }
       return copied
-          ? '💬 $why. Abrí WhatsApp y copié el mensaje: busca su chat y pégalo con ⌘V.'
-          : '💬 $why. Abrí WhatsApp: busca su chat.';
+          ? tr('💬 $why. Abrí WhatsApp y copié el mensaje: busca su chat y pégalo con ⌘V.', '💬 $why. I opened WhatsApp and copied the message: find their chat and paste it with ⌘V.')
+          : tr('💬 $why. Abrí WhatsApp: busca su chat.', '💬 $why. I opened WhatsApp: find their chat.');
     }
     // Igual que la búsqueda: sin tildes, mayúsculas ni emojis.
     String plain(String x) =>
@@ -400,8 +408,8 @@ class AssistantExecutor {
         .toList();
     final names = {for (final x in withPhone) x.name};
     if (exact.isEmpty && names.length > 1) {
-      return '💬 ¿A cuál? ${names.take(4).join(', ')}. Dímelo con el '
-          'nombre completo.';
+      return tr('💬 ¿A cuál? ${names.take(4).join(', ')}. Dímelo con el nombre completo.',
+          '💬 Which one? ${names.take(4).join(', ')}. Tell me the full name.');
     }
     final person = exact.isNotEmpty ? exact.first : withPhone.first;
     final number = whatsappNumber(
@@ -414,11 +422,11 @@ class AssistantExecutor {
     final web = Uri.parse('https://wa.me/$number'
         '${c.text.isEmpty ? '' : '?text=$encoded'}');
     if (!await mac.openUrl(app) && !await mac.openUrl(web)) {
-      return 'No pude abrir WhatsApp.';
+      return tr('No pude abrir WhatsApp.', "I couldn't open WhatsApp.");
     }
     return c.text.isEmpty
-        ? '💬 Abrí el chat de ${person.name} en WhatsApp.'
-        : '💬 Mensaje para ${person.name} listo en WhatsApp. Revísalo y pulsa Enter para enviarlo.';
+        ? tr('💬 Abrí el chat de ${person.name} en WhatsApp.', "💬 I opened ${person.name}'s chat in WhatsApp.")
+        : tr('💬 Mensaje para ${person.name} listo en WhatsApp. Revísalo y pulsa Enter para enviarlo.', '💬 Message for ${person.name} ready in WhatsApp. Check it and press Enter to send it.');
   }
 
   Future<String> _code(ParsedCommand c) async {
@@ -426,45 +434,45 @@ class AssistantExecutor {
     final pretty = language[0].toUpperCase() + language.substring(1);
     final code = await coder?.write(language, c.text);
     if (code == null) {
-      return '💻 Para escribir código necesito la IA de Apple (Apple Intelligence). Actívala en Configuración del Sistema.';
+      return tr('💻 Para escribir código necesito la IA de Apple (Apple Intelligence). Actívala en Configuración del Sistema.', "💻 To write code I need Apple's AI (Apple Intelligence). Turn it on in System Settings.");
     }
     final saved = await mac.saveCode(codeFileName(c.text, language), code,
         editor: c.editor);
-    if (saved == null) return '💻 No guardé el script (cancelaste).';
-    final where = saved.editor.isEmpty ? '' : ' y lo abrí en ${saved.editor}';
-    return '💻 Escribí «${saved.fileName}» ($pretty)$where. Revísalo antes de ejecutarlo.';
+    if (saved == null) return tr('💻 No guardé el script (cancelaste).', "💻 I didn't save the script (you canceled).");
+    final where = saved.editor.isEmpty ? '' : tr(' y lo abrí en ${saved.editor}', 'and opened it in ${saved.editor}');
+    return tr('💻 Escribí «${saved.fileName}» ($pretty)$where. Revísalo antes de ejecutarlo.', '💻 I wrote “${saved.fileName}” ($pretty)$where. Check it before running it.');
   }
 
   Future<String> _media(ParsedCommand c) async {
     final r = await mac.media(c.text, player: c.app);
-    final player = r.player ?? c.app ?? 'la música';
+    final player = r.player ?? c.app ?? tr('la música', 'the music');
     switch (r.error) {
       case 'none':
         return c.app == null
-            ? '🎵 No veo Spotify ni Música abiertos. Dime «abre Spotify» o «reproduce …».'
-            : '🎵 ${c.app} no está abierto.';
+            ? tr('🎵 No veo Spotify ni Música abiertos. Dime «abre Spotify» o «reproduce …».', "🎵 I don't see Spotify or Music open. Tell me “open Spotify” or “play …”.")
+            : tr('🎵 ${c.app} no está abierto.', "🎵 ${c.app} isn't open.");
       case 'denied':
-        return '🔒 No tengo permiso para controlar $player: Ajustes del Sistema › Privacidad y seguridad › Automatización › PixelMate.';
+        return tr('🔒 No tengo permiso para controlar $player: Ajustes del Sistema › Privacidad y seguridad › Automatización › PixelMate.', "🔒 I don't have permission to control $player: System Settings › Privacy & Security › Automation › PixelMate.");
       case 'failed':
-        return '😵 No pude controlar $player.';
+        return tr('😵 No pude controlar $player.', "😵 I couldn't control $player.");
     }
     return switch (c.text) {
-      'pause' => '⏸️ Pausé $player.',
-      'play' => '▶️ Sigue sonando $player.',
-      'next' => '⏭️ Siguiente canción en $player.',
-      'previous' => '⏮️ Canción anterior en $player.',
+      'pause' => tr('⏸️ Pausé $player.', '⏸️ I paused $player.'),
+      'play' => tr('▶️ Sigue sonando $player.', '▶️ $player is playing again.'),
+      'next' => tr('⏭️ Siguiente canción en $player.', '⏭️ Next song on $player.'),
+      'previous' => tr('⏮️ Canción anterior en $player.', '⏮️ Previous song on $player.'),
       'now' => r.track == null || r.track!.trim() == '—'
-          ? '🎵 No suena nada en $player ahora.'
-          : '🎵 Suena «${r.track}» en $player.',
-      _ => '⏯️ Listo ($player).',
+          ? tr('🎵 No suena nada en $player ahora.', '🎵 Nothing is playing on $player right now.')
+          : tr('🎵 Suena «${r.track}» en $player.', '🎵 “${r.track}” is playing on $player.'),
+      _ => tr('⏯️ Listo ($player).', '⏯️ Done ($player).'),
     };
   }
 
   Future<String> _open(ParsedCommand c) async {
     final browser = c.browser;
-    final inBrowser = browser == null ? '' : ' en $browser';
+    final inBrowser = browser == null ? '' : tr(' en $browser', 'in $browser');
     String notInstalled() =>
-        'No encontré $browser en tu Mac 🤔. Lo abro en tu navegador de siempre';
+        tr('No encontré $browser en tu Mac 🤔. Lo abro en tu navegador de siempre', "I didn't find $browser on your Mac 🤔. I'll open it in your usual browser");
 
     // Buscar dentro de un sitio: "pon Despacito en YouTube".
     final site = c.searchIn;
@@ -482,7 +490,7 @@ class AssistantExecutor {
           final name = video.title.isEmpty ? c.text : video.title;
           if (await mac.openUrl(video.watchUrl, browser: browser)) {
             onPlaying?.call(video);
-            return '▶️ Reproduciendo «$name»$inBrowser.';
+            return tr('▶️ Reproduciendo «$name»$inBrowser.', '▶️ Playing “$name”$inBrowser.');
           }
           if (browser != null && await mac.openUrl(video.watchUrl)) {
             onPlaying?.call(video);
@@ -496,27 +504,28 @@ class AssistantExecutor {
         if (app != null &&
             await mac.openUrl(searchUrl(site, c.text, spotifyApp: true))) {
           return c.play
-              ? '🎵 Abrí Spotify buscando «${c.text}». Sin tu cuenta de Spotify no puedo darle play: elige la canción ▶️.'
-              : '🎵 Abrí Spotify buscando «${c.text}».';
+              ? tr('🎵 Abrí Spotify buscando «${c.text}». Sin tu cuenta de Spotify no puedo darle play: elige la canción ▶️.', "🎵 I opened Spotify searching for “${c.text}”. Without your Spotify account I can't press play: choose the song ▶️.")
+              : tr('🎵 Abrí Spotify buscando «${c.text}».', '🎵 I opened Spotify searching for “${c.text}”.');
         }
       }
       final url = searchUrl(site, c.text);
-      final hint = site == 'youtube' ? ' Elige la que quieras y dale ▶️.' : '';
+      final hint = site == 'youtube' ? tr(' Elige la que quieras y dale ▶️.', 'Choose the one you want and press ▶️.') : '';
       if (await mac.openUrl(url, browser: browser)) {
-        return '${site == 'google' ? '🔎' : '🎵'} Abrí $siteName$inBrowser '
-            'buscando «${c.text}».$hint';
+        return tr('${site == 'google' ? '🔎' : '🎵'} Abrí $siteName$inBrowser buscando «${c.text}».$hint',
+            '${site == 'google' ? '🔎' : '🎵'} I opened $siteName$inBrowser searching for “${c.text}”.$hint');
       }
       if (browser != null && await mac.openUrl(url)) {
-        return '${notInstalled()}: busqué «${c.text}» en $siteName.$hint';
+        return tr('${notInstalled()}: busqué «${c.text}» en $siteName.$hint', '${notInstalled()}: I searched for “${c.text}” on $siteName.$hint');
       }
-      return 'No pude abrir $siteName.';
+      return tr('No pude abrir $siteName.', "I couldn't open $siteName.");
     }
 
     // Una web conocida o un dominio: "abre YouTube en Brave".
     final web = siteFor(c.text);
     if (browser != null && web != null) {
       if (await mac.openUrl(web, browser: browser)) {
-        return '🌐 Abrí ${web.host.replaceFirst('www.', '')}$inBrowser.';
+        return tr('🌐 Abrí ${web.host.replaceFirst('www.', '')}$inBrowser.',
+            '🌐 I opened ${web.host.replaceFirst('www.', '')}$inBrowser.');
       }
       if (await mac.openUrl(web)) {
         return '${notInstalled()}: ${web.host.replaceFirst('www.', '')}.';
@@ -525,30 +534,31 @@ class AssistantExecutor {
 
     // Una app instalada.
     final app = await mac.openApp(c.text);
-    if (app != null) return '🚀 Abrí $app.';
+    if (app != null) return tr('🚀 Abrí $app.', '🚀 I opened $app.');
     if (web != null && await mac.openUrl(web)) {
-      return '🌐 Abrí ${web.host.replaceFirst('www.', '')}.';
+      return tr('🌐 Abrí ${web.host.replaceFirst('www.', '')}.',
+          '🌐 I opened ${web.host.replaceFirst('www.', '')}.');
     }
-    return 'No encontré «${c.text}» en tu Mac. ¿Cómo se llama la app?';
+    return tr('No encontré «${c.text}» en tu Mac. ¿Cómo se llama la app?', "I didn't find “${c.text}” on your Mac. What's the app called?");
   }
 
-  static const _calendarDenied =
-      '📅 Para usar tu calendario, permite el acceso en Configuración del Sistema → Privacidad y seguridad → Calendarios → PixelMate.';
+  static String get _calendarDenied =>
+      tr('📅 Para usar tu calendario, permite el acceso en Configuración del Sistema → Privacidad y seguridad → Calendarios → PixelMate.', '📅 To use your calendar, allow access in System Settings → Privacy & Security → Calendars → PixelMate.');
 
   String _pendingText() {
     final tasks = store.pending;
     final reminders = store.reminders;
     if (tasks.isEmpty && reminders.isEmpty) {
-      return '✅ Nada pendiente.';
+      return tr('✅ Nada pendiente.', '✅ Nothing pending.');
     }
     final t = now();
     return [
       if (tasks.isNotEmpty) ...[
-        '📝 Pendientes:',
+        tr('📝 Pendientes:', '📝 To-do:'),
         for (var i = 0; i < tasks.length; i++) '${i + 1}. ${tasks[i].text}',
       ],
       if (reminders.isNotEmpty) ...[
-        '⏰ Recordatorios y alarmas:',
+        tr('⏰ Recordatorios y alarmas:', '⏰ Reminders and alarms:'),
         for (final r in reminders) '• ${_describeReminder(r, t)}',
       ],
     ].join('\n');
@@ -560,7 +570,7 @@ class AssistantExecutor {
 
   Future<String> _deleteAlarm(ParsedCommand c, {bool confirmed = false}) async {
     final alarms = store.alarms;
-    if (alarms.isEmpty) return '🔕 No tienes alarmas puestas.';
+    if (alarms.isEmpty) return tr('🔕 No tienes alarmas puestas.', '🔕 You have no alarms set.');
     final t = now();
     final list = alarms.map((r) => '• ${_describeReminder(r, t)}').join('\n');
     final hhmm = c.number;
@@ -576,13 +586,13 @@ class AssistantExecutor {
       return alarms.length == 1;
     }).toList();
     if (matches.isEmpty) {
-      return '🤔 No sé cuál quitar. Tus alarmas:\n$list';
+      return tr('🤔 No sé cuál quitar. Tus alarmas:\n$list', "🤔 I don't know which one to remove. Your alarms:\n$list");
     }
     if (!confirmed) {
       return _ask(
           c,
           matches.length == 1
-              ? '⚠️ ¿Quito la alarma ${_describeReminder(matches.single, t)}?'
+              ? tr('⚠️ ¿Quito la alarma ${_describeReminder(matches.single, t)}?', '⚠️ Should I remove the alarm ${_describeReminder(matches.single, t)}?')
               : '⚠️ ¿Quito estas ${matches.length} alarmas?\n${[
                   for (final r in matches) '• ${_describeReminder(r, t)}'
                 ].join('\n')}\n');
@@ -591,8 +601,8 @@ class AssistantExecutor {
       await store.removeReminder(r.id);
     }
     return matches.length == 1
-        ? '🗑️ Quité la alarma ${_describeReminder(matches.single, t)}.'
-        : '🗑️ Quité ${matches.length} alarmas.';
+        ? tr('🗑️ Quité la alarma ${_describeReminder(matches.single, t)}.', '🗑️ I removed the alarm ${_describeReminder(matches.single, t)}.')
+        : tr('🗑️ Quité ${matches.length} alarmas.', '🗑️ I removed ${matches.length} alarms.');
   }
 
   /// La tarea pendiente que más se parece a [text] (por palabras).
@@ -625,14 +635,14 @@ String describeVolume(String action, VolumeLevel v) {
               ? '🔉'
               : '🔊';
   return switch (action) {
-    'mute' => '🔇 Silencié el sonido.',
-    'unmute' => '$icon Sonido activado (${v.level} %).',
+    'mute' => tr('🔇 Silencié el sonido.', '🔇 I muted the sound.'),
+    'unmute' => tr('$icon Sonido activado (${v.level} %).', '$icon Sound on (${v.level}%).'),
     'get' => v.muted
-        ? '🔇 Está silenciado (el volumen quedó en ${v.level} %).'
-        : '$icon El volumen está al ${v.level} %.',
-    'up' when v.level >= 100 => '🔊 Ya está al máximo (100 %).',
-    'down' when v.level <= 0 => '🔇 Ya está al mínimo.',
-    _ => '$icon Volumen al ${v.level} %.',
+        ? tr('🔇 Está silenciado (el volumen quedó en ${v.level} %).', "🔇 It's muted (the volume stayed at ${v.level}%).")
+        : tr('$icon El volumen está al ${v.level} %.', '$icon The volume is at ${v.level}%.'),
+    'up' when v.level >= 100 => tr('🔊 Ya está al máximo (100 %).', "🔊 It's already at maximum (100%)."),
+    'down' when v.level <= 0 => tr('🔇 Ya está al mínimo.', "🔇 It's already at minimum."),
+    _ => tr('$icon Volumen al ${v.level} %.', '$icon Volume at ${v.level}%.'),
   };
 }
 

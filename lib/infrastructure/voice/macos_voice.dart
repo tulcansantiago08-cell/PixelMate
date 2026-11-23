@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../application/assistant/voice.dart';
+import '../../core/i18n/language.dart';
 
 /// Micrófono y voz del Mac (ver `Voice.swift`).
 class MacosVoice implements VoicePort {
@@ -20,7 +21,7 @@ class MacosVoice implements VoicePort {
   @override
   Future<String?> start() async {
     try {
-      return await _channel.invokeMethod<String>('start');
+      return await _channel.invokeMethod<String>('start', _lang);
     } catch (e) {
       debugPrint('Voz: $e');
       return 'unavailable';
@@ -31,7 +32,7 @@ class MacosVoice implements VoicePort {
   Future<String?> startWake(String name, {bool strict = false}) async {
     try {
       return await _channel
-          .invokeMethod<String>('startWake', {'name': name, 'strict': strict});
+          .invokeMethod<String>('startWake', {'name': name, 'strict': strict, ..._lang});
     } catch (e) {
       debugPrint('Voz: $e');
       return 'unavailable';
@@ -48,7 +49,10 @@ class MacosVoice implements VoicePort {
   Future<void> cancel() => _call('cancel');
 
   @override
-  Future<void> speak(String text) => _call('speak', text);
+  Future<void> speak(String text) => _call('speak', {'text': text, ..._lang});
+
+  /// Idioma de la app para el reconocimiento y la voz.
+  Map<String, String> get _lang => {'lang': LanguageSettings.current.code};
 
   @override
   Future<void> stopSpeaking() => _call('stopSpeaking');

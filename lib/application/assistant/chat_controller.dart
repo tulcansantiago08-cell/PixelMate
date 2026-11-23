@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,7 +42,7 @@ class ChatMessage {
 /// Qué IA usa el chat. Se sobrescribe en `main()` (Apple si está
 /// disponible; si no, Claude con API key; si no, ninguna con su motivo).
 final assistantChoiceProvider = FutureProvider<AssistantChoice>(
-  (_) async => const AssistantChoice(null, 'No hay IA configurada.'),
+  (_) async => AssistantChoice(null, tr('No hay IA configurada.', 'No AI is set up.')),
 );
 
 /// Captura de pantalla en base64 (solo la usa una IA que ve imágenes).
@@ -56,7 +57,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       : super([
           ChatMessage(
             text:
-                'Hola${_greetName(_ref)}. Soy ${_ref.read(petNameProvider)}.\n¿En qué te ayudo hoy?\n\nPuedo decirte cuánto te falta, empezar o pausar tu jornada y cambiar tu meta. Pídemelo con tus palabras.',
+                tr('Hola${_greetName(_ref)}. Soy ${_ref.read(petNameProvider)}.\n¿En qué te ayudo hoy?\n\nPuedo decirte cuánto te falta, empezar o pausar tu jornada y cambiar tu meta. Pídemelo con tus palabras.', "Hi${_greetName(_ref)}. I'm ${_ref.read(petNameProvider)}.\nHow can I help you today?\n\nI can tell you how much you have left, start or pause your workday and change your goal. Ask me in your own words."),
             isUser: false,
           ),
         ]);
@@ -158,7 +159,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     if (assistant == null) {
       if (text.isNotEmpty) _add(ChatMessage(text: text, isUser: true));
       _add(ChatMessage(
-          text: choice.problem ?? 'No hay IA disponible.', isUser: false));
+          text: choice.problem ?? tr('No hay IA disponible.', 'No AI available.'), isUser: false));
       return;
     }
 
@@ -167,7 +168,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       final capture = _ref.read(screenCaptureProvider);
       if (!assistant.supportsImages || capture == null) {
         _add(ChatMessage(
-          text: '📷 Con ${assistant.label} no puedo ver tu pantalla. Eso solo funciona con Claude (necesita API key con créditos).',
+          text: tr('📷 Con ${assistant.label} no puedo ver tu pantalla. Eso solo funciona con Claude (necesita API key con créditos).', "📷 With ${assistant.label} I can't see your screen. That only works with Claude (it needs an API key with credits)."),
           isUser: false,
           isNote: true,
         ));
@@ -178,7 +179,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       } catch (e) {
         debugPrint('Captura de pantalla: $e');
         _add(ChatMessage(
-          text: '⚠️ No pude capturar la pantalla. Revisa el permiso en Configuración del Sistema → Privacidad → Grabación de pantalla.',
+          text: tr('⚠️ No pude capturar la pantalla. Revisa el permiso en Configuración del Sistema → Privacidad → Grabación de pantalla.', "⚠️ I couldn't capture the screen. Check the permission in System Settings → Privacy → Screen Recording."),
           isUser: false,
         ));
         return;
@@ -186,7 +187,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     }
 
     _add(ChatMessage(
-      text: text.isEmpty ? '📷 ¿Qué ves en mi pantalla?' : text,
+      text: text.isEmpty ? tr('📷 ¿Qué ves en mi pantalla?', '📷 What do you see on my screen?') : text,
       isUser: true,
       hasImage: image != null,
     ));
@@ -237,7 +238,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       _add(ChatMessage(text: e.message, isUser: false));
     } catch (e) {
       debugPrint('Chat: $e');
-      _add(ChatMessage(text: 'Algo falló: $e', isUser: false));
+      _add(ChatMessage(text: tr('Algo falló: $e', 'Something went wrong: $e'), isUser: false));
     } finally {
       isLoading = false;
       state = [...state];

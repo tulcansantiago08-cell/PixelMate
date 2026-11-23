@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -84,7 +85,7 @@ class AppleRemindersSync extends ChangeNotifier {
         await _pushOnce();
       } while (_again && _enabled);
     } on CalendarDenied {
-      problem = 'Sin permiso para Recordatorios: Ajustes del Sistema › Privacidad y seguridad › Recordatorios › activa PixelMate.';
+      problem = tr('Sin permiso para Recordatorios: Ajustes del Sistema › Privacidad y seguridad › Recordatorios › activa PixelMate.', 'No permission for Reminders: System Settings › Privacy & Security › Reminders › turn on PixelMate.');
       _enabled = false;
       await _prefs?.setBool(_onKey, false);
       notifyListeners();

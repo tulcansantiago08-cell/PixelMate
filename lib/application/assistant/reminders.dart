@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,11 +61,11 @@ class ReminderAlert {
   String get message {
     String one(ReminderItem r) {
       final late = at.difference(r.due) > const Duration(minutes: 2);
-      return late ? '${r.text} (era para ${describeWhen(r.due, at)})' : r.text;
+      return late ? tr('${r.text} (era para ${describeWhen(r.due, at)})', '${r.text} (it was for ${describeWhen(r.due, at)})') : r.text;
     }
 
     return items.length == 1
-        ? '⏰ Recuerda: ${one(items.single)}.'
+        ? tr('⏰ Recuerda: ${one(items.single)}.', '⏰ Remember: ${one(items.single)}.')
         : '⏰ Recordatorios: ${items.map(one).join(' · ')}';
   }
 }

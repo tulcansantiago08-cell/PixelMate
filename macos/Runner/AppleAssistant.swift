@@ -49,7 +49,7 @@ enum AppleAssistant {
   struct MascotReply {
     @Guide(
       description:
-        "Lo que le dices al usuario: en español, cálido y breve (1 a 3 oraciones).")
+        "Lo que le dices al usuario: en el idioma que piden las instrucciones (español o inglés), cálido y breve (1 a 3 oraciones).")
     var reply: String
 
     @Guide(
@@ -116,7 +116,7 @@ enum AppleAssistant {
         Task { @MainActor in
           let coder = LanguageModelSession(
             instructions:
-              "Eres un programador experto. Escribes programas completos, cortos y que funcionan. Responde SOLO con el código del archivo, sin explicaciones antes ni después. Los comentarios y los textos para el usuario, en español."
+              "Eres un programador experto. Escribes programas completos, cortos y que funcionan. Responde SOLO con el código del archivo, sin explicaciones antes ni después. Los comentarios y los textos para el usuario, en el idioma de la petición."
           )
           do {
             let response = try await coder.respond(

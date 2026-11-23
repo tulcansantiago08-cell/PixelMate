@@ -72,15 +72,15 @@ String describeDay(DateTime day, DateTime now) {
 }
 
 /// Colores para marcar las notas del calendario (el índice se guarda).
-const calendarColorNames = [
-  'Naranja',
-  'Azul',
-  'Verde',
-  'Morado',
-  'Rosa',
-  'Amarillo',
-  'Gris',
-];
+List<String> get calendarColorNames => [
+      tr('Naranja', 'Orange'),
+      tr('Azul', 'Blue'),
+      tr('Verde', 'Green'),
+      tr('Morado', 'Purple'),
+      tr('Rosa', 'Pink'),
+      tr('Amarillo', 'Yellow'),
+      tr('Gris', 'Gray'),
+    ];
 
 /// Color de los recordatorios del chat que quedan en el calendario.
 const reminderColor = 6;
@@ -97,8 +97,8 @@ enum NoteRepeat {
   /// "", "cada semana" o "cada año".
   String get label => switch (this) {
         none => '',
-        weekly => 'cada semana',
-        yearly => 'cada año',
+        weekly => tr('cada semana', 'every week'),
+        yearly => tr('cada año', 'every year'),
       };
 }
 
@@ -153,7 +153,7 @@ class CalendarNote {
   DateTime get at => atOn(day);
 
   /// "Todo el día" o "9:30 a. m.".
-  String get timeLabel => allDay ? 'Todo el día' : clock12(hour!, minute);
+  String get timeLabel => allDay ? tr('Todo el día', 'All day') : clock12(hour!, minute);
 
   /// Si toca el [d] (contando las repeticiones).
   bool on(DateTime d) {
@@ -433,7 +433,7 @@ class CalendarScheduler extends StateNotifier<ReminderAlert?> {
       if (!_early.add('$id@$key')) return;
       final minutes = (left.inSeconds / 60).ceil();
       soon.add(ReminderItem('early-$id',
-          'en $minutes min: $text (${clock12(at.hour, at.minute)})', t));
+          tr('en $minutes min: $text (${clock12(at.hour, at.minute)})', 'in $minutes min: $text (${clock12(at.hour, at.minute)})'), t));
     }
 
     for (final n in store.onDay(t)) {
@@ -465,7 +465,7 @@ class CalendarScheduler extends StateNotifier<ReminderAlert?> {
         if (!n.alarm)
           ReminderItem(
               '$alarmPrefix${n.id}',
-              n.allDay ? 'hoy es «${n.text}»' : n.text,
+              n.allDay ? tr('hoy es «${n.text}»', 'today is “${n.text}”') : n.text,
               n.allDay ? t : n.atOn(t))
     ];
     if (notices.isNotEmpty || soon.isNotEmpty) {
@@ -492,8 +492,8 @@ final calendarAlertProvider =
         ));
 
 /// Qué decir si el Mac no deja usar su Calendario.
-const calendarDeniedMessage =
-    'Sin permiso para el Calendario del Mac: Ajustes del Sistema › Privacidad y seguridad › Calendarios › activa PixelMate.';
+String get calendarDeniedMessage =>
+    tr('Sin permiso para el Calendario del Mac: Ajustes del Sistema › Privacidad y seguridad › Calendarios › activa PixelMate.', 'No permission for the Mac Calendar: System Settings › Privacy & Security › Calendars › turn on PixelMate.');
 
 /// Copia [note] al Calendario del Mac (con aviso: las de todo el día a las
 /// 8, las de hora 10 min antes, o a su hora si llevan alarma) y guarda el
@@ -517,7 +517,7 @@ Future<String?> copyToMacCalendar(
   } on CalendarDenied {
     return calendarDeniedMessage;
   } catch (_) {
-    return 'No pude guardarlo en el Calendario del Mac.';
+    return tr('No pude guardarlo en el Calendario del Mac.', "I couldn't save it to the Mac Calendar.");
   }
 }
 

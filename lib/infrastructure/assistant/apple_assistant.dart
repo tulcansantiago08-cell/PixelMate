@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/services.dart';
 
 import '../../application/assistant/assistant_context.dart';
@@ -19,11 +20,11 @@ enum AppleAiAvailability {
   String? get problem => switch (this) {
         available => null,
         appleIntelligenceNotEnabled =>
-          'Para charlar gratis conmigo, activa Apple Intelligence en Configuración del Sistema → Apple Intelligence y Siri.',
-        modelNotReady => 'Apple Intelligence aún está descargando su modelo. Vuelve a intentarlo en un rato ⏳',
+          tr('Para charlar gratis conmigo, activa Apple Intelligence en Configuración del Sistema → Apple Intelligence y Siri.', 'To chat with me for free, turn on Apple Intelligence in System Settings → Apple Intelligence & Siri.'),
+        modelNotReady => tr('Apple Intelligence aún está descargando su modelo. Vuelve a intentarlo en un rato ⏳', 'Apple Intelligence is still downloading its model. Try again in a while ⏳'),
         deviceNotEligible =>
-          'Este Mac no es compatible con Apple Intelligence.',
-        unsupported => 'La IA de Apple necesita macOS 26 o posterior.',
+          tr('Este Mac no es compatible con Apple Intelligence.', "This Mac isn't compatible with Apple Intelligence."),
+        unsupported => tr('La IA de Apple necesita macOS 26 o posterior.', "Apple's AI needs macOS 26 or later."),
       };
 }
 
@@ -42,7 +43,7 @@ class AppleAssistant implements ChatAssistant {
   }
 
   @override
-  String get label => 'IA de Apple · en tu Mac';
+  String get label => tr('IA de Apple · en tu Mac', 'Apple AI · on your Mac');
 
   @override
   bool get supportsImages => false;
@@ -98,14 +99,14 @@ class AppleAssistant implements ChatAssistant {
   /// Mensaje para cada código de error del lado nativo.
   static String errorMessage(String code) => switch (code) {
         'guardrail' =>
-          'Prefiero no responder a eso 🙈. ¿Hablamos de otra cosa?',
-        'language' => 'Ese idioma aún no lo entiendo bien 😅.',
-        'busy' => 'Estoy pensando demasiado rápido 🐢. Prueba en un momento.',
+          tr('Prefiero no responder a eso 🙈. ¿Hablamos de otra cosa?', "I'd rather not answer that 🙈. Shall we talk about something else?"),
+        'language' => tr('Ese idioma aún no lo entiendo bien 😅.', "I don't understand that language well yet 😅."),
+        'busy' => tr('Estoy pensando demasiado rápido 🐢. Prueba en un momento.', "I'm thinking too fast 🐢. Try again in a moment."),
         'unavailable' =>
-          'La IA de Apple no está lista ahora mismo. Inténtalo en un rato ⏳',
+          tr('La IA de Apple no está lista ahora mismo. Inténtalo en un rato ⏳', "Apple's AI isn't ready right now. Try again in a while ⏳"),
         'context' =>
-          'Se me llenó la memoria 🧠. Empecemos una conversación nueva.',
-        _ => 'Algo falló al pensar 😵. Inténtalo de nuevo.',
+          tr('Se me llenó la memoria 🧠. Empecemos una conversación nueva.', "My memory is full 🧠. Let's start a new conversation."),
+        _ => tr('Algo falló al pensar 😵. Inténtalo de nuevo.', 'Something went wrong while thinking 😵. Try again.'),
       };
 }
 

@@ -38,6 +38,9 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
   private var wakeStrict = false
   /// Ya oyó el nombre en esta sesión.
   private var woke = false
+  /// Idioma de la app ("es" o "en"): reconocimiento, voz y palabra para despertar.
+  private var language = "es"
+  private var english: Bool { language == "en" }
   private var wakeTimer: Timer?
 
   static func register(with messenger: FlutterBinaryMessenger) {
@@ -48,6 +51,10 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
       .setStreamHandler(bridge)
     let channel = FlutterMethodChannel(name: "com.pixelmate/voice", binaryMessenger: messenger)
     channel.setMethodCallHandler { call, result in
+      // Cada llamada puede traer el idioma de la app ({lang: "es" | "en"}).
+      if let lang = (call.arguments as? [String: Any])?["lang"] as? String {
+        bridge.language = lang
+      }
       switch call.method {
       case "start":
         bridge.wakeName = nil
@@ -75,7 +82,10 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
         bridge.cancel()
         result(nil)
       case "speak":
-        bridge.speak((call.arguments as? String) ?? "")
+        // "texto" o {text, lang}.
+        let text = (call.arguments as? String)
+          ?? ((call.arguments as? [String: Any])?["text"] as? String) ?? ""
+        bridge.speak(text)
         result(nil)
       case "stopSpeaking":
         bridge.synth.stopSpeaking(at: .immediate)
@@ -121,12 +131,12 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     }
   }
 
-  /// Español: el de tu región si el Mac está en español; si no, el primero
-  /// que funcione (mejor si reconoce sin internet).
+  /// En el idioma de la app: el de tu región si el Mac está en ese idioma;
+  /// si no, el primero que funcione (mejor si reconoce sin internet).
   private func makeRecognizer() -> SFSpeechRecognizer? {
-    var ids = ["es-MX", "es-US", "es-ES", "es-CO"]
+    var ids = english ? ["en-US", "en-GB", "en-AU", "en-CA"] : ["es-MX", "es-US", "es-ES", "es-CO"]
     let current = Locale.current.identifier
-    if current.hasPrefix("es") { ids.insert(current, at: 0) }
+    if current.hasPrefix(language) { ids.insert(current, at: 0) }
     let recognizers = ids.compactMap { SFSpeechRecognizer(locale: Locale(identifier: $0)) }
       .filter { $0.isAvailable }
     return recognizers.first { $0.supportsOnDeviceRecognition } ?? recognizers.first
@@ -144,7 +154,7 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     let request = SFSpeechAudioBufferRecognitionRequest()
     request.shouldReportPartialResults = true
     if let name = wake {
-      request.contextualStrings = [name, "oye \(name)", "hola \(name)", "hey \(name)"]
+      request.contextualStrings = [name, "oye \(name)", "hola \(name)", "hey \(name)", "hi \(name)"]
     }
     if recognizer.supportsOnDeviceRecognition { request.requiresOnDeviceRecognition = true }
     if #available(macOS 13, *) { request.addsPunctuation = true }
@@ -244,8 +254,10 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     let words = fold(name).split(separator: " ").map(String.init)
     guard !words.isEmpty else { return nil }
     let folded = fold(text)
-    // Estricto: solo «oye», al principio o después de una pausa (punto).
-    let start = wakeStrict ? "(?:^|[.!?]\\s*)\\W*(?:oye)" : "\\b(?:oye|hola|hey)"
+    // Estricto: solo «oye» («hey» en inglés), al principio o después de una pausa (punto).
+    let start = wakeStrict
+      ? (english ? "(?:^|[.!?]\\s*)\\W*(?:hey)" : "(?:^|[.!?]\\s*)\\W*(?:oye)")
+      : "\\b(?:oye|hola|hey|hi|hello)"
     let pattern =
       start + "\\W+(?:"
       + words.map { NSRegularExpression.escapedPattern(for: $0) }.joined(separator: "\\W+")
@@ -339,16 +351,17 @@ final class VoiceBridge: NSObject, FlutterStreamHandler {
     synth.speak(utterance)
   }
 
-  /// La mejor voz en español instalada (la mejorada si la hay), mejor si es
-  /// de tu región.
+  /// La mejor voz instalada en el idioma de la app (la mejorada si la hay),
+  /// mejor si es de tu región.
   private func bestVoice() -> AVSpeechSynthesisVoice? {
     let region = Locale.current.identifier.replacingOccurrences(of: "_", with: "-")
-    let voices = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("es") }
+    let voices = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix(language) }
     func score(_ v: AVSpeechSynthesisVoice) -> Int {
       var s = v.quality == .default ? 0 : 2
-      if region.hasPrefix("es"), v.language == region { s += 1 }
+      if region.hasPrefix(language), v.language == region { s += 1 }
       return s
     }
-    return voices.max { score($0) < score($1) } ?? AVSpeechSynthesisVoice(language: "es-MX")
+    return voices.max { score($0) < score($1) }
+      ?? AVSpeechSynthesisVoice(language: english ? "en-US" : "es-MX")
   }
 }

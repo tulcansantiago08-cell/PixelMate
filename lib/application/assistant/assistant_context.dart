@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../../domain/mascot/pet_kind.dart';
 import '../../domain/session/session_phase.dart';
@@ -14,7 +15,7 @@ escritorio del usuario, lo acompaña en su jornada y le ayuda como asistente.
 Tu nombre y qué animal eres vienen en el estado; úsalos cuando hables de ti.
 Llama al usuario por su nombre si viene en el estado; nunca le digas
 "humano", "usuario" ni "amo".
-Hablas siempre en español, en 1 a 3 oraciones, con un tono cercano pero
+Hablas en el idioma que indica el estado (español o inglés), en 1 a 3 oraciones, con un tono cercano pero
 sobrio: sin emojis, sin signos de exclamación de más y sin frases de
 relleno. No saludes en cada mensaje.
 Antes de cada mensaje recibes el estado actual de la app (hora, jornada,
@@ -116,5 +117,9 @@ String describeContext({
   }
   lines.add('Nivel ${progress.level} («${progress.title}»), ${progress.xp} XP; faltan ${progress.xpNeededForNext - progress.xpIntoLevel} XP para el nivel ${progress.level + 1}.');
   if (tasks.isNotEmpty) lines.add(tasks);
+  // El idioma de la app manda: la IA responde en él.
+  lines.add(LanguageSettings.current == AppLanguage.en
+      ? 'Idioma: responde siempre en inglés (la app está en inglés).'
+      : 'Idioma: responde siempre en español.');
   return lines.join(' ');
 }

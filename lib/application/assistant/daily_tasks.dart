@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -9,7 +10,10 @@ import 'alarm.dart';
 import 'personal_store.dart';
 
 /// Letras de los días (lunes = 1 … domingo = 7).
-const dayLetters = {1: 'L', 2: 'M', 3: 'X', 4: 'J', 5: 'V', 6: 'S', 7: 'D'};
+/// Iniciales de los días en el idioma de la app.
+Map<int, String> get dayLetters => tr('es', 'en') == 'en'
+    ? const {1: 'M', 2: 'T', 3: 'W', 4: 'T', 5: 'F', 6: 'S', 7: 'S'}
+    : const {1: 'L', 2: 'M', 3: 'X', 4: 'J', 5: 'V', 6: 'S', 7: 'D'};
 
 const allDays = {1, 2, 3, 4, 5, 6, 7};
 const weekdays = {1, 2, 3, 4, 5};
@@ -49,9 +53,9 @@ class DailyTask {
 
   /// "Todos los días", "L a V" o "L X V".
   String get daysLabel {
-    if (days.length == 7) return 'Todos los días';
-    if (setEquals(days, weekdays)) return 'De lunes a viernes';
-    if (setEquals(days, {6, 7})) return 'Fines de semana';
+    if (days.length == 7) return tr('Todos los días', 'Every day');
+    if (setEquals(days, weekdays)) return tr('De lunes a viernes', 'Monday to Friday');
+    if (setEquals(days, {6, 7})) return tr('Fines de semana', 'Weekends');
     return (days.toList()..sort()).map((d) => dayLetters[d]).join(' ');
   }
 

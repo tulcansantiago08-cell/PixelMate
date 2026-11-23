@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -60,8 +61,8 @@ enum AlarmRepeat {
   /// "todos los días", "de lunes a viernes" o "".
   String get label => switch (this) {
         none => '',
-        daily => 'todos los días',
-        weekdays => 'de lunes a viernes',
+        daily => tr('todos los días', 'every day'),
+        weekdays => tr('de lunes a viernes', 'Monday to Friday'),
       };
 }
 
@@ -266,8 +267,8 @@ class PersonalStore extends ChangeNotifier {
   String describe() {
     final p = pending;
     final tasks = p.isEmpty
-        ? 'Sin tareas pendientes.'
-        : 'Tareas pendientes: '
+        ? tr('Sin tareas pendientes.', 'No pending tasks.')
+        : tr('Tareas pendientes: ', 'Pending tasks: ') +
             '${[
             for (var i = 0; i < p.length && i < 8; i++) '${i + 1}) ${p[i].text}'
           ].join('; ')}.';

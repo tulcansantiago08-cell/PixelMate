@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'package:flutter/services.dart';
 
 import '../../application/settings/backup.dart';
@@ -13,12 +14,12 @@ class MacosBackupFiles implements BackupFiles {
         'name': suggestedName,
         'content': content,
         'type': 'json',
-        'title': 'Guardar copia de seguridad',
+        'title': tr('Guardar copia de seguridad', 'Save backup'),
       });
 
   @override
   Future<String?> open() => _files.invokeMethod<String>(
-      'openText', {'title': 'Restaurar copia de seguridad'});
+      'openText', {'title': tr('Restaurar copia de seguridad', 'Restore backup')});
 
   @override
   Future<void> relaunch() => _app.invokeMethod<void>('relaunch');

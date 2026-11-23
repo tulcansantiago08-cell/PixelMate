@@ -1,4 +1,5 @@
 import '../../core/i18n/language.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,12 +46,14 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
   Future<void> _save() async {
     final text = _text.text.trim();
     if (text.isEmpty) {
-      setState(() => _problem = tr('Escribe qué tienes que hacer.', 'Write what you need to do.'));
+      setState(() => _problem =
+          tr('Escribe qué tienes que hacer.', 'Write what you need to do.'));
       _textFocus.requestFocus();
       return;
     }
     if (_days.isEmpty) {
-      setState(() => _problem = tr('Elige al menos un día.', 'Choose at least one day.'));
+      setState(() =>
+          _problem = tr('Elige al menos un día.', 'Choose at least one day.'));
       return;
     }
     final DailyTask? added;
@@ -60,7 +63,9 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
           .add(text, _hour, _minute, days: _days, now: DateTime.now());
     } catch (e) {
       appLog('diarias: error al guardar: $e');
-      if (mounted) setState(() => _problem = tr('No pude guardarla: $e', "I couldn't save it: $e"));
+      if (mounted)
+        setState(() =>
+            _problem = tr('No pude guardarla: $e', "I couldn't save it: $e"));
       return;
     }
     if (added == null || !mounted) return;
@@ -85,8 +90,11 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
 
   void _testSound() => _ring();
 
-  void _ring() => ref.read(alarmProvider.notifier).ring(
-      [ReminderItem('test', tr('Prueba de alarma', 'Alarm test'), DateTime.now(), alarm: true)]);
+  void _ring() => ref.read(alarmProvider.notifier).ring([
+        ReminderItem(
+            'test', tr('Prueba de alarma', 'Alarm test'), DateTime.now(),
+            alarm: true)
+      ]);
 
   @override
   Widget build(BuildContext context) {
@@ -114,11 +122,12 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                 segments: [
                   ButtonSegment(
                       value: 0,
-                      label: Text(tr('Diarias', 'Daily'), style: TextStyle(fontSize: 11))),
+                      label: Text(tr('Diarias', 'Daily'),
+                          style: TextStyle(fontSize: 11))),
                   ButtonSegment(
                       value: 1,
-                      label:
-                          Text(tr('Calendario', 'Calendar'), style: TextStyle(fontSize: 11))),
+                      label: Text(tr('Calendario', 'Calendar'),
+                          style: TextStyle(fontSize: 11))),
                 ],
                 selected: {_tab},
                 onSelectionChanged: (v) => setState(() {
@@ -138,7 +147,9 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
             const Expanded(child: CalendarTab())
           else ...[
             if (!_adding && today.isNotEmpty) ...[
-              Text(tr('Hoy: $done de ${today.length} hechas', 'Today: $done of ${today.length} done'),
+              Text(
+                  tr('Hoy: $done de ${today.length} hechas',
+                      'Today: $done of ${today.length} done'),
                   key: const ValueKey('daily-progress'),
                   style: const TextStyle(
                       color: StatsStyle.textSecondary, fontSize: 11)),
@@ -179,7 +190,8 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
                     style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         visualDensity: VisualDensity.compact),
-                    label: Text(tr('Añadir', 'Add'), style: TextStyle(fontSize: 12)),
+                    label: Text(tr('Añadir', 'Add'),
+                        style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ]),
@@ -195,7 +207,8 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text(
-            tr('Sin alarmas.\nAñade una o dímelo: «alarma de lunes a viernes a las 7 gimnasio».', 'No alarms.\nAdd one or tell me: “alarm Monday to Friday at 7 gym”.'),
+            tr('Sin alarmas.\nAñade una o dímelo: «alarma de lunes a viernes a las 7 gimnasio».',
+                'No alarms.\nAdd one or tell me: “alarm Monday to Friday at 7 gym”.'),
             style: TextStyle(color: StatsStyle.textSecondary, fontSize: 11)),
       );
     }
@@ -279,7 +292,8 @@ class _DailyTasksPanelState extends ConsumerState<DailyTasksPanel> {
         Row(children: [
           TextButton(
             onPressed: () => setState(() => _adding = false),
-            child: Text(tr('Cancelar', 'Cancel'), style: TextStyle(fontSize: 12)),
+            child:
+                Text(tr('Cancelar', 'Cancel'), style: TextStyle(fontSize: 12)),
           ),
           const Spacer(),
           FilledButton(
@@ -348,57 +362,68 @@ class _AlarmTile extends ConsumerWidget {
                   decoration: done ? TextDecoration.lineThrough : null,
                 )),
             Text(
-                'Repetir: ${t.daysLabel == 'De lunes a viernes' ? tr('Lun a vie', 'Mon to Fri') : t.daysLabel}',
+                tr('Repetir: ', 'Repeat: ') +
+                    (setEquals(t.days, weekdays)
+                        ? tr('Lun a vie', 'Mon to Fri')
+                        : t.daysLabel),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: muted),
             Text(tr('Sonido: $sound', 'Sound: $sound'),
                 maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
             const Spacer(),
-            Row(children: [
-              SizedBox(
-                width: 42,
-                height: 26,
-                child: FittedBox(
-                  child: Switch(
-                    key: ValueKey('daily-bell-${t.id}'),
-                    value: on,
-                    activeTrackColor: StatsStyle.accent,
-                    onChanged: (v) => store.setEnabled(t.id, v),
+            // En tarjetas angostas no caben el interruptor y los dos botones
+            // (el de "hecha hoy" solo sale los días que toca): se encogen.
+            FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  SizedBox(
+                    width: 42,
+                    height: 26,
+                    child: FittedBox(
+                      child: Switch(
+                        key: ValueKey('daily-bell-${t.id}'),
+                        value: on,
+                        activeTrackColor: StatsStyle.accent,
+                        onChanged: (v) => store.setEnabled(t.id, v),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const Spacer(),
-              if (on && t.isToday(now))
-                IconButton(
-                  key: ValueKey('daily-done-${t.id}'),
-                  tooltip: done ? tr('Desmarcar', 'Unmark') : tr('Hecha hoy', 'Done today'),
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 30, minHeight: 30),
-                  iconSize: 18,
-                  onPressed: () => store.setDone(t.id, !done, now),
-                  icon: Icon(
-                      done
-                          ? Icons.check_circle_rounded
-                          : Icons.check_circle_outline_rounded,
-                      color: done
-                          ? const Color(0xFF34D399)
-                          : StatsStyle.textMuted),
-                ),
-              IconButton(
-                key: ValueKey('daily-delete-${t.id}'),
-                tooltip: tr('Borrar', 'Delete'),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
-                iconSize: 17,
-                onPressed: () => store.remove(t.id),
-                icon: const Icon(Icons.delete_outline,
-                    color: StatsStyle.textMuted),
-              ),
-            ]),
+                  const SizedBox(width: 8),
+                  if (on && t.isToday(now))
+                    IconButton(
+                      key: ValueKey('daily-done-${t.id}'),
+                      tooltip: done
+                          ? tr('Desmarcar', 'Unmark')
+                          : tr('Hecha hoy', 'Done today'),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 30, minHeight: 30),
+                      iconSize: 18,
+                      onPressed: () => store.setDone(t.id, !done, now),
+                      icon: Icon(
+                          done
+                              ? Icons.check_circle_rounded
+                              : Icons.check_circle_outline_rounded,
+                          color: done
+                              ? const Color(0xFF34D399)
+                              : StatsStyle.textMuted),
+                    ),
+                  IconButton(
+                    key: ValueKey('daily-delete-${t.id}'),
+                    tooltip: tr('Borrar', 'Delete'),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 30, minHeight: 30),
+                    iconSize: 17,
+                    onPressed: () => store.remove(t.id),
+                    icon: const Icon(Icons.delete_outline,
+                        color: StatsStyle.textMuted),
+                  ),
+                ])),
           ],
         ),
       ),

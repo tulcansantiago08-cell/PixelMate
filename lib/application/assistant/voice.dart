@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,11 +94,11 @@ class NoVoice implements VoicePort {
 
 /// Qué decir cuando no se puede escuchar.
 String voiceProblem(String code) => switch (code) {
-      'speech-denied' => '🎙️ Para entenderte necesito permiso: Ajustes del Sistema › Privacidad y seguridad › Reconocimiento de voz › activa PixelMate.',
-      'mic-denied' => '🎙️ No puedo usar el micrófono: Ajustes del Sistema › Privacidad y seguridad › Micrófono › activa PixelMate.',
-      'mic' => '🎙️ No encuentro ningún micrófono conectado.',
-      'offline' => '🎙️ Para esperar a que me llames necesito entender español sin internet: Ajustes del Sistema › Teclado › Dictado, activa el dictado en español y deja que se descargue.',
-      _ => '🎙️ El reconocimiento de voz en español no está disponible ahora. Revisa tu conexión o activa el dictado en Ajustes del Sistema › Teclado.',
+      'speech-denied' => tr('🎙️ Para entenderte necesito permiso: Ajustes del Sistema › Privacidad y seguridad › Reconocimiento de voz › activa PixelMate.', '🎙️ To understand you I need permission: System Settings › Privacy & Security › Speech Recognition › turn on PixelMate.'),
+      'mic-denied' => tr('🎙️ No puedo usar el micrófono: Ajustes del Sistema › Privacidad y seguridad › Micrófono › activa PixelMate.', "🎙️ I can't use the microphone: System Settings › Privacy & Security › Microphone › turn on PixelMate."),
+      'mic' => tr('🎙️ No encuentro ningún micrófono conectado.', "🎙️ I can't find any connected microphone."),
+      'offline' => tr('🎙️ Para esperar a que me llames necesito entender español sin internet: Ajustes del Sistema › Teclado › Dictado, activa el dictado en español y deja que se descargue.', '🎙️ To wait for you to call me I need to understand English without internet: System Settings › Keyboard › Dictation, turn on English dictation and let it download.'),
+      _ => tr('🎙️ El reconocimiento de voz en español no está disponible ahora. Revisa tu conexión o activa el dictado en Ajustes del Sistema › Teclado.', "🎙️ English speech recognition isn't available right now. Check your connection or turn on dictation in System Settings › Keyboard."),
     };
 
 /// Texto para leer en voz alta: sin emojis ni símbolos que la voz
@@ -123,7 +124,7 @@ String speechText(String text, {int maxLength = 400}) {
 enum VoiceStatus { idle, listening, thinking }
 
 /// Lo que se dice si se escuchó pero no dijiste nada.
-const nothingHeard = '🙉 No te escuché. Toca 🎙️ y habla cuando quieras.';
+String get nothingHeard => tr('🙉 No te escuché. Toca 🎙️ y habla cuando quieras.', "🙉 I didn't hear you. Tap 🎙️ and speak whenever you want.");
 
 class VoiceState {
   final VoiceStatus status;
@@ -307,7 +308,7 @@ class VoiceController extends StateNotifier<VoiceState> {
     _clearTimers();
     final said = text.trim();
     if (said.isEmpty) {
-      state = const VoiceState(problem: nothingHeard);
+      state = VoiceState(problem: nothingHeard);
       unawaited(_armWake());
       return;
     }

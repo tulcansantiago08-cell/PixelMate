@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import '../../domain/activity/activity_mode.dart';
 import '../../domain/session/workday_config.dart';
 import '../../domain/session/workday_timer.dart';
@@ -24,11 +25,11 @@ String? runAssistantAction(
   final paused = status != null && status.state == WorkdayRunState.paused;
 
   String? start(ActivityMode mode, WorkdayConfig base, String label) {
-    if (view.isActive) return 'ℹ️ Ya hay una jornada en curso.';
+    if (view.isActive) return tr('ℹ️ Ya hay una jornada en curso.', 'ℹ️ A workday is already running.');
     final config =
         hours > 0 ? base.copyWith(workday: Duration(hours: hours)) : base;
     workday.start(config, mode: mode);
-    return '▶️ Empecé una jornada de $label de ${config.workday.inHours} h.';
+    return tr('▶️ Empecé una jornada de $label de ${config.workday.inHours} h.', '▶️ I started a ${config.workday.inHours} h $label workday.');
   }
 
   switch (reply.action) {
@@ -43,22 +44,22 @@ String? runAssistantAction(
     case AssistantAction.pause:
       if (!running) return null;
       workday.pause();
-      return '⏸️ Pausé la jornada.';
+      return tr('⏸️ Pausé la jornada.', '⏸️ I paused the workday.');
     case AssistantAction.resume:
       if (!paused) return null;
       workday.resume();
-      return '▶️ Reanudé la jornada.';
+      return tr('▶️ Reanudé la jornada.', '▶️ I resumed the workday.');
     case AssistantAction.finish:
       if (!view.isActive) return null;
       workday.finish();
-      return '⏹️ Terminé la jornada.';
+      return tr('⏹️ Terminé la jornada.', '⏹️ I ended the workday.');
     case AssistantAction.setGoal:
       if (hours == 0) return null;
       goal.setGoal(Duration(hours: hours));
-      return '🎯 Tu meta diaria ahora es de $hours h.';
+      return tr('🎯 Tu meta diaria ahora es de $hours h.', '🎯 Your daily goal is now $hours h.');
     case AssistantAction.openStats:
       openStats();
-      return '📊 Abrí tus estadísticas.';
+      return tr('📊 Abrí tus estadísticas.', '📊 I opened your stats.');
     case AssistantAction.remind ||
           AssistantAction.addTask ||
           AssistantAction.completeTask ||
@@ -136,9 +137,9 @@ AssistantReply? workdayCommand(String message, {String? petName}) {
 
 /// Qué decir si la orden de jornada no se pudo hacer ahora.
 String workdayCommandSkipped(AssistantAction a) => switch (a) {
-      AssistantAction.pause => 'ℹ️ No hay una jornada en marcha para pausar.',
-      AssistantAction.resume => 'ℹ️ No hay una jornada en pausa.',
-      AssistantAction.finish => 'ℹ️ No hay ninguna jornada en curso.',
-      AssistantAction.setGoal => 'ℹ️ Dime la meta en horas, por ejemplo «cambia mi meta a 6 horas».',
-      _ => 'ℹ️ No pude hacerlo ahora.',
+      AssistantAction.pause => tr('ℹ️ No hay una jornada en marcha para pausar.', "ℹ️ There's no running workday to pause."),
+      AssistantAction.resume => tr('ℹ️ No hay una jornada en pausa.', "ℹ️ There's no paused workday."),
+      AssistantAction.finish => tr('ℹ️ No hay ninguna jornada en curso.', "ℹ️ There's no workday running."),
+      AssistantAction.setGoal => tr('ℹ️ Dime la meta en horas, por ejemplo «cambia mi meta a 6 horas».', 'ℹ️ Tell me the goal in hours, for example “change my goal to 6 hours”.'),
+      _ => tr('ℹ️ No pude hacerlo ahora.', "ℹ️ I couldn't do it right now."),
     };

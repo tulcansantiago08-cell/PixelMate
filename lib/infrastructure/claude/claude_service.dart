@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -15,7 +16,14 @@ class ClaudeService {
     this.model = 'claude-haiku-4-5',
   });
 
-  static const _systemPrompt = '''
+  /// En el idioma de la app.
+  static String get _systemPrompt => _basePrompt.replaceFirst(
+      'Responde siempre en español',
+      LanguageSettings.current == AppLanguage.en
+          ? 'Responde siempre en inglés'
+          : 'Responde siempre en español');
+
+  static const _basePrompt = '''
 Eres la mascota virtual pixel art de PixelMate, que vive en el escritorio del usuario
 (tu nombre viene en el estado de cada mensaje).
 Tu personalidad es alegre, motivadora y concisa. Usas emojis ocasionalmente.
@@ -31,7 +39,7 @@ Responde siempre en español, de forma breve (máximo 3 oraciones).
   }) async {
     if (apiKey.isEmpty) {
       throw ClaudeApiException(
-        'Falta la API key 🔑. Ejecuta la app con --dart-define=ANTHROPIC_API_KEY=tu_clave',
+        tr('Falta la API key 🔑. Ejecuta la app con --dart-define=ANTHROPIC_API_KEY=tu_clave', 'The API key is missing 🔑. Run the app with --dart-define=ANTHROPIC_API_KEY=your_key'),
       );
     }
 
@@ -74,9 +82,9 @@ Responde siempre en español, de forma breve (máximo 3 oraciones).
     } catch (e) {
       _history.removeLast(); // no dejar el mensaje fallido en el historial
       if (e is TimeoutException) {
-        throw ClaudeApiException('Claude tardó demasiado en responder ⏱️');
+        throw ClaudeApiException(tr('Claude tardó demasiado en responder ⏱️', 'Claude took too long to respond ⏱️'));
       }
-      throw ClaudeApiException('Sin conexión con Claude 🔌');
+      throw ClaudeApiException(tr('Sin conexión con Claude 🔌', 'No connection to Claude 🔌'));
     }
 
     if (response.statusCode != 200) {
@@ -124,27 +132,27 @@ Responde siempre en español, de forma breve (máximo 3 oraciones).
   static String _friendlyError(int status, String type, String message) {
     final lower = message.toLowerCase();
     if (lower.contains('credit balance')) {
-      return 'Tu cuenta de la API de Claude se quedó sin créditos 💳. Recarga en console.anthropic.com → Plans & Billing.';
+      return tr('Tu cuenta de la API de Claude se quedó sin créditos 💳. Recarga en console.anthropic.com → Plans & Billing.', 'Your Claude API account ran out of credits 💳. Top up at console.anthropic.com → Plans & Billing.');
     }
     if (status == 401 || type == 'authentication_error') {
-      return 'La API key de Claude no es válida 🔑. Revisa ANTHROPIC_API_KEY.';
+      return tr('La API key de Claude no es válida 🔑. Revisa ANTHROPIC_API_KEY.', "The Claude API key isn't valid 🔑. Check ANTHROPIC_API_KEY.");
     }
     if (status == 403 || type == 'permission_error') {
-      return 'Tu API key no tiene permiso para usar este modelo 🚫.';
+      return tr('Tu API key no tiene permiso para usar este modelo 🚫.', "Your API key isn't allowed to use this model 🚫.");
     }
     if (status == 429 || type == 'rate_limit_error') {
-      return 'Demasiadas peticiones seguidas 🐢. Espera un momento e inténtalo de nuevo.';
+      return tr('Demasiadas peticiones seguidas 🐢. Espera un momento e inténtalo de nuevo.', 'Too many requests in a row 🐢. Wait a moment and try again.');
     }
     if (status == 529 || type == 'overloaded_error') {
-      return 'Claude está saturado ahora mismo 😵. Inténtalo en unos segundos.';
+      return tr('Claude está saturado ahora mismo 😵. Inténtalo en unos segundos.', 'Claude is overloaded right now 😵. Try again in a few seconds.');
     }
     if (status >= 500) {
-      return 'Claude tuvo un problema interno (error $status). Inténtalo de nuevo.';
+      return tr('Claude tuvo un problema interno (error $status). Inténtalo de nuevo.', 'Claude had an internal problem (error $status). Try again.');
     }
     if (status == 413 || lower.contains('too large')) {
-      return 'La captura de pantalla es demasiado grande 🖼️.';
+      return tr('La captura de pantalla es demasiado grande 🖼️.', 'The screenshot is too large 🖼️.');
     }
-    return message.isNotEmpty ? message : 'Error $status al hablar con Claude.';
+    return message.isNotEmpty ? message : tr('Error $status al hablar con Claude.', 'Error $status while talking to Claude.');
   }
 }
 

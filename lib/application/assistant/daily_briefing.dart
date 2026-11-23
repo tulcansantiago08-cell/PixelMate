@@ -1,3 +1,4 @@
+import '../../core/i18n/language.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +46,7 @@ List<AgendaItem> agendaFor(
             n.allDay ? -1 : n.hour! * 60 + n.minute),
     for (final t in daily?.tasks ?? <DailyTask>[])
       if (t.enabled && t.days.contains(day.weekday))
-        AgendaItem(t.time12, '${t.text} (diaria)', t.hour * 60 + t.minute),
+        AgendaItem(t.time12, tr('${t.text} (diaria)', '${t.text} (daily)'), t.hour * 60 + t.minute),
     for (final r in reminders)
       if (sameDay(r.due))
         AgendaItem(clock12(r.due.hour, r.due.minute), r.text,
@@ -53,7 +54,7 @@ List<AgendaItem> agendaFor(
     for (final e in macEvents)
       if (!copied.contains(e.id))
         AgendaItem(
-            e.allDay ? 'Todo el día' : clock12(e.start.hour, e.start.minute),
+            e.allDay ? tr('Todo el día', 'All day') : clock12(e.start.hour, e.start.minute),
             e.title,
             e.allDay ? -1 : e.start.hour * 60 + e.start.minute),
   ];
@@ -65,19 +66,19 @@ List<AgendaItem> agendaFor(
 String briefingMessage(
     {String? userName, required List<AgendaItem> items, int pending = 0}) {
   final hi = userName == null || userName.isEmpty
-      ? '☀️ Buenos días.'
-      : '☀️ Buenos días, $userName.';
+      ? tr('☀️ Buenos días.', '☀️ Good morning.')
+      : tr('☀️ Buenos días, $userName.', '☀️ Good morning, $userName.');
   final tasks = pending == 0
       ? ''
       : pending == 1
-          ? '\n📝 Tienes 1 tarea pendiente.'
-          : '\n📝 Tienes $pending tareas pendientes.';
+          ? tr('\n📝 Tienes 1 tarea pendiente.', '\n📝 You have 1 pending task.')
+          : tr('\n📝 Tienes $pending tareas pendientes.', '\n📝 You have $pending pending tasks.');
   if (items.isEmpty) {
-    return '$hi Hoy no tienes nada anotado. ¿Qué te gustaría lograr?$tasks';
+    return tr('$hi Hoy no tienes nada anotado. ¿Qué te gustaría lograr?$tasks', '$hi You have nothing noted today. What would you like to achieve?$tasks');
   }
   final shown = items.take(6).map((i) => '• ${i.time} · ${i.text}').join('\n');
-  final more = items.length > 6 ? '\n…y ${items.length - 6} más.' : '';
-  return '$hi Hoy tienes:\n$shown$more$tasks';
+  final more = items.length > 6 ? tr('\n…y ${items.length - 6} más.', '\n…and ${items.length - 6} more.') : '';
+  return tr('$hi Hoy tienes:\n$shown$more$tasks', '$hi Today you have:\n$shown$more$tasks');
 }
 
 /// Da el resumen una vez al día, la primera vez que la app está despierta
