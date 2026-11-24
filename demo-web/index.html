@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PixelMate · Demo | Santiago Rivas</title>
+<meta name="description" content="Una mascota en pixel art que vive en tu escritorio y te acompaña mientras trabajas, estudias o juegas: organiza tu jornada, te recuerda descansar y conversa contigo.">
+<meta property="og:title" content="PixelMate · Demo"><meta property="og:description" content="Una mascota en pixel art que vive en tu escritorio y te acompaña mientras trabajas, estudias o juegas: organiza tu jornada, te recuerda descansar y conversa contigo."><meta property="og:image" content="assets/og.jpg">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>:root{--accent:#a78bfa;--accent2:#ec4899}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0c;--fg:#f4f1ea;--muted:#9a978f;--line:rgba(244,241,234,.12);--card:#121215}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1120px,92vw);margin:0 auto}
+nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:rgba(10,10,12,.7);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;justify-content:space-between;align-items:center;height:64px}
+.brand{display:flex;gap:10px;align-items:center;font-weight:700;letter-spacing:-.02em}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+.navlinks{display:flex;gap:22px;font-size:14px;color:var(--muted)}
+.navlinks a:hover{color:var(--fg)}
+.hero{position:relative;padding:90px 0 70px;overflow:hidden}
+.glow{position:absolute;inset:-20% -10% auto auto;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 62%);opacity:.28;filter:blur(40px);pointer-events:none}
+.glow.two{inset:auto auto -40% -20%;background:radial-gradient(circle,var(--accent2) 0%,transparent 60%);opacity:.18}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center}
+.pill{display:inline-flex;gap:8px;align-items:center;border:1px solid color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;padding:9px 14px;border-radius:99px}
+h1{font-size:clamp(52px,8vw,104px);line-height:.95;letter-spacing:-.055em;margin:22px 0 18px}
+.lead{font-size:clamp(18px,2vw,21px);color:#cfcbc2;max-width:520px}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.btn{display:inline-flex;align-items:center;gap:10px;border-radius:99px;padding:14px 22px;font-weight:600;font-size:15px;transition:transform .15s,background .15s,border-color .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.primary{background:var(--fg);color:var(--bg)}
+.btn.ghost{border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--fg)}
+.btn svg{width:18px;height:18px}
+.meta{display:flex;gap:26px;margin-top:34px;color:var(--muted);font-size:13px}
+.meta b{display:block;color:var(--fg);font-size:22px;letter-spacing:-.02em}
+section{padding:80px 0;border-top:1px solid var(--line)}
+.kicker{font:600 12px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h2{font-size:clamp(34px,4.6vw,56px);letter-spacing:-.045em;line-height:1.02;margin:12px 0 14px}
+.sub{color:var(--muted);max-width:620px;margin-bottom:40px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;transition:border-color .2s,transform .2s}
+.card:hover{border-color:color-mix(in srgb,var(--accent) 55%,transparent);transform:translateY(-3px)}
+.card .ic{font-size:26px;margin-bottom:14px}
+.card h3{font-size:18px;letter-spacing:-.02em;margin-bottom:6px}
+.card p{color:var(--muted);font-size:14.5px}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1px solid var(--line);border-radius:99px;padding:9px 16px;font-size:14px}
+.chip:hover{background:var(--fg);color:var(--bg)}
+.gallery{display:flex;gap:26px;overflow-x:auto;padding:10px 4px 30px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.gallery figure{flex:none;scroll-snap-align:center;text-align:center}
+.gallery figcaption{margin-top:14px;font-size:14px;color:var(--muted)}
+.phone{width:230px;border-radius:38px;padding:9px;background:#151518;border:2px solid #34343c;box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+.phone img{display:block;width:100%;border-radius:30px}
+.watch{width:220px;height:220px;border-radius:50%;padding:12px;background:#111;border:6px solid #5a5d66;box-shadow:0 0 0 2px #222,0 30px 60px -20px rgba(0,0,0,.8)}
+.watch img{width:100%;height:100%;border-radius:50%;display:block}
+.download{display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,#0f0f12),#0f0f12 60%);border:1px solid var(--line);border-radius:26px;padding:44px}
+.steps{counter-reset:s;list-style:none;display:grid;gap:12px}
+.steps li{counter-increment:s;display:flex;gap:14px;align-items:flex-start;color:#d6d2c9;font-size:15px}
+.steps code{background:#0a0a0c;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}.steps li:before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#0a0a0c;font-weight:700;font-size:13px}
+footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer a{color:var(--fg)}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+@media (max-width:860px){.hero .wrap,.download{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.navlinks{display:none}.download{padding:28px}}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}*{transition:none!important;animation:none!important}}
+.hpet{position:relative;height:420px;display:grid;place-items:center}.hpet .icon{width:260px;border-radius:56px;box-shadow:0 40px 80px -20px rgba(167,139,250,.5)}.pet.small{position:absolute;bottom:10px;right:12%;transform:scale(1)}
+.pet{width:32px;height:32px;image-rendering:pixelated;background-repeat:no-repeat;transform-origin:bottom center;scale:6}
+.desk{background:#16141f;border:1px solid #3a3550;border-radius:22px;overflow:hidden;box-shadow:0 40px 80px -30px rgba(0,0,0,.8)}
+.bar{display:flex;align-items:center;gap:8px;padding:14px 18px;background:#221f30}.bar i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.bar i:nth-child(2){background:#febc2e}.bar i:nth-child(3){background:#28c840}.bar span{margin:0 auto;font-size:13px;color:#b8b2d4;font-weight:600}
+.dbody{display:grid;grid-template-columns:1.1fr 1fr;gap:30px;padding:34px}
+.seg{display:flex;gap:8px}.seg button,.pick button,.acts button{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#0f0e16;color:var(--fg);font:600 14px Inter,sans-serif;cursor:pointer}.seg button.on,.pick button.on{background:var(--accent);color:#0a0a0c;border-color:var(--accent)}
+.timer{font-size:clamp(64px,9vw,104px);font-weight:800;letter-spacing:-.05em;margin:18px 0 0;font-variant-numeric:tabular-nums}.phase{color:#b8b2d4}.prog{height:10px;background:#2c2840;border-radius:9px;margin:18px 0 22px;overflow:hidden}.prog div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.ctl{display:flex;gap:10px}.ctl .btn{cursor:pointer;border:0;font-family:inherit}.ctl .ghost{border:1px solid var(--line);background:none;color:var(--fg)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:26px}.acts span{color:var(--muted);font-size:13px;margin-right:4px}.acts button:hover{border-color:var(--accent)}
+.stage{position:relative;min-height:340px;border-radius:18px;background:linear-gradient(#1d1a2b,#13111c);display:grid;place-items:end center;padding-bottom:70px;overflow:hidden}
+.stage:after{content:"";position:absolute;left:8%;right:8%;bottom:64px;height:4px;border-radius:4px;background:#3a3550}
+.stage .pet{position:relative;z-index:1;transition:translate 2.5s linear}
+.bubble{position:absolute;top:28px;left:50%;transform:translateX(-50%);background:var(--fg);color:#1b1726;font-weight:600;font-size:14px;padding:10px 16px;border-radius:16px;white-space:nowrap}
+.pick{position:absolute;bottom:14px;display:flex;gap:6px}
+@media(max-width:860px){.dbody{grid-template-columns:1fr;padding:22px}}.pets{justify-content:center}.petcard{width:240px;height:240px;border-radius:24px;background:var(--card);border:1px solid var(--line);display:grid;place-items:end center;padding-bottom:46px}.pet.g{scale:5}</style></head>
+<body>
+<nav><div class="wrap"><a class="brand" href="#"><span class="dot"></span>PixelMate</a>
+<div class="navlinks"><a href="#demo">Demo</a><a href="#funciones">Funciones</a><a href="#tecnologias">Tecnologías</a><a href="#descargar">Descargar</a></div>
+<a class="btn ghost" style="padding:9px 16px;font-size:13px" href="https://santiago-rivas-portafolio.vercel.app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>Portafolio</a></div></nav>
+<header class="hero"><div class="glow"></div><div class="glow two"></div><div class="wrap">
+<div><span class="pill">Flutter · Dart · macOS</span><h1>PixelMate</h1><p class="lead">Una mascota en pixel art que vive en tu escritorio y te acompaña mientras trabajas, estudias o juegas: organiza tu jornada, te recuerda descansar y conversa contigo.</p>
+<div class="ctas"><a class="btn primary" href="https://github.com/tulcansantiago08-cell/PixelMate/releases/download/v1.5.0/PixelMate-1.5.0-macOS.zip" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>macOS</a><a class="btn ghost" href="https://github.com/tulcansantiago08-cell/PixelMate" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z"/></svg>Ver código</a></div>
+<div class="meta"><div><b>3</b>mascotas</div><div><b>15</b>animaciones</div><div><b>macOS · Win · Linux</b>descargas</div></div></div>
+<div><div class="hpet"><img src="assets/icon.png" alt="Ícono de PixelMate" class="icon"><div class="pet small" id="hp"></div></div></div></div></header>
+<section id="demo"><div class="wrap"><div class="kicker">Demo interactiva</div><h2>Tu compañero de escritorio</h2><p class="sub">Las mascotas y animaciones son las mismas de la app. Elige una, empieza una jornada y mira cómo reacciona.</p>
+<div class="desk reveal"><div class="bar"><i></i><i></i><i></i><span id="title">Jornada de trabajo</span></div>
+<div class="dbody"><div class="left"><div class="seg" id="modes"><button data-m="trabajo" class="on">💻 Trabajo</button><button data-m="estudio">📚 Estudio</button><button data-m="juego">🎮 Juego</button></div>
+<div class="timer" id="t">25:00</div><div class="phase" id="ph">Bloque de enfoque · listo para empezar</div><div class="prog"><div id="pg"></div></div>
+<div class="ctl"><button class="btn primary" id="go">▶ Empezar</button><button class="btn ghost" id="rs">Reiniciar</button></div>
+<div class="acts"><span>Interactúa:</span><button data-a="wave">👋 Saludar</button><button data-a="happy">😊 Acariciar</button><button data-a="celebrate">🎉 Celebrar</button><button data-a="sleep">😴 Dormir</button><button data-a="walk">🚶 Pasear</button></div></div>
+<div class="stage"><div class="bubble" id="bb">¡Hola! Soy tu PixelMate.</div><div class="pet" id="pet"></div>
+<div class="pick" id="pick"><button data-p="cat" class="on">Gato</button><button data-p="dog">Perro</button><button data-p="fox">Zorro</button></div></div></div></div><p style="color:var(--muted);font-size:13px;margin-top:16px">En esta demo el temporizador corre 30 veces más rápido para que veas el cambio a descanso.</p></div></section>
+<section id="pantallas"><div class="wrap"><div class="kicker">Pantallas</div><h2>Las mascotas</h2><p class="sub">Gato, perro y zorro en pixel art, cada uno con 15 animaciones: teclear, leer, jugar, estirarse, dormir, celebrar y más.</p>
+<div class="gallery pets"><figure><div class="petcard"><div class="pet g" data-k="cat" style="background-image:url(assets/cat.png)"></div></div><figcaption>Gato</figcaption></figure><figure><div class="petcard"><div class="pet g" data-k="dog" style="background-image:url(assets/dog.png)"></div></div><figcaption>Perro</figcaption></figure><figure><div class="petcard"><div class="pet g" data-k="fox" style="background-image:url(assets/fox.png)"></div></div><figcaption>Zorro</figcaption></figure></div></div></section>
+<section id="funciones"><div class="wrap"><div class="kicker">Funciones</div><h2>Mucho más que una mascota</h2><p class="sub">Vive en la barra de menú y en el escritorio, y responde por chat o por voz.</p><div class="grid"><div class="card reveal"><div class="ic">⏱️</div><h3>Jornadas con descansos</h3><p>Modos trabajo, estudio y juego con bloques de enfoque y descansos cortos y largos.</p></div><div class="card reveal"><div class="ic">🐾</div><h3>Una mascota viva</h3><p>Gato, perro o zorro con 15 animaciones que reaccionan a la hora del día y a tu música.</p></div><div class="card reveal"><div class="ic">💬</div><h3>Chat con IA privada</h3><p>Usa la IA de Apple en tu Mac, sin internet ni costo; Claude es opcional con API key.</p></div><div class="card reveal"><div class="ic">🎙️</div><h3>Háblale</h3><p>⌃⌥V desde cualquier app: entiende español y te responde en voz alta.</p></div><div class="card reveal"><div class="ic">✅</div><h3>Asistente</h3><p>“Recuérdame en 20 minutos…”, “abre Notas”, “volumen al 50”, “crea una reunión mañana a las 10”.</p></div><div class="card reveal"><div class="ic">⏰</div><h3>Alarmas</h3><p>Alarmas con texto, repetición por días, posponer y sonidos a elegir.</p></div><div class="card reveal"><div class="ic">📅</div><h3>Calendario</h3><p>Notas por día con colores y aviso, sincronizables con el Calendario del Mac.</p></div><div class="card reveal"><div class="ic">☀️</div><h3>Resumen del día</h3><p>Por la mañana te cuenta tus pendientes, alarmas y eventos.</p></div><div class="card reveal"><div class="ic">🙈</div><h3>Escóndelo</h3><p>Un botón lo quita de la pantalla y vuelve con “Oye James” o ⌃⌥P.</p></div></div></div></section>
+<section id="tecnologias"><div class="wrap"><div class="kicker">Tecnologías</div><h2>Cómo está construida</h2><p class="sub">App de escritorio en Flutter con estado en Riverpod y base de datos local con Drift.</p><div class="chips"><span class="chip">Flutter</span><span class="chip">Dart</span><span class="chip">Riverpod</span><span class="chip">Drift (SQLite)</span><span class="chip">window_manager</span><span class="chip">tray_manager</span><span class="chip">Notificaciones locales</span><span class="chip">Apple Intelligence</span><span class="chip">Reconocimiento de voz de Apple</span><span class="chip">GitHub Actions</span></div></div></section>
+<section id="descargar"><div class="wrap"><div class="download reveal"><div><div class="kicker">Descargar</div><h2>Descárgala para tu computador</h2><p class="sub" style="margin-bottom:24px">Versión 1.5.0. La de macOS tiene todas las funciones; las de Windows y Linux las compila GitHub.</p><div class="ctas" style="margin-top:0"><a class="btn primary" href="https://github.com/tulcansantiago08-cell/PixelMate/releases/download/v1.5.0/PixelMate-1.5.0-macOS.zip" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>macOS</a><a class="btn ghost" href="https://github.com/tulcansantiago08-cell/PixelMate/releases/download/v1.5.0/PixelMate-1.5.0-Windows.zip" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Windows</a><a class="btn ghost" href="https://github.com/tulcansantiago08-cell/PixelMate/releases/download/v1.5.0/PixelMate-1.5.0-Linux-x64.tar.gz" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Linux</a></div></div>
+<ol class="steps"><li><span>Descarga el archivo de tu sistema y descomprímelo.</span></li><li><span>En Mac, mueve PixelMate a Aplicaciones y la primera vez ábrela con clic derecho → Abrir.</span></li><li><span>Elige tu mascota y empieza tu primera jornada.</span></li></ol></div></div></section>
+<footer><div class="wrap"><span>PixelMate · Proyecto de <a href="https://santiago-rivas-portafolio.vercel.app">Santiago Rivas</a>, Ingeniería de Software · UCC</span><span><a href="https://github.com/tulcansantiago08-cell/PixelMate" target="_blank" rel="noopener">GitHub</a></span></div></footer>
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script><script>
+const A={idle:[0,4,3],walk:[1,4,8],sleep:[2,4,2],wakeUp:[3,6,6],stretch:[4,6,6],work:[5,4,4],study:[6,4,3],gaming:[7,4,4],happy:[8,4,8],celebrate:[9,6,8],tired:[10,4,3],rest:[11,4,3],alert:[12,4,6],sad:[13,4,3],wave:[14,6,8]};
+function Pet(el,kind){this.el=el;this.f=0;this.set=k=>{this.k=k;this.f=0};this.kind=k=>{el.style.backgroundImage=`url(assets/${k}.png)`};this.kind(kind);this.set('idle');
+let last=0;const tick=t=>{const [row,n,fps]=A[this.k];if(t-last>1000/fps){last=t;this.f=(this.f+1)%n;el.style.backgroundPosition=`-${this.f*32}px -${row*32}px`}requestAnimationFrame(tick)};requestAnimationFrame(tick)}
+const hp=new Pet(document.getElementById('hp'),'fox');let hs=['idle','wave','happy','work','sleep'],hi=0;setInterval(()=>hp.set(hs[hi=(hi+1)%hs.length]),2600);
+const pet=new Pet(document.getElementById('pet'),'cat'),bb=document.getElementById('bb'),$=id=>document.getElementById(id);
+const say=t=>{bb.textContent=t};let base='idle',tmo;
+function act(k,t,ms=2600){clearTimeout(tmo);pet.set(k);if(t)say(t);tmo=setTimeout(()=>pet.set(base),ms)}
+const MODES={trabajo:['work','Jornada de trabajo','💻 ¡A trabajar! Yo tecleo contigo.'],estudio:['study','Jornada de estudio','📚 Hora de estudiar. Leo a tu lado.'],juego:['gaming','Jornada de juego','🎮 ¡A jugar un rato!']};
+let mode='trabajo',FOCUS=25*60,BREAK=5*60,left=FOCUS,run=false,brk=false,iv;
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+function draw(){$('t').textContent=fmt(left);const tot=brk?BREAK:FOCUS;$('pg').style.width=(100*(tot-left)/tot)+'%';$('ph').textContent=(brk?'Descanso corto':'Bloque de enfoque')+(run?' · en curso':' · en pausa')}
+function tick(){left-=1;if(left<=0){brk=!brk;left=brk?BREAK:FOCUS;if(brk){base='stretch';act('celebrate','🎉 ¡Bloque terminado! Hora del descanso.',3000)}else{base=MODES[mode][0];act('alert','⏰ Se acabó el descanso, ¡volvemos!',3000)}}draw()}
+$('go').onclick=()=>{run=!run;if(run){iv=setInterval(tick,1000/30);base=brk?'stretch':MODES[mode][0];pet.set(base);say(MODES[mode][2]);$('go').textContent='❚❚ Pausar'}else{clearInterval(iv);base='rest';pet.set('rest');say('☕ Pausa. Aquí te espero.');$('go').textContent='▶ Seguir'}draw()};
+$('rs').onclick=()=>{clearInterval(iv);run=false;brk=false;left=FOCUS;base='idle';pet.set('idle');say('Listo para una nueva jornada.');$('go').textContent='▶ Empezar';draw()};
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#modes button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;$('title').textContent=MODES[mode][1];if(run&&!brk){base=MODES[mode][0];pet.set(base);say(MODES[mode][2])}});
+document.querySelectorAll('.pick button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.pick button').forEach(x=>x.classList.remove('on'));b.classList.add('on');pet.kind(b.dataset.p);act('wave','¡Hola! Ahora soy tu '+b.textContent.toLowerCase()+'.')});
+const T={wave:'👋 ¡Hola!',happy:'😊 ¡Me encanta!',celebrate:'🎉 ¡Bien hecho!',sleep:'😴 Zzz…',walk:'🚶 Doy una vuelta.'};
+document.querySelectorAll('.acts button').forEach(b=>b.onclick=()=>{const k=b.dataset.a;if(k==='walk'){const p=document.getElementById('pet');p.style.translate='-120px 0';setTimeout(()=>p.style.translate='120px 0',1300);setTimeout(()=>p.style.translate='0 0',2600)}act(k,T[k],k==='sleep'?4000:2800)});
+draw();
+</script>
+<script>document.querySelectorAll(".pet.g").forEach((el,i)=>{const p=new Pet(el,el.dataset.k);const seq=["work","study","gaming","happy","sleep","celebrate","wave"];let j=i*2;setInterval(()=>p.set(seq[j=(j+1)%seq.length]),2200)})</script></body></html>
