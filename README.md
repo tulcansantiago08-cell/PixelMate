@@ -98,7 +98,7 @@
 
 ## Instalar
 
-1. Descarga `PixelMate-1.4.0-macOS.zip` desde
+1. Descarga `PixelMate-1.5.0-macOS.zip` desde
    [Releases](https://github.com/tulcansantiago08-cell/PixelMate/releases).
 2. Descomprímelo y arrastra **PixelMate.app** a **Aplicaciones**.
 3. La primera vez, haz **clic derecho → Abrir** (la app no está firmada por
@@ -109,7 +109,7 @@ posterior con Apple Intelligence activado.
 
 ### Windows y Linux
 
-1. Descarga `PixelMate-windows.zip` o `PixelMate-linux-x64.tar.gz` desde
+1. Descarga `PixelMate-1.5.0-Windows.zip` o `PixelMate-1.5.0-Linux-x64.tar.gz` desde
    [Releases](https://github.com/tulcansantiago08-cell/PixelMate/releases)
    (o, de una rama, desde la pestaña *Actions* → *Compilar* → *Artifacts*).
 2. **Windows:** descomprime la carpeta y abre `pixelmate.exe`. Si SmartScreen
